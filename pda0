@@ -1,0 +1,74 @@
+;; start -> foo C
+;;        | foo B foo
+;; foo -> A
+;;      | foo A
+
+;; PDA0 from doc.txt
+;; LCASE should push-token on every branch. In every branch, a token must be
+;; pushed. Why should the receiving state deal with that?
+((tokens A B C)
+ (block s1 #f #f
+        (push-state s1-reduce)
+        (lcase ((A) s2)))
+ (block s1-reduce #f #f
+        (push-state s1-reduce)
+        (gcase (start s8)
+               (foo s3)))
+ (block s2 #f #f
+        (push-state ???) ; I shouldn't ever come back here
+        (push-token) ; A
+        (lcase (() rule3)))
+ (block s3 #f #f
+        (push-state s3)
+        (lcase ((A) s4)
+               ((C) s5)
+               ((B) s6)))
+ (block s4 #f #f
+        (push-state s4)
+        (push-token) ; A
+        (lcase (() rule4)))
+ (block s5 #f #f
+        (push-state s5)
+        (push-token) ; C
+        (lcase (() rule1)))
+ (block s6 #f #f
+        (push-state s6)
+        (push-token) ; B
+        (lcase (() s2)))
+ (block s6-reduce #f #f
+        (push-state s6-reduce)
+        (gcase (foo s7)))
+ (block s7 #f #f
+        (push-state s7)
+        (lcase ((A) s4)
+               (() rule2)))
+ (block s8 #f #f
+        (lcase (($end) accept-block)))
+ (block accept-block #f #f
+        accept)
+
+ (block rule1 #f #f
+        (reduce r1)
+        (pop-states 2)
+        return)
+ (block rule2 #f #f
+        (reduce r2)
+        (pop-states 3)
+        return)
+ (block rule3 #f #f
+        (reduce r3)
+        (pop-states 1)
+        return)
+ (block rule4 #f #f
+        (reduce r4)
+        (pop-states 2)
+        return)
+
+ ;; start -> foo C
+ ;;        | foo B foo
+ ;; foo -> A
+ ;;      | foo A
+ (rule r1 start (#f #f)    1)
+ (rule r2 start (#f #f #f) 2)
+ (rule r3 foo   (#f)       3)
+ (rule r4 foo   (#f #f)    4))
