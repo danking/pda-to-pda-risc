@@ -1,5 +1,5 @@
 #lang racket
-(require "../trivial-cfg.scm")
+(require "../pda-to-pda0.rkt")
 
 ;; convert-rule
 (map (lambda (in expected)
