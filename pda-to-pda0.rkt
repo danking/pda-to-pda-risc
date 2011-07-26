@@ -61,12 +61,13 @@
 ;; dispatches to various pda-clause converters
 (define (convert-pda-clause pda-clause more)
   (case (first pda-clause)
-    [(state)  (append (convert-state pda-clause accept-block)
+    [(state)   (append (convert-state pda-clause accept-block)
+                       more)]
+    [(rule)    (list* (convert-rule pda-clause accept-block)
+                      pda-clause           ; include the rule itself
                       more)]
-    [(rule)   (list* (convert-rule pda-clause accept-block)
-                     pda-clause           ; include the rule itself
-                     more)]
-    [(tokens) (cons pda-clause more)]
+    [(tokens)  (cons pda-clause more)]
+    [(comment) more]
     [else     (error 'convert-pda "unsupported pda-clause : ~a"
                      pda-clause)]))
 
