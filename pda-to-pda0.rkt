@@ -52,32 +52,30 @@
 
 ;; convert a pda description into a pda0 description
 (define (convert-pda pda)
-  (let* ((used-names (map second
-                          (filter state?
-                                  pda)))
+  (let* ((used-names (map second (filter state? pda)))
          (accept-block (uniqify 'accept-block used-names)))
-    (foldr (lambda (pda-clause more)
-             (case (first pda-clause)
-               [(state) (append (convert-state pda-clause
-                                                accept-block)
-                                 more)]
-               [(rule) (list* (convert-rule pda-clause
-                                            accept-block)
-                              pda-clause ; include the rule itself
-                              more)]
-               [(tokens) (cons pda-clause more)]
-               [else (error 'convert-pda "unsupported pda-clause : ~a"
-                            pda-clause)]))
+    (foldr convert-pda-clause
            `((block ,accept-block #f #f accept))
            pda)))
+
+;; dispatches to various pda-clause converters
+(define (convert-pda-clause pda-clause more)
+  (case (first pda-clause)
+    [(state)  (append (convert-state pda-clause accept-block)
+                      more)]
+    [(rule)   (list* (convert-rule pda-clause accept-block)
+                     pda-clause           ; include the rule itself
+                     more)]
+    [(tokens) (cons pda-clause more)]
+    [else     (error 'convert-pda "unsupported pda-clause : ~a"
+                     pda-clause)]))
 
 ;; produce an id, based on name, which is unique relative to used
 (define (uniqify name used)
   (let loop ((name name)
              (used used))
     (if (memq name used)
-        (loop (string->symbol
-               (string-append "_" (symbol->string name)))
+        (loop (string->symbol (string-append "_" (symbol->string name)))
               used)
         name)))
 
@@ -90,7 +88,7 @@
 (define (convert-rule rule accept-block)
   (let ((name (second rule))
         (vars (fourth rule)))
-    `(block ,name #f #f         ; blocks and rules have different namespaces (?)
+    `(block ,name #f #f    ; blocks and rules have different namespaces (?)
             (reduce ,name)
             (pop-states ,(length vars))
             return)))
