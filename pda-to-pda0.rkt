@@ -21,8 +21,8 @@
                       more)]
     [(tokens)  (cons pda-clause more)]
     [(comment) more]
-    [else     (error 'convert-pda "unsupported pda-clause : ~a"
-                     pda-clause)]))
+    [else      (error 'convert-pda "unsupported pda-clause : ~a"
+                      pda-clause)]))
 
 ;; produce an id, based on name, which is unique relative to used
 (define (uniqify name used)
