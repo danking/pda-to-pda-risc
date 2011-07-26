@@ -1,19 +1,18 @@
 #lang racket
-(provide convert-pda
-         convert-rule
-         convert-state
-         group-actions)
+(provide convert-pda)
+
+;; The data definitions (i.e. grammars) are after the code
 
 ;; convert a pda description into a pda0 description
 (define (convert-pda pda)
   (let* ((used-names (map second (filter state? pda)))
          (accept-block (uniqify 'accept-block used-names)))
-    (foldr convert-pda-clause
+    (foldr (lambda (clause more) (convert-pda-clause clause more accept-block))
            `((block ,accept-block #f #f accept))
            pda)))
 
 ;; dispatches to various pda-clause converters
-(define (convert-pda-clause pda-clause more)
+(define (convert-pda-clause pda-clause more accept-block)
   (case (first pda-clause)
     [(state)   (append (convert-state pda-clause accept-block)
                        more)]
