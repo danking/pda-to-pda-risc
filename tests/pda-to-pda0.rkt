@@ -17,7 +17,7 @@
 ;;            (=> (foo A) 0)))
 
 ;; PDA from doc.txt
-;; ((tokens A B C)
+;; ((tokens A B C $end)
 ;;  (state s1
 ;;         (shift (A) s2)
 ;;         (goto start s8)
