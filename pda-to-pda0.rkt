@@ -43,7 +43,7 @@
 (define (convert-rule rule accept-block)
   (let ((name (second rule))
         (vars (fourth rule)))
-    `(block ,name #f #f    ; blocks and rules have different namespaces (?)
+    `(block ,name #f #f    ; blocks and rules have different namespaces
             (reduce ,name)
             (pop-states ,(length vars))
             return)))
