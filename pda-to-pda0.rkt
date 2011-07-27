@@ -3,6 +3,7 @@
 
 ;; The data definitions (i.e. grammars) are after the code
 
+;; convert-pda : [ListOf Clause] -> [ListOf Clause]
 ;; convert a pda description into a pda0 description
 (define (convert-pda pda)
   (let* ((used-names (map second (filter state? pda)))
