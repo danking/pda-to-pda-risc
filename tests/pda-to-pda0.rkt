@@ -4,7 +4,7 @@
          "example-pdas.rkt")
 
 (require/expose "../pda-to-pda0.rkt"
-                (convert-pda convert-rule convert-state group-actions))
+                (convert-pda convert-rule convert-state categorize-actions))
 
 ;; convert-pda
 (check-equal? (convert-pda pda1)
@@ -81,17 +81,17 @@
                (push-state s3-reduce)
                (gcase)))))
 
-;; group-actions
-(check-equal? (group-actions '((shift (A) s2)
-                               (goto start s8)
-                               (goto foo s3)))
-              '(((goto start s8) (goto foo s3))
-                ((shift (A) s2))))
-(check-equal? (group-actions '((shift (A) s4)
-                               (shift (C) s5)
-                               (shift (B) s6)))
-              '(()
-                ((shift (A) s4) (shift (C) s5) (shift (B) s6))))
+;; categorize-actions
+(let-values (((gotos actions) (categorize-actions '((shift (A) s2)
+                                                    (goto start s8)
+                                                    (goto foo s3)))))
+  (check-equal? gotos '((goto start s8) (goto foo s3)))
+  (check-equal? actions '((shift (A) s2))))
+(let-values (((gotos actions) (categorize-actions '((shift (A) s4)
+                                                    (shift (C) s5)
+                                                    (shift (B) s6)))))
+  (check-equal? gotos '())
+  (check-equal? actions '((shift (A) s4) (shift (C) s5) (shift (B) s6))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; A sample grammar that I represented in pseudo-BNF, CFG lang, and PDA lang

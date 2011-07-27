@@ -50,20 +50,20 @@
 
 ;; produce a series of pda0 blocks which represent the given pda state
 (define (convert-state state accept-block)
-  (let ((name (second state))
-        (actions (group-actions (cddr state))))
+  (let-values (((name) (second state))
+               ((goto-actions other-actions) (categorize-actions (cddr state))))
     (produce-state-block name
-                         (first actions)
-                         (second actions)
+                         goto-actions
+                         other-actions
                          accept-block)))
 
-;; group all the gotos together, must maintain order of others per pda specs
-(define (group-actions actions)
+;; group all the gotos together, must maintain order of actions per pda spec
+(define (categorize-actions actions)
   (let loop ((gotos '())
              (others '())
              (actions actions))
     (cond [(empty? actions)
-           (list (reverse gotos) (reverse others))]
+           (values (reverse gotos) (reverse others))]
           [(eq? (caar actions) 'goto)
            (loop (cons (car actions) gotos) others (rest actions))]
           [else
