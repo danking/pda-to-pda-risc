@@ -7,9 +7,9 @@
 
 ;; convert-pda
 (check-equal? (convert-pda pda1)
-              pda1-risc)
+              pda1-0)
 (check-equal? (convert-pda pda2)
-              pda2-risc)
+              pda2-0)
 
 ;; convert-rule
 (for-each (lambda (in expected)

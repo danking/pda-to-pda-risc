@@ -117,7 +117,7 @@
                 (:= return-here (pop))
                 (go return-here (nterm accept) result))))))
 
-(define pda1-risc
+(define pda1-0
   '((tokens A B $end)
     (block s1 #f #f push-token (jump s1-body))
     (block s1-body #f #f (push-state s1-reduce) (lcase ((A) s2)))
@@ -182,7 +182,7 @@
     (rule r3 foo    (#f)       3)
     (rule r4 foo    (#f #f)    4)
     (rule r5 accept (#f #f)    5)))
-(define pda2-risc
+(define pda2-0
   '((tokens A B C $end)
     (block s1 #f #f push-token (jump s1-body))
     (block s1-body #f #f
