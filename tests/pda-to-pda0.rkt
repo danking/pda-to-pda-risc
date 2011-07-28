@@ -1,6 +1,5 @@
 #lang racket
-(require racket/enter
-         rackunit
+(require rackunit
          "example-pdas.rkt")
 
 (require/expose "../pda-to-pda0.rkt"
