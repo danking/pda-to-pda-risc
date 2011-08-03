@@ -1,13 +1,20 @@
 #lang racket
 (provide convert-pda)
 
+(define (lower-case x)
+  (cond [(cons? x)
+         (cons (lower-case (car x)) (lower-case (cdr x)))]
+        [(symbol? x)
+         (string->symbol (string-downcase (symbol->string x)))]
+        [else x]))
+
 ;; convert-pda : [ListOf Clause] -> [ListOf Clause]
 ;; convert a pda description into a pda0 description
 (define (convert-pda pda)
   (list 'label
         (foldr (lambda (clause more) (convert-pda-clause clause more))
                '()
-               pda)))
+               (lower-case pda))))
 
 ;; dispatches to various pda-clause converters
 (define (convert-pda-clause pda-clause more)
