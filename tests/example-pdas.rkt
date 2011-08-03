@@ -15,70 +15,86 @@
 
 (define pda1-risc
   '(;(tokens A B $end) ; ?? not in the spec
-    (label ((s1-body ()
-                     (push (state s1-reduce))
-                     (if-eos ("OH SHIT!")
-                             (get-token
-                              (push (current-token))
-                              (token-case
-                               (A (go s2))))))
+    (label ((s1 ()
+                (push (state s1-reduce))
+                (if-eos (block (error 's1 "saw eos early"))
+                        (block get-token
+                               (push (current-token))
+                               (token-case
+                                (A (go s2))))))
             (s1-reduce (nt sem-val)
                        (push (state s1-reduce))
                        (push sem-val)
                        (state-case nt
                                    (start (go s6))))
-            (s2-body ()
-                     (push (state s2-reduce))
-                     (if-eos ("OH SHIT!")
-                             (get-token
-                              (push (current-token))
-                              (token-case
-                               (A (go s2))
-                               (B (go s3))))))
+            (s1-reduce-eos (nt sem-val)
+                           (push (state s1-reduce-eos))
+                           (push sem-val)
+                           (state-case nt
+                                       (start (go s6-eos))))
+            (s2 ()
+                (push (state s2-reduce))
+                (if-eos (block (error 's2 "saw eos early"))
+                        (block get-token
+                               (push (current-token))
+                               (token-case
+                                (A (go s2))
+                                (B (go s3))))))
             (s2-reduce (nt sem-val)
                        (push (state s2-reduce))
                        (push sem-val)
                        (state-case nt
                                    (start (go s4))))
-            (s3-body ()
-                     (push (state s3-reduce))
-                     (if-eos ("OH SHIT!")
-                             (get-token
-                              (push (current-token))
-                              (token-case
-                               (#t (go r2))))))
+            (s2-reduce-eos (nt sem-val)
+                           (push (state s2-reduce))
+                           (push sem-val)
+                           (state-case nt
+                                       (start (go s4-eos))))
+            (s3 ()
+                (push (state s3-reduce))
+                (if-eos (block (error 's3 "saw eos early"))
+                        (block get-token
+                               (push (current-token))
+                               (token-case
+                                (#t (go r2))))))
             (s3-reduce (nt sem-val)
                        (push (state s2-reduce))
                        (push sem-val)
                        (state-case nt))
-            (s4-body ()
-                     (push (state s4-reduce))
-                     (if-eos ("OH SHIT!")
-                             (get-token
-                              (push (current-token))
-                              (token-case
-                               (B (go s5))))))
+            (s4 ()
+                (push (state s4-reduce))
+                (if-eos (block (error 's4 "saw eos early"))
+                        (block get-token
+                               (push (current-token))
+                               (token-case
+                                (B (go s5))))))
+            (s4-eos ()
+                    (error 's4 "saw eos early"))
             (s4-reduce (nt sem-val)
                        (push (state s4-reduce))
                        (push sem-val)
                        (state-case nt))
-            (s5-body ()
-                     (push (state s5-reduce))
-                     (if-eos ("OH SHIT!")
-                             (get-token
-                              (push (current-token))
-                              (token-case
-                               (#t (go r1))))))
+            (s5 ()
+                (push (state s5-reduce))
+                (if-eos (block (go r1-eos))
+                        (block get-token
+                               (push (current-token))
+                               (token-case
+                                (#t (go r1))))))
             (s5-reduce (nt sem-val)
                        (push (state s5-reduce))
                        (push sem-val)
                        (state-case nt))
-            (s6-body ()
-                     (push (state s6-reduce))
-                     (if-eos ((pop)
-                              (:= return-value (pop))
-                              (accept return-value))
-                             ("OH SHIT!?")))
+            (s6 ()
+                (push (state s6-reduce))
+                (if-eos (block (pop)
+                               (:= return-value (pop))
+                               (accept return-value))
+                        (block (error 's6 "saw more symbols after parsing"))))
+            (s6-eos ()
+                    (pop)
+                    (:= return-value (pop))
+                    (accept return-value))
             (s6-reduce ()
                        (nt sem-val)
                        (push (state s6-reduce))
@@ -115,7 +131,21 @@
                                  (result)
                                  (lambda (x) x))
                 (:= return-here (pop))
-                (go return-here (nterm accept) result))))))
+                (go return-here (nterm accept) result))
+            (r1-eos ()
+                (:= v1 (pop))
+                (pop)
+                (:= v2 (pop))
+                (pop)
+                (:= v3 (pop))
+                (pop) ; pop 6 states b/c rule has 3 rhs's
+                (semantic-action (v2)
+                                 (result)
+                                 (lambda (x) (+ 2 x)))
+                (:= return-here (pop))
+                (go return-here (nterm start) result)))
+           (go s1))))
+
 
 (define pda1-0
   '((tokens A B $end)
