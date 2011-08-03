@@ -23,7 +23,7 @@
                        more)]
     [(rule)    (cons (convert-rule pda-clause)
                      more)]
-    [(tokens)  more]
+    [(tokens no-shift error)  (cons pda-clause more)]
     [(comment) more]
     [else      (error 'convert-pda "unsupported pda-clause : ~a"
                       pda-clause)]))
