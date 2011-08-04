@@ -80,20 +80,48 @@
       (make-risc-states name gotos actions eos-actions))))
 
 (define (make-risc-states name gotos others eos-actions)
-  (let ((reduce-name (symbol-append name '-reduce)))
+  (let* ((reduce-name (symbol-append name '-reduce))
+         (eos-name (make-eos-name name))
+         (eos-reduce-name (make-eos-name reduce-name)))
     (list (make-body-state name reduce-name others eos-actions)
-          (make-reduce-state reduce-name gotos))))
+          (make-reduce-state reduce-name gotos)
+          (make-eos-body-state eos-name eos-reduce-name eos-actions)
+          (make-eos-reduce-state eos-reduce-name gotos))))
 
-(define (make-body-state name reduce-name others eos-actions)
+(define (make-body-skeleton-state name reduce-name actions)
   `(,name ()
           (push (state ,reduce-name))
-          (if-eos
-           (block . ,(map (lambda (x)
-                            (cadr (convert-action x)))
-                          eos-actions))
-           (block get-token
-                  (push (current-token))
-                  (token-case . ,(map convert-action others))))))
+          .
+          ,actions))
+
+(define (make-eos-body-state name reduce-name eos-actions)
+  (make-body-skeleton-state name
+                            reduce-name
+                            (map (lambda (x)
+                                   (cadr (convert-action x)))
+                                 eos-actions)))
+
+(define (make-body-state name reduce-name others eos-actions)
+  (make-body-skeleton-state
+   name
+   reduce-name
+   `((if-eos (block . ,(map (lambda (x)
+                              (cadr (convert-action x)))
+                            eos-actions))
+             (block get-token
+                    (push (current-token))
+                    (token-case . ,(map convert-action others)))))))
+
+(define (make-eos-reduce-state reduce-name gotos)
+  (make-reduce-state reduce-name
+                     (map (lambda (x)
+                            (list (first x)
+                                  (second x)
+                                  (make-eos-name (third x))))
+                          gotos)))
+
+(define (make-eos-name name)
+  (symbol-append name '-eos))
 
 (define (make-reduce-state reduce-name gotos)
   `(,reduce-name (nt sem-val)
