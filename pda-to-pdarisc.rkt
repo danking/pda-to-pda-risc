@@ -66,7 +66,9 @@
 ;; produce a series of pda0 blocks which represent the given pda state
 (define (convert-state state)
   (let ((name (cadr state))
-        (actions (cddr state)))
+        (actions (filter (lambda (x)
+                           (not (eq? (first x) 'comment)))
+                         (cddr state))))
    (let-values (((goto-actions other-actions)
                  (categorize-actions actions)))
      (produce-state-block name
