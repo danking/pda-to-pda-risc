@@ -89,10 +89,10 @@
           (if-eos
            (block . ,(map (lambda (x)
                             (cadr (convert-action x)))
-                          eos-actions)))
+                          eos-actions))
            (block get-token
                   (push (current-token))
-                  (token-case . ,(map convert-action others)))))
+                  (token-case . ,(map convert-action others))))))
 
 (define (make-reduce-state reduce-name gotos)
   `(,reduce-name (nt sem-val)
