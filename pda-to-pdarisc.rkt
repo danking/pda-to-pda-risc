@@ -14,7 +14,8 @@
   (list 'label
         (foldr (lambda (clause more) (convert-pda-clause clause more))
                '()
-               (lower-case pda))))
+               (lower-case pda))
+        '(go **start-symbol**?)))
 
 ;; dispatches to various pda-clause converters
 (define (convert-pda-clause pda-clause more)
