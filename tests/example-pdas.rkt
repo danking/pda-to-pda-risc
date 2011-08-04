@@ -3,6 +3,7 @@
 
 (define pda1
   '((tokens A B $end)
+    (eos $end)
     (state s1 (shift (A) s2) (goto start s6))
     (state s2 (shift (A) s2) (shift (B) s3) (goto start s4))
     (state s3 (reduce () r2))
