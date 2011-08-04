@@ -12,22 +12,28 @@
 ;; convert a pda description into a pda0 description
 (define (convert-pda pda)
   (list 'label
-        (foldr (lambda (clause more) (convert-pda-clause clause more))
+        (foldr (lambda (clause more) (convert-pda-clause clause
+                                                         more
+                                                         (get-eos-token pda)))
                '()
                (lower-case pda))
         '(go **start-symbol**?)))
 
 ;; dispatches to various pda-clause converters
-(define (convert-pda-clause pda-clause more)
+(define (convert-pda-clause pda-clause more the-eos-token)
   (case (first pda-clause)
-    [(state)   (append (convert-state pda-clause)
+    [(state)   (append (convert-state pda-clause the-eos-token)
                        more)]
     [(rule)    (cons (convert-rule pda-clause)
                      more)]
-    [(tokens no-shift error)  (cons pda-clause more)]
-    [(comment) more]
+    [(tokens no-shift error) (cons pda-clause more)]
+    [(comment eos) more]
     [else      (error 'convert-pda "unsupported pda-clause : ~a"
                       pda-clause)]))
+
+;; grabs the first occurence of (eos . stuff) and returns the associated token
+(define (get-eos-token pda)
+  (second (assq 'eos pda)))
 
 ;; produces a rule block which handles reduction, state pop'ing, and jumping
 (define (convert-rule rule)
@@ -65,11 +71,11 @@
             (go return-here (nterm ,nterm) result))))
 
 ;; produce a series of pda0 blocks which represent the given pda state
-(define (convert-state state)
+(define (convert-state state the-eos-token)
   (let ((name (cadr state)))
     (let*-values
         (((gotos others) (segregate-gotos (remove-comments (cddr state))))
-         ((eos-actions actions) (segregate-eos others)))
+         ((eos-actions actions) (segregate-eos others the-eos-token)))
       (make-risc-states name gotos actions eos-actions))))
 
 (define (make-risc-states name gotos others eos-actions)
@@ -95,9 +101,9 @@
 (define (segregate-gotos gotos+others)
   (partition (lambda (x) (of-type? x 'goto)) gotos+others))
 
-(define (segregate-eos actions)
+(define (segregate-eos actions the-eos-token)
   (partition (lambda (x) (and (cons? (second x))
-                              (eq? (first (second x)) 'eos)))
+                              (eq? (first (second x)) the-eos-token)))
              actions))
 
 (define (remove-comments clauses)
