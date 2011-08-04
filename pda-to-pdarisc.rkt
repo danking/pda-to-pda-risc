@@ -12,9 +12,10 @@
 ;; convert a pda description into a pda0 description
 (define (convert-pda pda)
   (list 'label
-        (foldr (lambda (clause more) (convert-pda-clause clause
-                                                         more
-                                                         (get-eos-token pda)))
+        (foldr (lambda (clause more)
+                 (convert-pda-clause clause
+                                     more
+                                     (get-eos-token pda)))
                '()
                (lower-case pda))
         '(go **start-symbol**?)))
