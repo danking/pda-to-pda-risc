@@ -66,50 +66,58 @@
 
 ;; produce a series of pda0 blocks which represent the given pda state
 (define (convert-state state)
-  (let ((name (cadr state))
-        (actions (filter (lambda (x)
-                           (not (eq? (first x) 'comment)))
-                         (cddr state))))
-   (let-values (((goto-actions other-actions)
-                 (categorize-actions actions)))
-     (produce-state-block name
-                          goto-actions
-                          other-actions))))
+  (let ((name (cadr state)))
+    (let*-values
+        (((gotos others) (segregate-gotos (remove-comments (cddr state))))
+         ((eos-actions actions) (segregate-eos others)))
+      (make-risc-states name gotos actions eos-actions))))
 
-;; group all the gotos together, must maintain order of actions per pda spec
-(define (categorize-actions actions)
-  (let loop ((gotos '())
-             (others '())
-             (actions actions))
-    (cond [(empty? actions)
-           (values (reverse gotos) (reverse others))]
-          [(eq? (caar actions) 'goto)
-           (loop (cons (car actions) gotos) others (rest actions))]
-          [else
-           (loop gotos (cons (car actions) others) (rest actions))])))
+(define (make-risc-states name gotos others eos-actions)
+  (let ((reduce-name (symbol-append name '-reduce)))
+    (list (make-body-state name reduce-name others eos-actions)
+          (make-reduce-state reduce-name gotos))))
 
-;; expands a state (name, goto actions, other actions) into its primary state
-;; and its reduction state, ferrying eos actions to the true branch of if-eos
-(define (produce-state-block name gotos other-actions)
-  (let* ((reduce-state (symbol-append name '-reduce))
-         (uses-eos? (lambda (state) (eq? (cadr state) '$eos)))
-         (maybe-eos-action (filter uses-eos? other-actions))
-         (non-eos-actions (filter (lambda (x) (not (uses-eos? x)))
-                                  other-actions)))
-    `((,name ()
-             (push (state ,reduce-state))
-             (if-eos
-              (block . ,(if (empty? maybe-eos-action)
-                            '...
-                            (cadar (format-non-goto-actions maybe-eos-action))))
-              (block get-token
-                     (push (current-token))
-                     (token-case . ,(format-non-goto-actions
-                                     non-eos-actions)))))
-      (,reduce-state (nt sem-val)
-                     (push (state ,reduce-state))
-                     (push sem-val)
-                     (state-case nt . ,(format-goto-actions gotos))))))
+(define (make-body-state name reduce-name others eos-actions)
+  `(,name ()
+          (push (state ,reduce-name))
+          (if-eos
+           (block . ,(map convert-action eos-actions)))
+           (block get-token
+                  (push (current-token))
+                  (token-case . ,(map convert-action others)))))
+
+(define (make-reduce-state reduce-name gotos)
+  `(,reduce-name (nt sem-val)
+                 (push (state ,reduce-name))
+                 (push sem-val)
+                 (state-case nt . ,(map convert-goto gotos))))
+
+(define (segregate-gotos gotos+others)
+  (partition (lambda (x) (of-type? x 'goto)) gotos+others))
+
+(define (segregate-eos actions)
+  (partition (lambda (x) (and (cons? (second x))
+                              (eq? (first (second x)) 'eos)))
+             actions))
+
+(define (remove-comments clauses)
+  (filter (lambda (x) (not (of-type? x 'comment))) clauses))
+
+(define (of-type? tuple type)
+  (eq? (first tuple) type))
+
+(define (convert-action action)
+  (let ((lookahead-token (second action)))
+    (if (of-type? action 'accept)
+        `(,lookahead-token ((pop)
+                            (:= return-value (pop))
+                            (accept return-value)))
+        `(,lookahead-token (go ,(third action))))))
+
+(define (convert-goto goto)
+  (let ((lookahead-state (second goto))
+        (target-state (third goto)))
+    `(,lookahead-state (go ,target-state))))
 
 ;; Symbol Symbol -> Symbol
 ;; appends the string versions of the symbols to produce a new symbol
@@ -117,25 +125,6 @@
 (define (symbol-append a b)
   (string->symbol (string-append (symbol->string a)
                                  (symbol->string b))))
-
-;; trims off the clause type identifier and contorts accept clauses so that
-;; they point to the accepting block
-(define (format-non-goto-actions clauses)
-  (map (lambda (x)
-         (if (eq? (first x) 'accept)
-             `(,(second x) ((pop)
-                            (:= return-value (pop))
-                            (accept return-value)))
-             `(,(second x) (go ,(third x)))))
-       clauses))
-
-;; similar to `format-non-goto-actions', but this function needn't extract the
-;; lookahaed from a list
-(define (format-goto-actions clauses)
-  (map (lambda (x)
-         `(,(second x) (go ,(third x))))
-       clauses))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Grammars
