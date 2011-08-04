@@ -87,7 +87,9 @@
   `(,name ()
           (push (state ,reduce-name))
           (if-eos
-           (block . ,(map convert-action eos-actions)))
+           (block . ,(map (lambda (x)
+                            (cadr (convert-action x)))
+                          eos-actions)))
            (block get-token
                   (push (current-token))
                   (token-case . ,(map convert-action others)))))
@@ -115,9 +117,9 @@
 (define (convert-action action)
   (let ((lookahead-token (second action)))
     (if (of-type? action 'accept)
-        `(,lookahead-token ((pop)
-                            (:= return-value (pop))
-                            (accept return-value)))
+        `(,lookahead-token (block (pop)
+                                  (:= return-value (pop))
+                                  (accept return-value)))
         `(,lookahead-token (go ,(third action))))))
 
 (define (convert-goto goto)
