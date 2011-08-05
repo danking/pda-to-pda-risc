@@ -1,13 +1,6 @@
 #lang racket
 (provide convert-pda)
 
-(define (lower-case x)
-  (cond [(cons? x)
-         (cons (lower-case (car x)) (lower-case (cdr x)))]
-        [(symbol? x)
-         (string->symbol (string-downcase (symbol->string x)))]
-        [else x]))
-
 ;; convert-pda : [ListOf Clause] -> [ListOf Clause]
 ;; convert a pda description into a pda0 description
 (define (convert-pda pda)
@@ -17,7 +10,7 @@
                                      more
                                      (get-eos-token pda)))
                '()
-               (lower-case pda))
+               pda)
         `(go ,(get-start-state pda))))
 
 ;; dispatches to various pda-clause converters
