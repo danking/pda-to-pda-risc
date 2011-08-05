@@ -18,7 +18,7 @@
                                      (get-eos-token pda)))
                '()
                (lower-case pda))
-        '(go **start-symbol**?)))
+        `(go ,(get-start-state pda))))
 
 ;; dispatches to various pda-clause converters
 (define (convert-pda-clause pda-clause more the-eos-token)
@@ -28,13 +28,24 @@
     [(rule)    (cons (convert-rule pda-clause)
                      more)]
     [(tokens no-shift error) (cons pda-clause more)]
-    [(comment eos) more]
+    [(comment eos start) more]
     [else      (error 'convert-pda "unsupported pda-clause : ~a"
                       pda-clause)]))
 
 ;; grabs the first occurence of (eos . stuff) and returns the associated token
 (define (get-eos-token pda)
-  (second (assq 'eos pda)))
+  (let ((eos-form? (assq 'eos pda)))
+    (if eos-form?
+        (second eos-form?)
+        (error 'convert-pda "no eos token specified"))))
+
+;; grabs the first occurence of (start . stuff) and returns the associated
+;; state
+(define (get-start-state pda)
+  (let ((start-form? (assq 'start pda)))
+    (if start-form?
+        (second start-form?)
+        (error 'convert-pda "no start state specified"))))
 
 ;; produces a rule block which handles reduction, state pop'ing, and jumping
 (define (convert-rule rule)
