@@ -150,12 +150,19 @@
   (eq? (first tuple) type))
 
 (define (convert-action action)
+  (convert-generic-action action (lambda (x) x)))
+
+(define (convert-eos-action action)
+  (convert-generic-action action make-eos-name))
+
+;; converts a PDA action clause into a PDA-RISC token/state-case clause
+(define (convert-generic-action action state-transformer)
   (let ((lookahead-token (second action)))
     (if (of-type? action 'accept)
         `(,lookahead-token (block (pop)
                                   (:= return-value (pop))
                                   (accept return-value)))
-        `(,lookahead-token (go ,(third action))))))
+        `(,lookahead-token (go ,(state-transformer (third action)))))))
 
 (define (convert-goto goto)
   (let ((lookahead-state (second goto))
