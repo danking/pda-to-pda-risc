@@ -126,18 +126,20 @@
                                   (make-eos-name (third x))))
                           gotos)))
 
-(define (make-eos-name name)
-  (symbol-append name '-eos))
-
 (define (make-reduce-state reduce-name gotos)
   `(,reduce-name (nt sem-val)
                  (push (state ,reduce-name))
                  (push sem-val)
                  (state-case nt . ,(map convert-goto gotos))))
 
+(define (make-eos-name name)
+  (symbol-append name '-eos))
+
+;; segregate the gotos from the other PDA clauses
 (define (segregate-gotos gotos+others)
   (partition (lambda (x) (of-type? x 'goto)) gotos+others))
 
+;; segregate PDA clauses whose lookahead is the given token
 (define (segregate-eos actions the-eos-token)
   (partition (lambda (x) (and (cons? (second x))
                               (eq? (first (second x)) the-eos-token)))
@@ -146,6 +148,7 @@
 (define (remove-comments clauses)
   (filter (lambda (x) (not (of-type? x 'comment))) clauses))
 
+;; A clause is (TYPE stuff ...), so just check the head of the tuple
 (define (of-type? tuple type)
   (eq? (first tuple) type))
 
@@ -164,6 +167,7 @@
                                   (accept return-value)))
         `(,lookahead-token (go ,(state-transformer (third action)))))))
 
+;; converts a PDA goto clause into a PDA-RISC token/state-case clause
 (define (convert-goto goto)
   (let ((lookahead-state (second goto))
         (target-state (third goto)))
