@@ -104,7 +104,7 @@
   (make-body-skeleton-state name
                             reduce-name
                             (map (lambda (x)
-                                   (cadr (convert-action x)))
+                                   (cadr (convert-eos-action x)))
                                  eos-actions)))
 
 (define (make-body-state name reduce-name others eos-actions)
@@ -112,7 +112,7 @@
    name
    reduce-name
    `((if-eos (block . ,(map (lambda (x)
-                              (cadr (convert-action x)))
+                              (cadr (convert-eos-action x)))
                             eos-actions))
              (block get-token
                     (push (current-token))
