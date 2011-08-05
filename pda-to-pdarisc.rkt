@@ -18,8 +18,11 @@
   (case (first pda-clause)
     [(state)   (append (convert-state pda-clause the-eos-token)
                        more)]
-    [(rule)    (cons (convert-rule pda-clause)
-                     more)]
+    [(rule)    (let ((rule (convert-rule pda-clause)))
+                 (list* rule
+                        (cons (make-eos-name (first rule))
+                              (rest rule))
+                        more))]
     [(tokens no-shift error) (cons pda-clause more)]
     [(comment eos start) more]
     [else      (error 'convert-pda "unsupported pda-clause : ~a"
