@@ -67,7 +67,7 @@
         (nterm (third rule))
         (vars (fourth rule))
         (sem-action (fifth rule)))
-    `(,name ()    ; blocks and rules have different namespaces
+    `(,name ()
             ,@(generate-pops (length vars))
             (semantic-action ,(generate-args vars)
                              (result)
