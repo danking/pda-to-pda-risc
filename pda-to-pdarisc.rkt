@@ -83,6 +83,8 @@
          ((eos-actions actions) (segregate-eos others the-eos-token)))
       (make-risc-states name gotos actions eos-actions))))
 
+;; each PDA state corresponds to (at most) four PDA-RISC states
+;; we need a body state and a reduce state and an -eos version of each
 (define (make-risc-states name gotos others eos-actions)
   (let* ((reduce-name (symbol-append name '-reduce))
          (eos-name (make-eos-name name))
