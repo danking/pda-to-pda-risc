@@ -48,15 +48,13 @@
   (define (vN n)
     (string->symbol (string-append "v" (number->string n))))
   (define (generate-pops n)
-    (let loop ((i n)
-               (pops '()))
-      (if (zero? i)
-          pops
-          (loop (sub1 i)
-                `((:= ,(vN i) (pop))
-                  (pop)
-                  .
-                  ,pops)))))
+    (for/fold
+        ([pops '()])
+        ([i (in-range n 0 -1)])
+      `((:= ,(vN i) (pop))
+        (pop)
+        .
+        ,pops)))
   (define (generate-args bools)
     (for/list ([i (in-naturals 1)]
                [l bools]
