@@ -61,25 +61,24 @@
                #:when l)
               (vN i)))
 
-  (let ((name (second rule))
-        (nterm (third rule))
-        (vars (fourth rule))
-        (sem-action (fifth rule)))
-    `(,name ()
-            ,@(generate-pops (length vars))
-            (semantic-action ,(generate-args vars)
-                             (result)
-                             ,sem-action)
+  (match rule
+    [(list _ name nterms bindings sem-action)
+     `(,name ()
+             ,@(generate-pops (length bindings))
+             (semantic-action ,(generate-args bindings)
+                              (result)
+                              ,sem-action)
             (:= return-here (pop))
-            (go return-here (nterm ,nterm) result))))
+            (go return-here (nterm ,nterm) result))]))
 
 ;; produce a series of pda0 blocks which represent the given pda state
 (define (convert-state state the-eos-token)
-  (let ((name (cadr state)))
-    (let*-values
-        (((gotos others) (segregate-gotos (remove-comments (cddr state))))
-         ((eos-actions actions) (segregate-eos others the-eos-token)))
-      (make-risc-states name gotos actions eos-actions))))
+  (match state
+    [(list state name clauses ...)
+     (let*-values
+         (((gotos others) (segregate-gotos (remove-comments clauses)))
+          ((eos-actions actions) (segregate-eos others the-eos-token)))
+       (make-risc-states name gotos actions eos-actions))]))
 
 ;; each PDA state corresponds to (at most) four PDA-RISC states
 ;; we need a body state and a reduce state and an -eos version of each
