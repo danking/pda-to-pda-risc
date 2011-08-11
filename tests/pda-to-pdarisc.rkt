@@ -48,35 +48,9 @@
 ;; CONVERT-RULE
 (for-each (lambda (in expected)
             (check-equal? (convert-rule in) expected))
-          '((rule r1 start (#f #t #f) (lambda (x) (+ 2 x)))
-            (rule r2 start (#f #f) (lambda () 2))
-            (rule r3 accept (#t #f) (lambda (x) x)))
-          '((r1
-             ()
-             (:= v1 (pop))
-             (pop)
-             (:= v2 (pop))
-             (pop)
-             (:= v3 (pop))
-             (pop)
-             (semantic-action (v2) (result) (lambda (x) (+ 2 x)))
-             (:= return-here (pop))
-             (go return-here (nterm start) result))
-            (r2
-             ()
-             (:= v1 (pop))
-             (pop)
-             (:= v2 (pop))
-             (pop)
-             (semantic-action () (result) (lambda () 2))
-             (:= return-here (pop))
-             (go return-here (nterm start) result))
-            (r3
-             ()
-             (:= v1 (pop))
-             (pop)
-             (:= v2 (pop))
-             (pop)
-             (semantic-action (v1) (result) (lambda (x) x))
-             (:= return-here (pop))
-             (go return-here (nterm accept) result))))
+          (list 3-rhs-rule
+                2-rhs-rule
+                2-rhs-rule-no-bindings)
+          (list 3-rhs-rule-risc
+                2-rhs-rule-risc
+                2-rhs-rule-no-bindings-risc))

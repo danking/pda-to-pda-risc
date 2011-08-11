@@ -99,3 +99,42 @@
                     (push (state s6-reduce-eos))
                     (push sem-val)
                     (state-case nt))))
+
+(define 3-rhs-rule
+  '(rule r1 non-terminal (#f #t #f) (lambda (x) (+ 2 x))))
+(define 3-rhs-rule-risc
+  '(r1
+    ()
+    (:= v1 (pop))
+    (pop)
+    (:= v2 (pop))
+    (pop)
+    (:= v3 (pop))
+    (pop)
+    (semantic-action (v2) (result) (lambda (x) (+ 2 x)))
+    (:= return-here (pop))
+    (go return-here (nterm non-terminal) result)))
+(define 2-rhs-rule
+  '(rule r3 non-terminal (#t #f) (lambda (x) x)))
+(define 2-rhs-rule-risc
+  '(r3
+    ()
+    (:= v1 (pop))
+    (pop)
+    (:= v2 (pop))
+    (pop)
+    (semantic-action (v1) (result) (lambda (x) x))
+    (:= return-here (pop))
+    (go return-here (nterm non-terminal) result)))
+(define 2-rhs-rule-no-bindings
+  '(rule r2 non-terminal (#f #f) (lambda () 2)))
+(define 2-rhs-rule-no-bindings-risc
+  '(r2
+    ()
+    (:= v1 (pop))
+    (pop)
+    (:= v2 (pop))
+    (pop)
+    (semantic-action () (result) (lambda () 2))
+    (:= return-here (pop))
+    (go return-here (nterm non-terminal) result)))
