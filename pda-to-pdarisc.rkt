@@ -58,13 +58,10 @@
                   .
                   ,pops)))))
   (define (generate-args bools)
-    (let loop ((i 1)
-               (ls bools))
-      (cond [(empty? ls) empty]
-            [(first ls) (cons (vN i)
-                              (loop (add1 i)
-                                    (rest ls)))]
-            [else (loop (add1 i) (rest ls))])))
+    (for/list ([i (in-naturals 1)]
+               [l bools]
+               #:when l)
+              (vN i)))
 
   (let ((name (second rule))
         (nterm (third rule))
