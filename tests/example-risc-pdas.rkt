@@ -54,15 +54,15 @@
                    (push sem-val)
                    (state-case nt (start (go s6-eos))))))
 (define multiple-shift-state
-  '(state s2 (shift (A) s2) (shift (B) s3) (goto start s4)))
+  '(state s2 (shift A s2) (shift B s3) (goto start s4)))
 (define multiple-shift-state-risc
   '((s2 ()
         (push (state s2-reduce))
         (if-eos (block)
                 (block get-token
                        (push (current-token))
-                       (token-case ((A) (go s2))
-                                   ((B) (go s3))))))
+                       (token-case (A (go s2))
+                                   (B (go s3))))))
     (s2-reduce (nt sem-val)
                (push (state s2-reduce))
                (push sem-val)
@@ -81,7 +81,7 @@
         (if-eos (block)
                 (block get-token
                        (push (current-token))
-                       (token-case (() (go r2))))))
+                       (token-case (#f (go r2))))))
     (s3-reduce (nt sem-val)
                (push (state s3-reduce))
                (push sem-val)
@@ -93,7 +93,7 @@
                    (push sem-val)
                    (state-case nt))))
 (define accepting-state
-  '(state s6 (accept ($eos))))
+  '(state s6 (accept $eos)))
 (define accepting-state-risc
   '((s6 ()
          (push (state s6-reduce))
