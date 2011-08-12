@@ -5,7 +5,7 @@
 (define (parse-pda sexp)
   (foldl (lambda (clause pda)
            (match clause
-             [(list 'state name shifts-etc ...)
+             [(list (or 'STATE 'state) name shifts-etc ...)
               (let-values
                   (((gotos not-gotos)
                     (partition (lambda (x)
@@ -13,13 +13,17 @@
                                shifts-etc)))
                 (pda-add-state (make-state name not-gotos gotos)
                                pda))]
-             [(list 'rule name nt bindings sem-act)
+             [(list (or 'RULE 'rule) name nt bindings sem-act)
               (pda-add-rule (make-rule name nt bindings sem-act) pda)]
-             [(list 'eos token)         (pda-set-eos token pda)]
-             [(list 'start token)       (pda-set-start token pda)]
-             [(list 'tokens tokens ...) (pda-set-tokens tokens pda)]
-             [(list 'comment _ ...)      pda]
-             [else (error 'parse-pda "unknown pda clause ~a" clause)]))
+             [(list (or 'EOS 'eos) token)
+              (pda-set-eos token pda)]
+             [(list (or 'START 'start) token)
+              (pda-set-start token pda)]
+             [(list (or 'TOKENS 'tokens) tokens ...)
+              (pda-set-tokens tokens pda)]
+             [(list (or 'COMMENT 'comment) _ ...)      pda]
+             [else (begin (printf "ignoring unknown pda clause ~a\n" clause)
+                          pda)]))
          empty-pda
          sexp))
 
@@ -75,14 +79,11 @@
         (pop)
         .
         ,pops)))
-  (define (generate-args bools)
-    (for/list ([i (in-naturals 1)]
-               [l bools]
-               #:when l)
-      (vN i)))
+  (define (generate-args n)
+    (build-list n (lambda (x) (vN (add1 x)))))
 
   `(,name ()
-          ,@(generate-pops (length bindings))
+          ,@(generate-pops bindings)
           (semantic-action ,(generate-args bindings)
                            (result)
                            ,sem-action)
@@ -187,7 +188,7 @@
 ;; converts a PDA action clause into a PDA-RISC token/state-case clause
 (define (convert-generic-action action state-transformer)
   (let ((lookahead-token (second action)))
-    (if (of-type? action 'accept)
+    (if (or (of-type? action 'accept) (of-type? action 'ACCEPT))
         `(,lookahead-token (block (pop)
                                   (:= return-value (pop))
                                   (accept return-value)))
