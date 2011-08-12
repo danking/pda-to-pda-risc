@@ -1,50 +1,70 @@
 #lang racket
-(provide convert-pda)
+(require "pda-data.rkt")
+(provide produce-risc-pda)
 
-;; convert-pda : [ListOf Clause] -> [ListOf Clause]
-;; convert a pda description into a pda0 description
-(define (convert-pda pda)
-  (list 'label
-        (foldr (lambda (clause more)
-                 (convert-pda-clause clause
-                                     more
-                                     (get-eos-token pda)))
-               '()
-               pda)
-        `(go ,(get-start-state pda))))
+(define (parse-pda sexp)
+  (foldl (lambda (clause pda)
+           (match clause
+             [(list 'state name shifts-etc ...)
+              (let-values
+                  (((gotos not-gotos)
+                    (partition (lambda (x)
+                                 (eq? (car x) 'goto))
+                               shifts-etc)))
+                (pda-add-state (make-state name not-gotos gotos)
+                               pda))]
+             [(list 'rule name nt bindings sem-act)
+              (pda-add-rule (make-rule name nt bindings sem-act) pda)]
+             [(list 'eos token)         (pda-set-eos token pda)]
+             [(list 'start token)       (pda-set-start token pda)]
+             [(list 'tokens tokens ...) (pda-set-tokens tokens pda)]
+             [(list 'comment _ ...)      pda]
+             [else (error 'parse-pda "unknown pda clause ~a" clause)]))
+         empty-pda
+         sexp))
 
-;; dispatches to various pda-clause converters
-(define (convert-pda-clause pda-clause more the-eos-token)
-  (case (first pda-clause)
-    [(state)   (append (convert-state pda-clause the-eos-token)
-                       more)]
-    [(rule)    (let ((rule (convert-rule pda-clause)))
-                 (list* rule
-                        (cons (make-eos-name (first rule))
-                              (rest rule))
-                        more))]
-    [(tokens no-shift error) (cons pda-clause more)]
-    [(comment eos start) more]
-    [else      (error 'convert-pda "unsupported pda-clause : ~a"
-                      pda-clause)]))
+(define (produce-risc-pda sexp)
+  (let* ((pda-no-hsh (parse-pda sexp))
+         (pda (pda-set-reducible-states (build-state-rule-hash pda-no-hsh)
+                                        pda-no-hsh)))
+    `(label
+      ,(append (produce-state-blocks pda)
+               (produce-rule-blocks pda))
+      (go ,(pda-start pda)))))
 
-;; grabs the first occurence of (eos . stuff) and returns the associated token
-(define (get-eos-token pda)
-  (let ((eos-form? (assq 'eos pda)))
-    (if eos-form?
-        (second eos-form?)
-        (error 'convert-pda "no eos token specified"))))
+(define (produce-rule-blocks pda)
+  (let* ((rules (pda-rules pda))
+         (hsh (pda-reducible-states pda)))
+    (foldl (lambda (rule rules)
+             (list* (rule-skeleton (rule-name rule)
+                                   (rule-bindings rule)
+                                   (rule-sem-act rule)
+                                   (rule-case-clauses rule
+                                                      hsh
+                                                      (lambda (x) x)))
+                    (rule-skeleton (make-eos-name (rule-name rule))
+                                   (rule-bindings rule)
+                                   (rule-sem-act rule)
+                                   (rule-case-clauses rule
+                                                      hsh
+                                                      make-eos-name))
+                    rules))
+           '()
+           rules)))
 
-;; grabs the first occurence of (start . stuff) and returns the associated
-;; state
-(define (get-start-state pda)
-  (let ((start-form? (assq 'start pda)))
-    (if start-form?
-        (second start-form?)
-        (error 'convert-pda "no start state specified"))))
+(define (rule-case-clauses rule reducible-states name-transformer)
+  (let ((states (hash-ref reducible-states
+                          (rule-name rule)
+                          (lambda ()
+                            (error 'rule-state-case
+                                   "rule has no reducible states"))))
+        (nt (rule-nt rule)))
+    (map (lambda (s)
+           `(,s (go ,(name-transformer s) (nterm ,nt) result)))
+         states)))
 
-;; produces a rule block which handles reduction, state pop'ing, and jumping
-(define (convert-rule rule)
+
+(define (rule-skeleton name bindings sem-action case-clauses)
   (define (vN n)
     (string->symbol (string-append "v" (number->string n))))
   (define (generate-pops n)
@@ -59,37 +79,53 @@
     (for/list ([i (in-naturals 1)]
                [l bools]
                #:when l)
-              (vN i)))
+      (vN i)))
 
-  (match rule
-    [(list _ name nterms bindings sem-action)
-     `(,name ()
-             ,@(generate-pops (length bindings))
-             (semantic-action ,(generate-args bindings)
-                              (result)
-                              ,sem-action)
-            (:= return-here (pop))
-            (go return-here (nterm ,nterm) result))]))
+  `(,name ()
+          ,@(generate-pops (length bindings))
+          (semantic-action ,(generate-args bindings)
+                           (result)
+                           ,sem-action)
+          (:= reduce-to (pop))
+          (state-case reduce-to . ,case-clauses)))
 
-;; produce a series of pda0 blocks which represent the given pda state
-(define (convert-state state the-eos-token)
-  (match state
-    [(list state name clauses ...)
-     (let*-values
-         (((gotos others) (segregate-gotos (remove-comments clauses)))
-          ((eos-actions actions) (segregate-eos others the-eos-token)))
-       (make-risc-states name gotos actions eos-actions))]))
+;; build a hash table from rules to states which the rules might reduce to
+(define (build-state-rule-hash pda)
+  (let ((states (pda-states pda))
+        (rules (pda-rules pda)))
+    (for/hasheq
+        ([r (in-list rules)])
+      (values (rule-name r)
+              (map state-name
+                   (filter (lambda (s)
+                             (ormap (lambda (g)
+                                      (eq? (rule-nt r)
+                                           (second g)))
+                                    (state-gotos s)))
+                           states))))))
+
+(define (produce-state-blocks pda)
+  (let ((states (pda-states pda)))
+    (foldl (lambda (state states)
+             (append (make-risc-states state (pda-eos pda))
+                     states))
+           '()
+           states)))
 
 ;; each PDA state corresponds to (at most) four PDA-RISC states
-;; we need a body state and a reduce state and an -eos version of each
-(define (make-risc-states name gotos others eos-actions)
-  (let* ((reduce-name (symbol-append name '-reduce))
-         (eos-name (make-eos-name name))
-         (eos-reduce-name (make-eos-name reduce-name)))
-    (list (make-body-state name reduce-name others eos-actions)
-          (make-reduce-state reduce-name gotos)
-          (make-eos-body-state eos-name eos-reduce-name eos-actions)
-          (make-eos-reduce-state eos-reduce-name gotos))))
+;; we need a body statem, a reduce state, and an -eos version of each
+(define (make-risc-states st eos-token)
+  (match st
+    [(state name not-gotos gotos)
+     (let* ((reduce-name (symbol-append name '-reduce))
+            (eos-name (make-eos-name name))
+            (eos-reduce-name (make-eos-name reduce-name)))
+       (let-values
+           (((eos-others non-eos-others) (segregate-eos not-gotos eos-token)))
+         (list (make-body-state name reduce-name non-eos-others eos-others)
+               (make-reduce-state reduce-name gotos)
+               (make-eos-body-state eos-name eos-reduce-name eos-others)
+               (make-eos-reduce-state eos-reduce-name gotos))))]))
 
 (define (make-body-skeleton-state name reduce-name actions)
   `(,name ()
@@ -132,18 +168,11 @@
 (define (make-eos-name name)
   (symbol-append name '-eos))
 
-;; segregate the gotos from the other PDA clauses
-(define (segregate-gotos gotos+others)
-  (partition (lambda (x) (of-type? x 'goto)) gotos+others))
-
 ;; segregate PDA clauses whose lookahead is the given token
 (define (segregate-eos actions the-eos-token)
-  (partition (lambda (x) (and (cons? (second x))
-                              (eq? (first (second x)) the-eos-token)))
+  (partition (lambda (x)
+               (eq? (second x) the-eos-token))
              actions))
-
-(define (remove-comments clauses)
-  (filter (lambda (x) (not (of-type? x 'comment))) clauses))
 
 ;; A clause is (TYPE stuff ...), so just check the head of the tuple
 (define (of-type? tuple type)
