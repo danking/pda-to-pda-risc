@@ -14,9 +14,9 @@
     (state s4 (shift B s5))
     (state s5 (reduce #t r1))
     (state s6 (accept $eos))
-    (rule r1 start  (#f #t #f) (lambda (x) (+ 2 x)))
-    (rule r2 start  (#f #f)    (lambda () 2))
-    (rule r3 accept (#t #f)    (lambda (x) x))))
+    (rule r1 start  3 (+ 2 x))
+    (rule r2 start  2 2)
+    (rule r3 accept 2 x)))
 (define pda1-risc-struct
   (make-pda '(A B $eos)
             '$eos
@@ -29,9 +29,9 @@
                               '((shift A s2) (shift B s3))
                               '((goto start s4)))
                   (make-state 's1 '((shift A s2)) '((goto start s6))))
-            (list (make-rule 'r3 'accept '(#t #f) '(lambda (x) x))
-                  (make-rule 'r2 'start '(#f #f) '(lambda () 2))
-                  (make-rule 'r1 'start '(#f #t #f) '(lambda (x) (+ 2 x))))
+            (list (make-rule 'r3 'accept 2 'x)
+                  (make-rule 'r2 'start 2 '2)
+                  (make-rule 'r1 'start 3 '(+ 2 x)))
             (hasheq)))
 
 (define single-shift-state
@@ -118,7 +118,7 @@
                     (state-case nt))))
 
 (define 3-rhs-rule
-  '(rule r1 non-terminal (#f #t #f) (lambda (x) (+ 2 x))))
+  '(rule r1 non-terminal 3 (+ 2 x)))
 (define 3-rhs-rule-risc
   '(r1
     ()
@@ -128,11 +128,11 @@
     (pop)
     (:= v3 (pop))
     (pop)
-    (semantic-action (v2) (result) (lambda (x) (+ 2 x)))
+    (semantic-action (v2) (result) (+ 2 x))
     (:= return-here (pop))
     (go return-here (nterm non-terminal) result)))
 (define 2-rhs-rule
-  '(rule r3 non-terminal (#t #f) (lambda (x) x)))
+  '(rule r3 non-terminal 2 x))
 (define 2-rhs-rule-risc
   '(r3
     ()
@@ -140,11 +140,11 @@
     (pop)
     (:= v2 (pop))
     (pop)
-    (semantic-action (v1) (result) (lambda (x) x))
+    (semantic-action (v1) (result) x)
     (:= return-here (pop))
     (go return-here (nterm non-terminal) result)))
 (define 2-rhs-rule-no-bindings
-  '(rule r2 non-terminal (#f #f) (lambda () 2)))
+  '(rule r2 non-terminal 2 2))
 (define 2-rhs-rule-no-bindings-risc
   '(r2
     ()
@@ -152,7 +152,7 @@
     (pop)
     (:= v2 (pop))
     (pop)
-    (semantic-action () (result) (lambda () 2))
+    (semantic-action () (result) 2)
     (:= return-here (pop))
     (go return-here (nterm non-terminal) result)))
 
@@ -275,7 +275,7 @@
       (pop)
       (:= v3 (pop))
       (pop)
-      (semantic-action (v2) (result) (lambda (x) (+ 2 x)))
+      (semantic-action (v1 v2 v3) (result) (+ 2 x))
       (:= reduce-to (pop))
       (state-case reduce-to
         (s2 (go s2 (nterm start) result))
@@ -288,7 +288,7 @@
       (pop)
       (:= v3 (pop))
       (pop)
-      (semantic-action (v2) (result) (lambda (x) (+ 2 x)))
+      (semantic-action (v1 v2 v3) (result) (+ 2 x))
       (:= reduce-to (pop))
       (state-case reduce-to
         (s2 (go s2-eos (nterm start) result))
@@ -299,7 +299,7 @@
       (pop)
       (:= v2 (pop))
       (pop)
-      (semantic-action () (result) (lambda () 2))
+      (semantic-action (v1 v2) (result) 2)
       (:= reduce-to (pop))
       (state-case reduce-to
         (s2 (go s2 (nterm start) result))
@@ -310,7 +310,7 @@
       (pop)
       (:= v2 (pop))
       (pop)
-      (semantic-action () (result) (lambda () 2))
+      (semantic-action (v1 v2) (result) 2)
       (:= reduce-to (pop))
       (state-case reduce-to
         (s2 (go s2-eos (nterm start) result))
@@ -321,7 +321,7 @@
       (pop)
       (:= v2 (pop))
       (pop)
-      (semantic-action (v1) (result) (lambda (x) x))
+      (semantic-action (v1 v2) (result) x)
       (:= reduce-to (pop))
       (state-case reduce-to))
      (r3-eos
@@ -330,7 +330,7 @@
       (pop)
       (:= v2 (pop))
       (pop)
-      (semantic-action (v1) (result) (lambda (x) x))
+      (semantic-action (v1 v2) (result) x)
       (:= reduce-to (pop))
       (state-case reduce-to)))
     (go s1)))
