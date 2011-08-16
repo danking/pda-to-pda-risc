@@ -1,9 +1,30 @@
 #lang racket
 (provide (all-defined-out))
 
-(define-struct pda (tokens eos start states rules reducible-states)
-  #:transparent)
+;; a PDAState is a (make-state Symbol
+;;                             [ListOf (U ShiftAction
+;;                                        ReduceAction
+;;                                        AcceptAction)]
+;;                             GotoAction)
 (define-struct state (name not-gotos gotos)
+  #:transparent)
+
+;; an [Action X] is a (list X lookahead target)
+;; where lookahead is a Symbol, and
+;;       target is a Symbol
+
+;; a ShiftAction is an [Action 'shift]
+
+;; a ReduceAction is an [Action 'reduce]
+
+;; a GotoAction is an [Action 'goto]
+
+;; an AcceptAction is a (list 'accept lookahead)
+;; where lookahead is a Symbol
+
+;; StateAction is (U ShiftAction ReduceAction GotoAction AcceptAction)
+
+(define-struct pda (tokens eos start states rules reducible-states)
   #:transparent)
 (define-struct rule (name nt bindings sem-act)
   #:transparent)
