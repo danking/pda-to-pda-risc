@@ -20,13 +20,7 @@
   (foldl (lambda (clause pda)
            (match clause
              [(list (or 'STATE 'state) name shifts-etc ...)
-              (let-values
-                  (((gotos not-gotos)
-                    (partition (lambda (x)
-                                 (eq? (car x) 'goto))
-                               shifts-etc)))
-                (pda-add-state (make-state name not-gotos gotos)
-                               pda))]
+              (pda-add-state (make-state/mixed-actions name shifts-etc) pda)]
              [(list (or 'RULE 'rule) name nt bindings sem-act)
               (pda-add-rule (make-rule name nt bindings sem-act) pda)]
              [(list (or 'EOS 'eos) token)
@@ -41,6 +35,15 @@
                           pda)]))
          empty-pda
          sexp))
+
+;; make-state/mixed-actions : Symbol [ListOf StateAction] -> PDAState
+(define (make-state/mixed-actions name shifts-and-other-actions)
+  (let-values
+      (((gotos not-gotos)
+        (partition (lambda (x)
+                     (eq? (car x) 'goto))
+                   shits-and-other-actions)))
+    (make-state name not-gotos gotos)))
 
 (define (produce-rule-blocks pda)
   (let* ((rules (pda-rules pda))
