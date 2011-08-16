@@ -3,7 +3,6 @@
 (provide parse-pda)
 
 ;; parse a sexp representation of a high-level pda into a structure
-;; representing the pda-risc
 (define (parse-pda sexp)
   (foldl (lambda (clause pda)
            (match clause
