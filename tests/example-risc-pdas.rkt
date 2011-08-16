@@ -207,7 +207,10 @@
       (push (state s3-reduce))
       (push sem-val)
       (state-case nt))
-     (s3-eos () (push (state s3-reduce-eos)) (go r2-eos))
+     (s3-eos
+      ()
+      (push (state s3-reduce-eos))
+      (go r2-eos))
      (s3-reduce-eos
       (nt sem-val)
       (push (state s3-reduce-eos))
@@ -241,7 +244,10 @@
       (push (state s5-reduce))
       (push sem-val)
       (state-case nt))
-     (s5-eos () (push (state s5-reduce-eos)) (go r1-eos))
+     (s5-eos
+      ()
+      (push (state s5-reduce-eos))
+      (go r1-eos))
      (s5-reduce-eos
       (nt sem-val)
       (push (state s5-reduce-eos))
