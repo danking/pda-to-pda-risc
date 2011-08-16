@@ -15,6 +15,10 @@
                (produce-rule-blocks pda))
       (go ,(pda-start pda)))))
 
+;; produce-rule-blocks : PDA -> SExp
+;; Each rule in the pda is converted to two pda-risc rule label clauses.
+;; In the first clause, the pda is not known to be in the EOS state. In the
+;; second clause, the pda is known to be in the EOS state.
 (define (produce-rule-blocks pda)
   (let* ((rules (pda-rules pda))
          (hsh (pda-reducible-states pda)))
@@ -84,6 +88,8 @@
                                     (state-gotos s)))
                            states))))))
 
+;; produce-state-blocks : PDA -> SExp
+;; a glue procedure which folds `make-risc-states` over the states in a PDA
 (define (produce-state-blocks pda)
   (let ((states (pda-states pda)))
     (foldl (lambda (state states)
@@ -92,8 +98,10 @@
            '()
            states)))
 
-;; each PDA state corresponds to (at most) four PDA-RISC states
-;; we need a body statem, a reduce state, and an -eos version of each
+;; make-risc-states : PDAState Symbol ->  (list SExp SExp SExp SExp)
+;; Each high-level PDA state corresponds to (at most) four PDA-RISC states;
+;; therefore, `make-risc-states produces a body state, a reduce state, and
+;; an -eos version of each input state
 (define (make-risc-states st eos-token)
   (match st
     [(state name not-gotos gotos)
