@@ -284,8 +284,8 @@
       (semantic-action (v1 v2 v3) (result) (+ 2 x))
       (:= reduce-to (pop))
       (state-case reduce-to
-        (s2 (go s2 (nterm start) result))
-        (s1 (go s1 (nterm start) result))))
+        (s2-reduce (go s2-reduce (nterm start) result))
+        (s1-reduce (go s1-reduce (nterm start) result))))
      (r1-eos
       ()
       (:= v1 (pop))
@@ -297,8 +297,10 @@
       (semantic-action (v1 v2 v3) (result) (+ 2 x))
       (:= reduce-to (pop))
       (state-case reduce-to
-        (s2 (go s2-eos (nterm start) result))
-        (s1 (go s1-eos (nterm start) result))))
+        (s2-reduce (go s2-reduce-eos (nterm start) result))
+        (s1-reduce (go s1-reduce-eos (nterm start) result))
+        (s2-reduce-eos (go s2-reduce-eos (nterm start) result))
+        (s1-reduce-eos (go s1-reduce-eos (nterm start) result))))
      (r2
       ()
       (:= v1 (pop))
@@ -308,8 +310,8 @@
       (semantic-action (v1 v2) (result) 2)
       (:= reduce-to (pop))
       (state-case reduce-to
-        (s2 (go s2 (nterm start) result))
-        (s1 (go s1 (nterm start) result))))
+        (s2-reduce (go s2-reduce (nterm start) result))
+        (s1-reduce (go s1-reduce (nterm start) result))))
      (r2-eos
       ()
       (:= v1 (pop))
@@ -319,8 +321,10 @@
       (semantic-action (v1 v2) (result) 2)
       (:= reduce-to (pop))
       (state-case reduce-to
-        (s2 (go s2-eos (nterm start) result))
-        (s1 (go s1-eos (nterm start) result))))
+        (s2-reduce (go s2-reduce-eos (nterm start) result))
+        (s1-reduce (go s1-reduce-eos (nterm start) result))
+        (s2-reduce-eos (go s2-reduce-eos (nterm start) result))
+        (s1-reduce-eos (go s1-reduce-eos (nterm start) result))))
      (r3
       ()
       (:= v1 (pop))

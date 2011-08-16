@@ -23,33 +23,38 @@
   (let* ((rules (pda-rules pda))
          (hsh (pda-reducible-states pda)))
     (foldl (lambda (rule rules)
-             (list* (rule-skeleton (rule-name rule)
-                                   (rule-bindings rule)
-                                   (rule-sem-act rule)
-                                   (rule-case-clauses rule
-                                                      hsh
-                                                      (lambda (x) x)))
-                    (rule-skeleton (make-eos-name (rule-name rule))
-                                   (rule-bindings rule)
-                                   (rule-sem-act rule)
-                                   (rule-case-clauses rule
-                                                      hsh
-                                                      make-eos-name))
-                    rules))
+             (append (make-risc-rules rule) rules))
            '()
            rules)))
 
-(define (rule-case-clauses rule reducible-states name-transformer)
-  (let ((states (hash-ref reducible-states
-                          (rule-name rule)
-                          (lambda ()
-                            (error 'rule-state-case
-                                   "rule has no reducible states"))))
-        (nt (rule-nt rule)))
-    (map (lambda (s)
-           `(,s (go ,(name-transformer s) (nterm ,nt) result)))
-         states)))
+(define (make-risc-rules r)
+  (let* ((states (hash-ref reducible-states
+                           (rule-name rule)
+                           (lambda ()
+                             (error 'rule-state-case
+                                    "rule has no reducible states"))))
+         (eos-states (map make-eos-name states)))
+    (match r
+      ((rule name nt bindings sem-act)
+       (list (rule-skeleton name
+                            bindings
+                            sem-act
+                            (rule-case-clauses nt
+                                               states
+                                               states))
+             (rule-skeleton name
+                            bindings
+                            sem-act
+                            (rule-case-clauses
+                             nt
+                             (append states eos-states)
+                             (append eos-states eos-states))))))))
 
+(define (rule-case-clauses nt from-states to-states)
+  (map (lambda (from to)
+         `(,from (go ,to (nterm ,nt) result)))
+       from-states
+       to-states))
 
 (define (rule-skeleton name bindings sem-action case-clauses)
   (define (vN n)
@@ -80,7 +85,8 @@
     (for/hasheq
         ([r (in-list rules)])
       (values (rule-name r)
-              (map state-name
+              (map (lambda (s)
+                     (symbol-append (state-name s) '-reduce))
                    (filter (lambda (s)
                              (ormap (lambda (g)
                                       (eq? (rule-nt r)
