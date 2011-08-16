@@ -37,7 +37,7 @@
       (((gotos not-gotos)
         (partition (lambda (x)
                      (eq? (car x) 'goto))
-                   shits-and-other-actions)))
+                   shifts-and-other-actions)))
     (make-state name not-gotos gotos)))
 
 (define (produce-rule-blocks pda)
