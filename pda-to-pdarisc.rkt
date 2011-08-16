@@ -109,10 +109,16 @@
             (eos-name (make-eos-name name))
             (eos-reduce-name (make-eos-name reduce-name)))
        (let-values
-           (((eos-others non-eos-others) (segregate-eos not-gotos eos-token)))
+           (((eos-others non-eos-others) (segregate-eos not-gotos eos-token))
+            ((actions-w/o-lookahead)     (filter (lambda (x)
+                                                   (eq? (second x) #t))
+                                                 not-gotos)))
          (list (make-body-state name reduce-name non-eos-others eos-others)
                (make-reduce-state reduce-name gotos)
-               (make-eos-body-state eos-name eos-reduce-name eos-others)
+               (make-eos-body-state eos-name
+                                    eos-reduce-name
+                                    (append actions-w/o-lookahead
+                                            eos-others))
                (make-eos-reduce-state eos-reduce-name gotos))))]))
 
 (define (make-body-skeleton-state name reduce-name actions)
