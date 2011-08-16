@@ -2,6 +2,20 @@
 (require "pda-data.rkt")
 (provide produce-risc-pda)
 
+;; produce-risc-pda : SExp
+;; sexp should be a pda sexp as specified by the output of Olin's LALR
+;; parser generator
+(define (produce-risc-pda sexp)
+  (let* ((pda-no-hsh (parse-pda sexp))
+         (pda (pda-set-reducible-states (build-state-rule-hash pda-no-hsh)
+                                        pda-no-hsh)))
+    `(label
+      ,(append (produce-state-blocks pda)
+               (produce-rule-blocks pda))
+      (go ,(pda-start pda)))))
+
+;; parse a sexp representation of a high-level pda into a structure
+;; representing the pda-risc
 (define (parse-pda sexp)
   (foldl (lambda (clause pda)
            (match clause
@@ -27,15 +41,6 @@
                           pda)]))
          empty-pda
          sexp))
-
-(define (produce-risc-pda sexp)
-  (let* ((pda-no-hsh (parse-pda sexp))
-         (pda (pda-set-reducible-states (build-state-rule-hash pda-no-hsh)
-                                        pda-no-hsh)))
-    `(label
-      ,(append (produce-state-blocks pda)
-               (produce-rule-blocks pda))
-      (go ,(pda-start pda)))))
 
 (define (produce-rule-blocks pda)
   (let* ((rules (pda-rules pda))
