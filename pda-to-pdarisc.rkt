@@ -1,5 +1,6 @@
 #lang racket
-(require "pda-data.rkt")
+(require "pda-data.rkt"
+         "parse-high-level-pda.rkt")
 (provide produce-risc-pda)
 
 ;; produce-risc-pda : SExp
@@ -13,37 +14,6 @@
       ,(append (produce-state-blocks pda)
                (produce-rule-blocks pda))
       (go ,(pda-start pda)))))
-
-;; parse a sexp representation of a high-level pda into a structure
-;; representing the pda-risc
-(define (parse-pda sexp)
-  (foldl (lambda (clause pda)
-           (match clause
-             [(list (or 'STATE 'state) name shifts-etc ...)
-              (pda-add-state (make-state/mixed-actions name shifts-etc) pda)]
-             [(list (or 'RULE 'rule) name nt bindings sem-act)
-              (pda-add-rule (make-rule name nt bindings sem-act) pda)]
-             [(list (or 'EOS 'eos) token)
-              (pda-set-eos token pda)]
-             [(list (or 'START 'start) token)
-              (pda-set-start token pda)]
-             [(list (or 'TOKENS 'tokens) tokens ...)
-              (pda-set-tokens tokens pda)]
-             [(list (or 'COMMENT 'comment) _ ...)
-              pda]
-             [else (begin (printf "ignoring unknown pda clause ~a\n" clause)
-                          pda)]))
-         empty-pda
-         sexp))
-
-;; make-state/mixed-actions : Symbol [ListOf StateAction] -> PDAState
-(define (make-state/mixed-actions name shifts-and-other-actions)
-  (let-values
-      (((gotos not-gotos)
-        (partition (lambda (x)
-                     (eq? (car x) 'goto))
-                   shits-and-other-actions)))
-    (make-state name not-gotos gotos)))
 
 (define (produce-rule-blocks pda)
   (let* ((rules (pda-rules pda))

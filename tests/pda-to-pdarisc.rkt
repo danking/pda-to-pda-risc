@@ -1,9 +1,10 @@
 #lang racket
 (require rackunit
+         "../parse-high-level-pda.rkt"
          "example-risc-pdas.rkt")
 
 (require/expose "../pda-to-pdarisc.rkt"
-                (produce-risc-pda segregate-eos parse-pda))
+                (produce-risc-pda segregate-eos))
 
 (check-equal? (parse-pda pda1)
               pda1-risc-struct)
