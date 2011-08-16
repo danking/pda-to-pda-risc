@@ -21,7 +21,8 @@
               (pda-set-start token pda)]
              [(list (or 'TOKENS 'tokens) tokens ...)
               (pda-set-tokens tokens pda)]
-             [(list (or 'COMMENT 'comment) _ ...)      pda]
+             [(list (or 'COMMENT 'comment) _ ...)
+              pda]
              [else (begin (printf "ignoring unknown pda clause ~a\n" clause)
                           pda)]))
          empty-pda
