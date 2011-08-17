@@ -23,13 +23,13 @@
   (let* ((rules (pda-rules pda))
          (hsh (pda-reducible-states pda)))
     (foldl (lambda (rule rules)
-             (append (make-risc-rules rule) rules))
+             (append (make-risc-rules rule hsh) rules))
            '()
            rules)))
 
-(define (make-risc-rules r)
-  (let* ((states (hash-ref reducible-states
-                           (rule-name rule)
+(define (make-risc-rules r hsh)
+  (let* ((states (hash-ref hsh
+                           (rule-name r)
                            (lambda ()
                              (error 'rule-state-case
                                     "rule has no reducible states"))))
@@ -42,7 +42,7 @@
                             (rule-case-clauses nt
                                                states
                                                states))
-             (rule-skeleton name
+             (rule-skeleton (make-eos-name name)
                             bindings
                             sem-act
                             (rule-case-clauses
