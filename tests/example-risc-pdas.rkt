@@ -164,7 +164,10 @@
       (push (state s1-reduce))
       (if-eos
        (block)
-       (block get-token (push (current-token)) (token-case (A (go s2))))))
+       (block get-token
+              drop-token
+              (push (current-token))
+              (token-case (A (go s2))))))
      (s1-reduce
       (nt sem-val)
       (push (state s1-reduce))
@@ -183,6 +186,7 @@
        (block)
        (block
         get-token
+        drop-token
         (push (current-token))
         (token-case (A (go s2)) (B (go s3))))))
      (s2-reduce
@@ -201,7 +205,10 @@
       (push (state s3-reduce))
       (if-eos
        (block)
-       (block get-token (push (current-token)) (token-case (#t (go r2))))))
+       (block get-token
+              drop-token
+              (push (current-token))
+              (token-case (#t (go r2))))))
      (s3-reduce
       (nt sem-val)
       (push (state s3-reduce))
@@ -221,7 +228,10 @@
       (push (state s4-reduce))
       (if-eos
        (block)
-       (block get-token (push (current-token)) (token-case (B (go s5))))))
+       (block get-token
+              drop-token
+              (push (current-token))
+              (token-case (B (go s5))))))
      (s4-reduce
       (nt sem-val)
       (push (state s4-reduce))
@@ -238,7 +248,10 @@
       (push (state s5-reduce))
       (if-eos
        (block)
-       (block get-token (push (current-token)) (token-case (#t (go r1))))))
+       (block get-token
+              drop-token
+              (push (current-token))
+              (token-case (#t (go r1))))))
      (s5-reduce
       (nt sem-val)
       (push (state s5-reduce))
@@ -260,7 +273,10 @@
        (block (block (:= dummy (pop))
                      (:= return-value (pop))
                      (accept return-value)))
-       (block get-token (push (current-token)) (token-case))))
+       (block get-token
+              drop-token
+              (push (current-token))
+              (token-case))))
      (s6-reduce
       (nt sem-val)
       (push (state s6-reduce))

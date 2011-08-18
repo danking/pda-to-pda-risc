@@ -148,6 +148,7 @@
                               (cadr (convert-eos-action x)))
                             eos-others))
              (block get-token
+                    drop-token
                     (push (current-token))
                     (token-case . ,(map convert-action others)))))))
 
