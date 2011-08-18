@@ -138,7 +138,7 @@
   (make-body-skeleton-state name
                             reduce-name
                             (map (lambda (x)
-                                   (cadr (convert-eos-action x)))
+                                   (convert-eos-action x))
                                  eos-others)))
 
 (define (make-body-state name reduce-name others eos-others)
@@ -146,10 +146,9 @@
    name
    reduce-name
    `((if-eos (block . ,(map (lambda (x)
-                              (cadr (convert-eos-action x)))
+                              (convert-eos-action x))
                             eos-others))
              (block get-token
-                    drop-token
                     (push (current-token))
                     (token-case . ,(map convert-action others)))))))
 
@@ -181,19 +180,21 @@
   (eq? (first tuple) type))
 
 (define (convert-action action)
-  (convert-generic-action action (lambda (x) x)))
+  (let ((lookahead-token (second action)))
+    `(,lookahead-token (block drop-token
+                              ,(convert-generic-action action
+                                                       (lambda (x) x))))))
 
 (define (convert-eos-action action)
   (convert-generic-action action make-eos-name))
 
 ;; converts a PDA action clause into a PDA-RISC token/state-case clause
 (define (convert-generic-action action state-transformer)
-  (let ((lookahead-token (second action)))
-    (if (or (of-type? action 'accept) (of-type? action 'ACCEPT))
-        `(,lookahead-token (block (:= dummy (pop))
-                                  (:= return-value (pop))
-                                  (accept return-value)))
-        `(,lookahead-token (go ,(state-transformer (third action)))))))
+  (if (or (of-type? action 'accept) (of-type? action 'ACCEPT))
+      `(block (:= dummy (pop))
+              (:= return-value (pop))
+              (accept return-value))
+      `(go ,(state-transformer (third action)))))
 
 ;; converts a PDA goto clause into a PDA-RISC token/state-case clause
 (define (convert-goto goto)
