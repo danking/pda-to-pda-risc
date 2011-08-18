@@ -111,15 +111,15 @@
 ;; an -eos version of each input state
 (define (make-risc-states st eos-token)
   (match st
-    [(state name not-gotos gotos)
+    [(state name non-gotos gotos)
      (let* ((reduce-name (symbol-append name '-reduce))
             (eos-name (make-eos-name name))
             (eos-reduce-name (make-eos-name reduce-name)))
        (let-values
-           (((eos-others non-eos-others) (segregate-eos not-gotos eos-token))
+           (((eos-others non-eos-others) (segregate-eos non-gotos eos-token))
             ((actions-w/o-lookahead)     (filter (lambda (x)
                                                    (eq? (second x) #t))
-                                                 not-gotos)))
+                                                 non-gotos)))
          (list (make-body-state name
                                 reduce-name
                                 non-eos-others

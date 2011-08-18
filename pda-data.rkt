@@ -6,7 +6,7 @@
 ;;                                        ReduceAction
 ;;                                        AcceptAction)]
 ;;                             GotoAction)
-(define-struct state (name not-gotos gotos)
+(define-struct state (name non-gotos gotos)
   #:transparent)
 
 ;; an [Action X] is a (list X lookahead target)
