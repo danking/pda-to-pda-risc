@@ -78,7 +78,7 @@
 (define reducing-state-risc
   '((s3 ()
         (push (state s3-reduce))
-        (if-eos (block)
+        (if-eos (block (go r2-eos))
                 (block get-token
                        (push (current-token))
                        (token-case (#t (block drop-token (go r2)))))))
@@ -271,7 +271,7 @@
       ()
       (push (state s3-reduce))
       (if-eos
-       (block)
+       (block (go r2-eos))
        (block get-token
               (push (current-token))
               (token-case (#t (block drop-token (go r2)))))))
@@ -312,7 +312,7 @@
       ()
       (push (state s5-reduce))
       (if-eos
-       (block)
+       (block (go r1-eos))
        (block get-token
               (push (current-token))
               (token-case (#t (block drop-token (go r1)))))))

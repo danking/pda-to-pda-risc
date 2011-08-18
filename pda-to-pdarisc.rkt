@@ -120,7 +120,11 @@
             ((actions-w/o-lookahead)     (filter (lambda (x)
                                                    (eq? (second x) #t))
                                                  not-gotos)))
-         (list (make-body-state name reduce-name non-eos-others eos-others)
+         (list (make-body-state name
+                                reduce-name
+                                non-eos-others
+                                (append actions-w/o-lookahead
+                                        eos-others))
                (make-reduce-state reduce-name gotos)
                (make-eos-body-state eos-name
                                     eos-reduce-name
