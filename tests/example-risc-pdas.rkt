@@ -364,7 +364,7 @@
       (:= dummy (pop))
       (:= v3 (pop))
       (:= dummy (pop))
-      (semantic-action (v1 v2 v3) (result) (+ 2 x))
+      (semantic-action (v1 v2 v3) (result) (+ 2 v2))
       (:= reduce-to (pop))
       (state-case reduce-to
         (s2-reduce (go s2-reduce (nterm start) result))
@@ -377,7 +377,7 @@
       (:= dummy (pop))
       (:= v3 (pop))
       (:= dummy (pop))
-      (semantic-action (v1 v2 v3) (result) (+ 2 x))
+      (semantic-action (v1 v2 v3) (result) (+ 2 v2))
       (:= reduce-to (pop))
       (state-case reduce-to
         (s2-reduce (go s2-reduce-eos (nterm start) result))
@@ -414,7 +414,7 @@
       (:= dummy (pop))
       (:= v2 (pop))
       (:= dummy (pop))
-      (semantic-action (v1 v2) (result) x)
+      (semantic-action (v1 v2) (result) v1)
       (:= reduce-to (pop))
       (state-case reduce-to))
      (r3-eos
@@ -423,7 +423,7 @@
       (:= dummy (pop))
       (:= v2 (pop))
       (:= dummy (pop))
-      (semantic-action (v1 v2) (result) x)
+      (semantic-action (v1 v2) (result) v1)
       (:= reduce-to (pop))
       (state-case reduce-to)))
     (go s1)))
