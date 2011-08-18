@@ -100,9 +100,10 @@
        (machine-update-env* out-vars out-vals m))))
 
 (define (external-evaluate action params args)
-  ;; (call-with-values (eval `((lambda ,params ,action) ,@args))
-  ;;                   list)
-  '(semantic-value))
+  (call-with-values (lambda ()
+                      (parameterize ([current-namespace (make-base-namespace)])
+                        (eval `((lambda ,params ,action) ,@args))))
+                    list))
 
 (define (drop-token m k)
   (k (machine-update-token-stream (cdr (machine-token-stream m)) m)))
