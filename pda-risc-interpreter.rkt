@@ -148,7 +148,7 @@
                           "no match for ~a found in ~a" st pairs))))))
 
 (define (token-case pairs m k)
-  (let ((insns (assq (machine-current-token m) pairs)))
+  (let ((insns (case-clause-lookup (machine-current-token m) pairs)))
     (if insns
         (interpret (cdr insns) m k)
         (error 'token-case "no match for ~a found in ~a"
@@ -197,3 +197,8 @@
                              vars
                              vals)
                       m))
+
+;; case-clause-lookup : Symbol [ListOf CaseClause] -> (U #f CaseClause)
+(define (case-clause-lookup v clauses)
+  (or (assq v clauses)
+      (assq #t clauses #f)))
