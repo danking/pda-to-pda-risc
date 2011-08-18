@@ -97,7 +97,7 @@
 (define accepting-state-risc
   '((s6 ()
          (push (state s6-reduce))
-         (if-eos (block (block (pop)
+         (if-eos (block (block (:= dummy (pop))
                                (:= return-value (pop))
                                (accept return-value)))
                  (block get-token
@@ -109,7 +109,7 @@
                 (state-case nt))
      (s6-eos ()
              (push (state s6-reduce-eos))
-             (block (pop)
+             (block (:= dummy (pop))
                     (:= return-value (pop))
                     (accept return-value)))
      (s6-reduce-eos (nt sem-val)
@@ -123,11 +123,11 @@
   '(r1
     ()
     (:= v1 (pop))
-    (pop)
+    (:= dummy (pop))
     (:= v2 (pop))
-    (pop)
+    (:= dummy (pop))
     (:= v3 (pop))
-    (pop)
+    (:= dummy (pop))
     (semantic-action (v2) (result) (+ 2 x))
     (:= return-here (pop))
     (go return-here (nterm non-terminal) result)))
@@ -137,9 +137,9 @@
   '(r3
     ()
     (:= v1 (pop))
-    (pop)
+    (:= dummy (pop))
     (:= v2 (pop))
-    (pop)
+    (:= dummy (pop))
     (semantic-action (v1) (result) x)
     (:= return-here (pop))
     (go return-here (nterm non-terminal) result)))
@@ -149,9 +149,9 @@
   '(r2
     ()
     (:= v1 (pop))
-    (pop)
+    (:= dummy (pop))
     (:= v2 (pop))
-    (pop)
+    (:= dummy (pop))
     (semantic-action () (result) 2)
     (:= return-here (pop))
     (go return-here (nterm non-terminal) result)))
@@ -257,7 +257,9 @@
       ()
       (push (state s6-reduce))
       (if-eos
-       (block (block (pop) (:= return-value (pop)) (accept return-value)))
+       (block (block (:= dummy (pop))
+                     (:= return-value (pop))
+                     (accept return-value)))
        (block get-token (push (current-token)) (token-case))))
      (s6-reduce
       (nt sem-val)
@@ -267,7 +269,9 @@
      (s6-eos
       ()
       (push (state s6-reduce-eos))
-      (block (pop) (:= return-value (pop)) (accept return-value)))
+      (block (:= dummy (pop))
+             (:= return-value (pop))
+             (accept return-value)))
      (s6-reduce-eos
       (nt sem-val)
       (push (state s6-reduce-eos))
@@ -276,11 +280,11 @@
      (r1
       ()
       (:= v1 (pop))
-      (pop)
+      (:= dummy (pop))
       (:= v2 (pop))
-      (pop)
+      (:= dummy (pop))
       (:= v3 (pop))
-      (pop)
+      (:= dummy (pop))
       (semantic-action (v1 v2 v3) (result) (+ 2 x))
       (:= reduce-to (pop))
       (state-case reduce-to
@@ -289,11 +293,11 @@
      (r1-eos
       ()
       (:= v1 (pop))
-      (pop)
+      (:= dummy (pop))
       (:= v2 (pop))
-      (pop)
+      (:= dummy (pop))
       (:= v3 (pop))
-      (pop)
+      (:= dummy (pop))
       (semantic-action (v1 v2 v3) (result) (+ 2 x))
       (:= reduce-to (pop))
       (state-case reduce-to
@@ -304,9 +308,9 @@
      (r2
       ()
       (:= v1 (pop))
-      (pop)
+      (:= dummy (pop))
       (:= v2 (pop))
-      (pop)
+      (:= dummy (pop))
       (semantic-action (v1 v2) (result) 2)
       (:= reduce-to (pop))
       (state-case reduce-to
@@ -315,9 +319,9 @@
      (r2-eos
       ()
       (:= v1 (pop))
-      (pop)
+      (:= dummy (pop))
       (:= v2 (pop))
-      (pop)
+      (:= dummy (pop))
       (semantic-action (v1 v2) (result) 2)
       (:= reduce-to (pop))
       (state-case reduce-to
@@ -328,18 +332,18 @@
      (r3
       ()
       (:= v1 (pop))
-      (pop)
+      (:= dummy (pop))
       (:= v2 (pop))
-      (pop)
+      (:= dummy (pop))
       (semantic-action (v1 v2) (result) x)
       (:= reduce-to (pop))
       (state-case reduce-to))
      (r3-eos
       ()
       (:= v1 (pop))
-      (pop)
+      (:= dummy (pop))
       (:= v2 (pop))
-      (pop)
+      (:= dummy (pop))
       (semantic-action (v1 v2) (result) x)
       (:= reduce-to (pop))
       (state-case reduce-to)))

@@ -64,7 +64,7 @@
         ([pops '()])
         ([i (in-range n 0 -1)])
       `((:= ,(vN i) (pop))
-        (pop)
+        (:= dummy (pop))
         .
         ,pops)))
   (define (generate-args n)
@@ -188,7 +188,7 @@
 (define (convert-generic-action action state-transformer)
   (let ((lookahead-token (second action)))
     (if (or (of-type? action 'accept) (of-type? action 'ACCEPT))
-        `(,lookahead-token (block (pop)
+        `(,lookahead-token (block (:= dummy (pop))
                                   (:= return-value (pop))
                                   (accept return-value)))
         `(,lookahead-token (go ,(state-transformer (third action)))))))
