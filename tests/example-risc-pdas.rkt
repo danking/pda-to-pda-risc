@@ -46,13 +46,13 @@
     (s1-reduce (nt sem-val)
                (push (state s1-reduce))
                (push sem-val)
-               (state-case nt (start (go s6))))
+               (nterm-case nt (start (go s6))))
     (s1-eos ()
             (push (state s1-reduce-eos)))
     (s1-reduce-eos (nt sem-val)
                    (push (state s1-reduce-eos))
                    (push sem-val)
-                   (state-case nt (start (go s6-eos))))))
+                   (nterm-case nt (start (go s6-eos))))))
 (define multiple-shift-state
   (state 's2 '((shift A s2) (shift B s3)) '((goto start s4))))
 (define multiple-shift-state-risc
@@ -66,13 +66,13 @@
     (s2-reduce (nt sem-val)
                (push (state s2-reduce))
                (push sem-val)
-               (state-case nt (start (go s4))))
+               (nterm-case nt (start (go s4))))
     (s2-eos ()
             (push (state s2-reduce-eos)))
     (s2-reduce-eos (nt sem-val)
                    (push (state s2-reduce-eos))
                    (push sem-val)
-                   (state-case nt (start (go s4-eos))))))
+                   (nterm-case nt (start (go s4-eos))))))
 (define reducing-state
   (state 's3 '((reduce #t r2)) '()))
 (define reducing-state-risc
@@ -85,13 +85,13 @@
     (s3-reduce (nt sem-val)
                (push (state s3-reduce))
                (push sem-val)
-               (state-case nt))
+               (nterm-case nt))
     (s3-eos ()
             (push (state s3-reduce-eos)) (go r2-eos))
     (s3-reduce-eos (nt sem-val)
                    (push (state s3-reduce-eos))
                    (push sem-val)
-                   (state-case nt))))
+                   (nterm-case nt))))
 (define accepting-state
   (state 's6 '((accept $eos)) '()))
 (define accepting-state-risc
@@ -106,7 +106,7 @@
      (s6-reduce (nt sem-val)
                 (push (state s6-reduce))
                 (push sem-val)
-                (state-case nt))
+                (nterm-case nt))
      (s6-eos ()
              (push (state s6-reduce-eos))
              (block (:= dummy (pop))
@@ -115,7 +115,7 @@
      (s6-reduce-eos (nt sem-val)
                     (push (state s6-reduce-eos))
                     (push sem-val)
-                    (state-case nt))))
+                    (nterm-case nt))))
 
 (define rule-state-hash
   (hasheq '3-rhs-rule '(s1-reduce s2-reduce)
@@ -239,13 +239,13 @@
       (nt sem-val)
       (push (state s1-reduce))
       (push sem-val)
-      (state-case nt (start (go s6))))
+      (nterm-case nt (start (go s6))))
      (s1-eos () (push (state s1-reduce-eos)))
      (s1-reduce-eos
       (nt sem-val)
       (push (state s1-reduce-eos))
       (push sem-val)
-      (state-case nt (start (go s6-eos))))
+      (nterm-case nt (start (go s6-eos))))
      (s2
       ()
       (push (state s2-reduce))
@@ -260,13 +260,13 @@
       (nt sem-val)
       (push (state s2-reduce))
       (push sem-val)
-      (state-case nt (start (go s4))))
+      (nterm-case nt (start (go s4))))
      (s2-eos () (push (state s2-reduce-eos)))
      (s2-reduce-eos
       (nt sem-val)
       (push (state s2-reduce-eos))
       (push sem-val)
-      (state-case nt (start (go s4-eos))))
+      (nterm-case nt (start (go s4-eos))))
      (s3
       ()
       (push (state s3-reduce))
@@ -279,7 +279,7 @@
       (nt sem-val)
       (push (state s3-reduce))
       (push sem-val)
-      (state-case nt))
+      (nterm-case nt))
      (s3-eos
       ()
       (push (state s3-reduce-eos))
@@ -288,7 +288,7 @@
       (nt sem-val)
       (push (state s3-reduce-eos))
       (push sem-val)
-      (state-case nt))
+      (nterm-case nt))
      (s4
       ()
       (push (state s4-reduce))
@@ -301,13 +301,13 @@
       (nt sem-val)
       (push (state s4-reduce))
       (push sem-val)
-      (state-case nt))
+      (nterm-case nt))
      (s4-eos () (push (state s4-reduce-eos)))
      (s4-reduce-eos
       (nt sem-val)
       (push (state s4-reduce-eos))
       (push sem-val)
-      (state-case nt))
+      (nterm-case nt))
      (s5
       ()
       (push (state s5-reduce))
@@ -320,7 +320,7 @@
       (nt sem-val)
       (push (state s5-reduce))
       (push sem-val)
-      (state-case nt))
+      (nterm-case nt))
      (s5-eos
       ()
       (push (state s5-reduce-eos))
@@ -329,7 +329,7 @@
       (nt sem-val)
       (push (state s5-reduce-eos))
       (push sem-val)
-      (state-case nt))
+      (nterm-case nt))
      (s6
       ()
       (push (state s6-reduce))
@@ -344,7 +344,7 @@
       (nt sem-val)
       (push (state s6-reduce))
       (push sem-val)
-      (state-case nt))
+      (nterm-case nt))
      (s6-eos
       ()
       (push (state s6-reduce-eos))
@@ -355,7 +355,7 @@
       (nt sem-val)
       (push (state s6-reduce-eos))
       (push sem-val)
-      (state-case nt))
+      (nterm-case nt))
      (r1
       ()
       (:= v1 (pop))
