@@ -35,7 +35,7 @@
             (hasheq)))
 
 (define single-shift-state
-  '(state s1 (shift A s2) (goto start s6)))
+  (state 's1 '((shift A s2)) '((goto start s6))))
 (define single-shift-state-risc
   '((s1 ()
         (push (state s1-reduce))
@@ -54,7 +54,7 @@
                    (push sem-val)
                    (state-case nt (start (go s6-eos))))))
 (define multiple-shift-state
-  '(state s2 (shift A s2) (shift B s3) (goto start s4)))
+  (state 's2 '((shift A s2) (shift B s3)) '((goto start s4))))
 (define multiple-shift-state-risc
   '((s2 ()
         (push (state s2-reduce))
@@ -74,7 +74,7 @@
                    (push sem-val)
                    (state-case nt (start (go s4-eos))))))
 (define reducing-state
-  '(state s3 (reduce () r2)))
+  (state 's3 '((reduce #t r2)) '()))
 (define reducing-state-risc
   '((s3 ()
         (push (state s3-reduce))
@@ -87,13 +87,13 @@
                (push sem-val)
                (state-case nt))
     (s3-eos ()
-            (push (state s3-reduce-eos)))
+            (push (state s3-reduce-eos)) (go r2-eos))
     (s3-reduce-eos (nt sem-val)
                    (push (state s3-reduce-eos))
                    (push sem-val)
                    (state-case nt))))
 (define accepting-state
-  '(state s6 (accept $eos)))
+  (state 's6 '((accept $eos)) '()))
 (define accepting-state-risc
   '((s6 ()
          (push (state s6-reduce))
@@ -117,45 +117,113 @@
                     (push sem-val)
                     (state-case nt))))
 
-(define 3-rhs-rule
-  '(rule r1 non-terminal 3 (+ 2 x)))
-(define 3-rhs-rule-risc
-  '(r1
-    ()
-    (:= v1 (pop))
-    (:= dummy (pop))
-    (:= v2 (pop))
-    (:= dummy (pop))
-    (:= v3 (pop))
-    (:= dummy (pop))
-    (semantic-action (v2) (result) (+ 2 x))
-    (:= return-here (pop))
-    (go return-here (nterm non-terminal) result)))
-(define 2-rhs-rule
-  '(rule r3 non-terminal 2 x))
-(define 2-rhs-rule-risc
-  '(r3
-    ()
-    (:= v1 (pop))
-    (:= dummy (pop))
-    (:= v2 (pop))
-    (:= dummy (pop))
-    (semantic-action (v1) (result) x)
-    (:= return-here (pop))
-    (go return-here (nterm non-terminal) result)))
-(define 2-rhs-rule-no-bindings
-  '(rule r2 non-terminal 2 2))
-(define 2-rhs-rule-no-bindings-risc
-  '(r2
-    ()
-    (:= v1 (pop))
-    (:= dummy (pop))
-    (:= v2 (pop))
-    (:= dummy (pop))
-    (semantic-action () (result) 2)
-    (:= return-here (pop))
-    (go return-here (nterm non-terminal) result)))
+(define rule-state-hash
+  (hasheq '3-rhs-rule '(s1-reduce s2-reduce)
+          '2-rhs-rule '(foo-reduce)
+          '2-rhs-rule-no-bindings '(s1-reduce s2-reduce)))
 
+(define 3-rhs-rule
+  (rule '3-rhs-rule 'non-terminal 3 '(+ 2 x)))
+(define 3-rhs-rule-risc
+  '((3-rhs-rule
+     ()
+     (:= v1 (pop))
+     (:= dummy (pop))
+     (:= v2 (pop))
+     (:= dummy (pop))
+     (:= v3 (pop))
+     (:= dummy (pop))
+     (semantic-action (v1 v2 v3) (result) (+ 2 x))
+     (:= reduce-to (pop))
+     (state-case reduce-to
+                 (s1-reduce (go s1-reduce
+                                (nterm non-terminal)
+                                result))
+                 (s2-reduce (go s2-reduce
+                                (nterm non-terminal)
+                                result))))
+    (3-rhs-rule-eos
+     ()
+     (:= v1 (pop))
+     (:= dummy (pop))
+     (:= v2 (pop))
+     (:= dummy (pop))
+     (:= v3 (pop))
+     (:= dummy (pop))
+     (semantic-action (v1 v2 v3) (result) (+ 2 x))
+     (:= reduce-to (pop))
+     (state-case reduce-to
+                 (s1-reduce (go s1-reduce-eos
+                                (nterm non-terminal)
+                                result))
+                 (s2-reduce (go s2-reduce-eos
+                                (nterm non-terminal)
+                                result))
+                 (s1-reduce-eos (go s1-reduce-eos
+                                    (nterm non-terminal)
+                                    result))
+                 (s2-reduce-eos (go s2-reduce-eos
+                                    (nterm non-terminal)
+                                    result))))))
+(define 2-rhs-rule
+  (rule '2-rhs-rule 'non-terminal 2 'x))
+(define 2-rhs-rule-risc
+  '((2-rhs-rule
+     ()
+     (:= v1 (pop))
+     (:= dummy (pop))
+     (:= v2 (pop))
+     (:= dummy (pop))
+     (semantic-action (v1 v2) (result) x)
+     (:= reduce-to (pop))
+     (state-case reduce-to
+                 (foo-reduce (go foo-reduce (nterm non-terminal) result))))
+    (2-rhs-rule-eos
+     ()
+     (:= v1 (pop))
+     (:= dummy (pop))
+     (:= v2 (pop))
+     (:= dummy (pop))
+     (semantic-action (v1 v2) (result) x)
+     (:= reduce-to (pop))
+     (state-case reduce-to
+                 (foo-reduce (go foo-reduce-eos
+                                 (nterm non-terminal)
+                                 result))
+                 (foo-reduce-eos (go foo-reduce-eos
+                                     (nterm non-terminal)
+                                     result))))))
+(define 2-rhs-rule-no-bindings
+  (rule '2-rhs-rule-no-bindings 'non-terminal 2 2))
+(define 2-rhs-rule-no-bindings-risc
+  '((2-rhs-rule-no-bindings
+     ()
+     (:= v1 (pop))
+     (:= dummy (pop))
+     (:= v2 (pop))
+     (:= dummy (pop))
+     (semantic-action (v1 v2) (result) 2)
+     (:= reduce-to (pop))
+     (state-case reduce-to
+                 (s1-reduce (go s1-reduce (nterm non-terminal) result))
+                 (s2-reduce (go s2-reduce (nterm non-terminal) result))))
+    (2-rhs-rule-no-bindings-eos
+     ()
+     (:= v1 (pop))
+     (:= dummy (pop))
+     (:= v2 (pop))
+     (:= dummy (pop))
+     (semantic-action (v1 v2) (result) 2)
+     (:= reduce-to (pop))
+     (state-case reduce-to
+                 (s1-reduce (go s1-reduce-eos (nterm non-terminal) result))
+                 (s2-reduce (go s2-reduce-eos (nterm non-terminal) result))
+                 (s1-reduce-eos (go s1-reduce-eos
+                                    (nterm non-terminal)
+                                    result))
+                 (s2-reduce-eos (go s2-reduce-eos
+                                    (nterm non-terminal)
+                                    result))))))
 
 (define pda1-risc
   '(label
