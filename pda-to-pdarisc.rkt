@@ -32,7 +32,8 @@
                            (rule-name r)
                            (lambda ()
                              (error 'rule-state-case
-                                    "rule has no reducible states"))))
+                                    "rule has no reducible states: ~a in ~a"
+                                    (rule-name r) hsh))))
          (eos-states (map make-eos-name states)))
     (match r
       ((rule name nt bindings sem-act)
