@@ -24,11 +24,29 @@
          sexp))
 
 ;; make-state/mixed-actions : Symbol [ListOf StateAction] -> PDAState
-(define (make-state/mixed-actions name shifts-and-other-actions)
-  (let-values
-      (((gotos not-gotos)
-        (partition (lambda (x)
-                     (or (eq? (car x) 'GOTO)
-                         (eq? (car x) 'goto)))
-                   shifts-and-other-actions)))
-    (make-state name not-gotos gotos)))
+(define (make-state/mixed-actions name actions)
+  (let ((actions (filter (lambda (x) (not (eq? (car x) 'COMMENT))) actions)))
+    (let-values
+        (((gotos not-gotos)
+          (partition (lambda (x)
+                       (or (eq? (car x) 'GOTO)
+                           (eq? (car x) 'goto)))
+                     actions)))
+      (make-state name
+                  (map parse-non-goto not-gotos)
+                  (map parse-goto gotos)))))
+
+(define (parse-goto g)
+  (make-goto (second g) (third g)))
+
+(define (parse-non-goto a)
+  (match a
+    ((list 'SHIFT lookahead target)
+     (make-shift (parse-lookahead lookahead) target))
+    ((list 'REDUCE lookahead target)
+     (make-reduce (parse-lookahead lookahead) target))
+    ((list 'ACCEPT lookahead)
+     (make-accept (parse-lookahead lookahead) #f))))
+
+(define (parse-lookahead l)
+  (if (empty? l) #t (car l)))
