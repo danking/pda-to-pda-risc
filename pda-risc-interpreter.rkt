@@ -102,7 +102,7 @@
 (define (external-evaluate action params args)
   (call-with-values (lambda ()
                       (parameterize ([current-namespace (make-base-namespace)])
-                        (eval `((lambda ,params ,action) ,@args))))
+                        (eval `(apply (lambda ,params ,action) ',args))))
                     list))
 
 (define (drop-token m k)
