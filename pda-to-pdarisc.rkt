@@ -7,9 +7,7 @@
 ;; sexp should be a pda sexp as specified by the output of Olin's LALR
 ;; parser generator
 (define (produce-risc-pda sexp)
-  (let* ((pda-no-hsh (parse-pda sexp))
-         (pda (pda-set-reducible-states (build-state-rule-hash pda-no-hsh)
-                                        pda-no-hsh)))
+  (let* ((pda (parse-pda sexp)))
     `(label
       ,(append (produce-state-blocks pda)
                (produce-rule-blocks pda))
@@ -20,191 +18,136 @@
 ;; In the first clause, the pda is not known to be in the EOS state. In the
 ;; second clause, the pda is known to be in the EOS state.
 (define (produce-rule-blocks pda)
-  (let* ((rules (pda-rules pda))
-         (hsh (pda-reducible-states pda)))
+  (let* ((rules (pda-rules pda)))
     (foldl (lambda (rule rules)
-             (append (make-risc-rules rule hsh) rules))
+             (append (translate-rule pda rule) rules))
            '()
            rules)))
 
-(define (make-risc-rules r hsh)
-  (let* ((states (hash-ref hsh
-                           (rule-name r)
-                           (lambda ()
-                             (error 'rule-state-case
-                                    "rule has no reducible states: ~a in ~a"
-                                    (rule-name r) hsh))))
-         (eos-states (map make-eos-name states)))
-    (match r
-      ((rule name nt bindings sem-act)
-       (list (rule-skeleton name
-                            bindings
-                            sem-act
-                            (rule-case-clauses nt
-                                               states
-                                               states))
-             (rule-skeleton (make-eos-name name)
-                            bindings
-                            sem-act
-                            (rule-case-clauses
-                             nt
-                             (append states eos-states)
-                             (append eos-states eos-states))))))))
-
-(define (rule-case-clauses nt from-states to-states)
-  (map (lambda (from to)
-         `(,from (go ,to (nterm ,nt) result)))
-       from-states
-       to-states))
-
-(define (rule-skeleton name bindings sem-action case-clauses)
-  (define (vN n)
-    (string->symbol (string-append "v" (number->string n))))
-  (define (generate-pops n)
-    (for/fold
-        ([pops '()])
-        ([i (in-range n 0 -1)])
-      `((:= ,(vN i) (pop))
-        (:= dummy (pop))
-        .
-        ,pops)))
-  (define (generate-args n)
-    (build-list n (lambda (x) (vN (add1 x)))))
-
-  `(,name ()
-          ,@(generate-pops bindings)
-          (semantic-action ,(generate-args bindings)
-                           (result)
-                           ,sem-action)
-          (:= reduce-to (pop))
-          (state-case reduce-to . ,case-clauses)))
-
-;; build a hash table from rules to states which the rules might reduce to
-(define (build-state-rule-hash pda)
-  (let ((states (pda-states pda))
-        (rules (pda-rules pda)))
-    (for/hasheq
-        ([r (in-list rules)])
-      (values (rule-name r)
-              (map (lambda (s)
-                     (symbol-append (state-name s) '-reduce))
-                   (filter (lambda (s)
-                             (ormap (lambda (g)
-                                      (eq? (rule-nt r)
-                                           (second g)))
-                                    (state-gotos s)))
-                           states))))))
-
 ;; produce-state-blocks : PDA -> SExp
-;; a glue procedure which folds `make-risc-states` over the states in a PDA
+;; a glue procedure which folds `translate-state` over the states in a PDA
 (define (produce-state-blocks pda)
   (let ((states (pda-states pda)))
     (foldl (lambda (state states)
-             (append (make-risc-states state (pda-eos pda))
-                     states))
+             (append (translate-state state (pda-eos pda)) states))
            '()
            states)))
 
-;; make-risc-states : PDAState Symbol ->  (list SExp SExp SExp SExp)
-;; Each high-level PDA state corresponds to (at most) four PDA-RISC states;
-;; therefore, `make-risc-states produces a body state, a reduce state, and
-;; an -eos version of each input state
-(define (make-risc-states st eos-token)
-  (match st
-    [(state name non-gotos gotos)
-     (let* ((reduce-name (symbol-append name '-reduce))
-            (eos-name (make-eos-name name))
-            (eos-reduce-name (make-eos-name reduce-name)))
-       (let-values
-           (((eos-others non-eos-others) (segregate-eos non-gotos eos-token))
-            ((actions-w/o-lookahead)     (filter (lambda (x)
-                                                   (eq? (second x) #t))
-                                                 non-gotos)))
-         (list (make-body-state name
-                                reduce-name
-                                non-eos-others
-                                (append actions-w/o-lookahead
-                                        eos-others))
-               (make-reduce-state reduce-name gotos)
-               (make-eos-body-state eos-name
-                                    eos-reduce-name
-                                    (append actions-w/o-lookahead
-                                            eos-others))
-               (make-eos-reduce-state eos-reduce-name gotos))))]))
+(define (translate-state st eos-token)
+  (let ((name (state-name st))
+        (actions (state-non-gotos st)))
+   (list (risc-top-state name)
+         (risc-eos-state name actions eos-token)
+         (risc-have-token-state name actions eos-token))))
 
-(define (make-body-skeleton-state name reduce-name actions)
+(define (risc-top-state name)
   `(,name ()
-          (push (state ,reduce-name))
-          .
-          ,actions))
+          (if-eos (go ,(make-eos-name name))
+                  (block get-token
+                         (go ,(make-have-token-name name))))))
 
-(define (make-eos-body-state name reduce-name eos-others)
-  (make-body-skeleton-state name
-                            reduce-name
-                            (map (lambda (x)
-                                   (convert-eos-action x))
-                                 eos-others)))
+(define (risc-eos-state name actions eos-token)
+  `(,(make-eos-name name)
+    ()
+    .
+    ,(foldr (lambda (action insns)
+              (if (or (eq? (second action) eos-token)
+                      (eq? (second action) #t))
+                  (cons (risc-action-eos name action) insns)
+                  insns))
+            '()
+            actions)))
 
-(define (make-body-state name reduce-name others eos-others)
-  (make-body-skeleton-state
-   name
-   reduce-name
-   `((if-eos (block . ,(map (lambda (x)
-                              (convert-eos-action x))
-                            eos-others))
-             (block get-token
-                    (push (current-token))
-                    (token-case . ,(map convert-action others)))))))
+(define (risc-have-token-state name actions eos-token)
+  `(,(make-have-token-name name)
+    ()
+    (token-case
+     ,@(foldr (lambda (action insns)
+                (if (eq? (second action) eos-token)
+                    insns
+                    (cons (list (second action) (risc-action name action))
+                          insns)))
+              '()
+              actions))))
 
-(define (make-eos-reduce-state reduce-name gotos)
-  (make-reduce-state reduce-name
-                     (map (lambda (x)
-                            (list (first x)
-                                  (second x)
-                                  (make-eos-name (third x))))
-                          gotos)))
+(define (translate-rule pda r)
+  (let ((name (rule-name r))
+        (nt (rule-nt r))
+        (n (rule-bindings r))
+        (sem-act (rule-sem-act r)))
+    (list (risc-rule-skeleton name
+                              n
+                              sem-act
+                              (risc-clauses nt
+                                            (pda-states pda)
+                                            make-have-token-name))
+          (risc-rule-skeleton (make-eos-name name)
+                              n
+                              sem-act
+                              (risc-clauses nt
+                                            (pda-states pda)
+                                            make-eos-name)))))
 
-(define (make-reduce-state reduce-name gotos)
-  `(,reduce-name (nt sem-val)
-                 (push (state ,reduce-name))
-                 (push sem-val)
-                 (state-case nt . ,(map convert-goto gotos))))
 
-(define (make-eos-name name)
-  (symbol-append name '-eos))
 
-;; segregate PDA clauses whose lookahead is the given token
-(define (segregate-eos actions the-eos-token)
-  (partition (lambda (x)
-               (eq? (second x) the-eos-token))
-             actions))
 
-;; A clause is (TYPE stuff ...), so just check the head of the tuple
-(define (of-type? tuple type)
-  (eq? (first tuple) type))
 
-(define (convert-action action)
-  (let ((lookahead-token (second action)))
-    `(,lookahead-token (block drop-token
-                              ,(convert-generic-action action
-                                                       (lambda (x) x))))))
+(define (risc-shift-insn from to)
+  `(block (push (state ,from))
+          (push (current-token))
+          drop-token
+          (go ,to)))
 
-(define (convert-eos-action action)
-  (convert-generic-action action make-eos-name))
+(define risc-accept-insn
+  '(block (:= final-semantic-value (pop))
+          (accept final-semantic-value)))
 
-;; converts a PDA action clause into a PDA-RISC token/state-case clause
-(define (convert-generic-action action state-transformer)
-  (if (or (of-type? action 'accept) (of-type? action 'ACCEPT))
-      `(block (:= dummy (pop))
-              (:= return-value (pop))
-              (accept return-value))
-      `(go ,(state-transformer (third action)))))
+(define (risc-action from action)
+  (match action
+    ((list 'shift lookahead to) (risc-shift-insn from to))
+    ((list 'accept lookahead) risc-accept-insn)
+    ((list 'reduce lookahead to) `(go ,to))))
 
-;; converts a PDA goto clause into a PDA-RISC token/state-case clause
-(define (convert-goto goto)
-  (let ((lookahead-state (second goto))
-        (target-state (third goto)))
-    `(,lookahead-state (go ,target-state))))
+(define (risc-action-eos from action)
+  (match action
+    ((list 'accept lookahead) risc-accept-insn)
+    ((list 'reduce lookahead to) `(go ,(make-eos-name to)))))
+
+(define (risc-rule-skeleton name n sem-act case-clauses)
+  (define (args n)
+    (build-list n (lambda (n) (SN "v" (add1 n)))))
+  (define (pops n)
+    (for/fold
+        ([pops '()])
+        ([i (in-range n 0 -1)])
+      `((:= ,(SN "v" i) (pop))
+        (:= ,(SN "st" i) (pop))
+        .
+        ,pops)))
+
+  `(,name ()
+          ,@(pops n)
+          (semantic-action ,(args n) (result) ,sem-act)
+          (push ,(SN "st" n))
+          (push result)
+          (state-case ,(SN "st" n) . ,case-clauses)))
+
+(define (risc-clauses nt states target-transformer)
+  (define (relevant-gotos gotos)
+    (filter (lambda (g) (eq? (second g) nt)) gotos))
+
+  (foldl (lambda (st cls)
+           (let ((gotos (relevant-gotos (state-gotos st))))
+             (if (empty? gotos)
+                 cls
+                 (cons `(,(state-name st) (go ,(target-transformer
+                                                (third (first gotos)))))
+                       cls))))
+         '()
+         states))
+
+(define (SN s n)
+  (string->symbol (string-append s (number->string n))))
 
 ;; Symbol Symbol -> Symbol
 ;; appends the string versions of the symbols to produce a new symbol
@@ -212,6 +155,12 @@
 (define (symbol-append a b)
   (string->symbol (string-append (symbol->string a)
                                  (symbol->string b))))
+
+(define (make-eos-name name)
+  (symbol-append name '-eos))
+
+(define (make-have-token-name name)
+  (symbol-append name '-have-token))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Grammars
