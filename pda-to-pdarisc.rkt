@@ -33,6 +33,9 @@
            '()
            states)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; states
+
 (define (translate-state st eos-token)
   (let ((name (state-name st))
         (actions (state-non-gotos st)))
@@ -51,8 +54,8 @@
     ()
     .
     ,(foldr (lambda (action insns)
-              (if (or (eq? (second action) eos-token)
-                      (eq? (second action) #t))
+              (if (or (eq? (action-lookahead action) eos-token)
+                      (eq? (action-lookahead action) #t))
                   (cons (risc-action-eos name action) insns)
                   insns))
             '()
@@ -63,12 +66,37 @@
     ()
     (token-case
      ,@(foldr (lambda (action insns)
-                (if (eq? (second action) eos-token)
+                (if (eq? (action-lookahead action) eos-token)
                     insns
-                    (cons (list (second action) (risc-action name action))
+                    (cons (list (action-lookahead action)
+                                (risc-action name action))
                           insns)))
               '()
               actions))))
+
+(define (risc-action from action)
+  (match action
+    ((shift lookahead to) (risc-shift-insn from to))
+    ((accept lookahead _) risc-accept-insn)
+    ((reduce lookahead to) `(go ,to))))
+
+(define (risc-action-eos from action)
+  (match action
+    ((accept lookahead _) risc-accept-insn)
+    ((reduce lookahead to) `(go ,(make-eos-name to)))))
+
+(define risc-accept-insn
+  '(block (:= final-semantic-value (pop))
+          (accept final-semantic-value)))
+
+(define (risc-shift-insn from to)
+  `(block (push (state ,from))
+          (push (current-token))
+          drop-token
+          (go ,to)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; rules
 
 (define (translate-rule pda r)
   (let ((name (rule-name r))
@@ -78,40 +106,15 @@
     (list (risc-rule-skeleton name
                               n
                               sem-act
-                              (risc-clauses nt
-                                            (pda-states pda)
-                                            make-have-token-name))
+                              (risc-rule-clauses nt
+                                                 (pda-states pda)
+                                                 make-have-token-name))
           (risc-rule-skeleton (make-eos-name name)
                               n
                               sem-act
-                              (risc-clauses nt
-                                            (pda-states pda)
-                                            make-eos-name)))))
-
-
-
-
-
-(define (risc-shift-insn from to)
-  `(block (push (state ,from))
-          (push (current-token))
-          drop-token
-          (go ,to)))
-
-(define risc-accept-insn
-  '(block (:= final-semantic-value (pop))
-          (accept final-semantic-value)))
-
-(define (risc-action from action)
-  (match action
-    ((list 'shift lookahead to) (risc-shift-insn from to))
-    ((list 'accept lookahead) risc-accept-insn)
-    ((list 'reduce lookahead to) `(go ,to))))
-
-(define (risc-action-eos from action)
-  (match action
-    ((list 'accept lookahead) risc-accept-insn)
-    ((list 'reduce lookahead to) `(go ,(make-eos-name to)))))
+                              (risc-rule-clauses nt
+                                                 (pda-states pda)
+                                                 make-eos-name)))))
 
 (define (risc-rule-skeleton name n sem-act case-clauses)
   (define (args n)
@@ -128,26 +131,35 @@
   `(,name ()
           ,@(pops n)
           (semantic-action ,(args n) (result) ,sem-act)
-          (push ,(SN "st" n))
-          (push result)
-          (state-case ,(SN "st" n) . ,case-clauses)))
+          .
+          ,(if (zero? n)
+               `((:= v (pop))
+                 (:= st (pop))
+                 (push st)
+                 (push v)
+                 (push st)
+                 (push result)
+                 (state-case st . ,case-clauses))
+               `((push ,(SN "st" n))
+                 (push result)
+                 (state-case ,(SN "st" n) . ,case-clauses)))))
 
-(define (risc-clauses nt states target-transformer)
+(define (risc-rule-clauses nt states target-transformer)
   (define (relevant-gotos gotos)
-    (filter (lambda (g) (eq? (second g) nt)) gotos))
+    (filter (lambda (g) (eq? (action-lookahead g) nt)) gotos))
 
   (foldl (lambda (st cls)
            (let ((gotos (relevant-gotos (state-gotos st))))
              (if (empty? gotos)
                  cls
                  (cons `(,(state-name st) (go ,(target-transformer
-                                                (third (first gotos)))))
+                                                (action-target (first gotos)))))
                        cls))))
          '()
          states))
 
-(define (SN s n)
-  (string->symbol (string-append s (number->string n))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; symbol frobbing
 
 ;; Symbol Symbol -> Symbol
 ;; appends the string versions of the symbols to produce a new symbol
@@ -155,6 +167,9 @@
 (define (symbol-append a b)
   (string->symbol (string-append (symbol->string a)
                                  (symbol->string b))))
+
+(define (SN s n)
+  (string->symbol (string-append s (number->string n))))
 
 (define (make-eos-name name)
   (symbol-append name '-eos))
