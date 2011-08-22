@@ -28,6 +28,7 @@
   (let-values
       (((gotos not-gotos)
         (partition (lambda (x)
-                     (eq? (car x) 'goto))
+                     (or (eq? (car x) 'GOTO)
+                         (eq? (car x) 'goto)))
                    shifts-and-other-actions)))
     (make-state name not-gotos gotos)))
