@@ -41,12 +41,9 @@
 
 (define (parse-non-goto a)
   (match a
-    ((list 'SHIFT lookahead target)
-     (make-shift (parse-lookahead lookahead) target))
-    ((list 'REDUCE lookahead target)
-     (make-reduce (parse-lookahead lookahead) target))
-    ((list 'ACCEPT lookahead)
-     (make-accept (parse-lookahead lookahead) #f))))
-
-(define (parse-lookahead l)
-  (if (empty? l) #t (car l)))
+    ((list (or 'shift 'SHIFT) lookahead target)
+     (make-shift lookahead target))
+    ((list (or 'reduce 'REDUCE) lookahead target)
+     (make-reduce lookahead target))
+    ((list (or 'accept 'ACCEPT) lookahead)
+     (make-accept lookahead))))
