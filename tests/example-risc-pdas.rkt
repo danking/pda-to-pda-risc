@@ -14,14 +14,17 @@
     (STATE s4 (SHIFT (B) s5))
     (STATE s5 (REDUCE () r1))
     (STATE s6 (ACCEPT ($eos)))
-    (RULE r1 start  3 (+ 2 v2))
-    (RULE r2 start  2 2)
-    (RULE r3 accept 2 v1)))
+    (RULE r1 start  (#f v2 #f) (+ 2 v2))
+    (RULE r2 start  (#f #f) 2)
+    (RULE r3 accept (v1 #f) v1)))
+
+
+
 (define pda1-risc-struct
   (make-pda '(A B $eos)
             '$eos
             's1
-            (list (make-state 's6 (list (make-accept '$eos #f)) '())
+            (list (make-state 's6 (list (make-accept '$eos)) '())
                   (make-state 's5 (list (make-reduce #t 'r1)) '())
                   (make-state 's4 (list (make-shift 'B 's5)) '())
                   (make-state 's3 (list (make-reduce #t 'r2)) '())
@@ -33,8 +36,7 @@
                               (list (make-goto 'start 's6))))
             (list (make-rule 'r3 'accept 2 'v1)
                   (make-rule 'r2 'start 2 '2)
-                  (make-rule 'r1 'start 3 '(+ 2 v2)))
-            (hasheq)))
+                  (make-rule 'r1 'start 3 '(+ 2 v2)))))
 
 (define pda1-risc
   '(label ((s1 ()
