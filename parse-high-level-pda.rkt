@@ -7,15 +7,20 @@
   (foldl (lambda (clause pda)
            (match clause
              [(list (or 'STATE 'state) name shifts-etc ...)
-              (pda-add-state (make-state/mixed-actions name shifts-etc) pda)]
+              (pda-update-states (cons (make-state/mixed-actions name
+                                                                 shifts-etc)
+                                       (pda-states pda))
+                                 pda)]
              [(list (or 'RULE 'rule) name nt bindings sem-act)
-              (pda-add-rule (make-rule name nt bindings sem-act) pda)]
+              (pda-update-rules (cons (make-rule name nt bindings sem-act)
+                                      (pda-rules pda))
+                                pda)]
              [(list (or 'EOS 'eos) token)
-              (pda-set-eos token pda)]
+              (pda-update-eos token pda)]
              [(list (or 'START 'start) token)
-              (pda-set-start token pda)]
+              (pda-update-start token pda)]
              [(list (or 'TOKENS 'tokens) tokens ...)
-              (pda-set-tokens tokens pda)]
+              (pda-update-tokens tokens pda)]
              [(list (or 'COMMENT 'comment) _ ...)
               pda]
              [else (begin (printf "ignoring unknown pda clause ~a\n" clause)
