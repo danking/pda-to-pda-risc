@@ -1,7 +1,7 @@
 #lang racket
 (require rackunit
          "../pdarisc-data.rkt"
-         "../pdarisc-reader.rkt")
+         "../parse-pdarisc.rkt")
 
 (check-equal? (read-pdarisc '((:= foo (pop))
                               (:= one two)

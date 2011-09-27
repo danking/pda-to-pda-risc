@@ -1,7 +1,7 @@
 #lang racket
 (require "../pda-data.rkt"
          rackunit
-         "../parse-high-level-pda.rkt")
+         "../parse-pda.rkt")
 
 (check-equal? (parse-pda '((TOKENS A B $eos)
                            (EOS $eos)

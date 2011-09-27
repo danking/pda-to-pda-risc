@@ -1,7 +1,7 @@
 #lang racket
 (require rackunit
          "../pdarisc-data.rkt"
-         "../pdarisc-writer.rkt")
+         "../unparse-pdarisc.rkt")
 
 (check-equal? (write-pdarisc (make-pdarisc
                               (list (make-assign 'foo
