@@ -2,7 +2,7 @@
 (provide (all-defined-out))
 (require "define-ustruct.rkt")
 
-;; a PDARisc is a (make-pdarisc [ListOf Insn])
+;; a PDARisc is a (make-pdarisc Insn*-Seq)
 (define-ustruct pdarisc (insns))
 
 ;; an Insn is one of
@@ -29,7 +29,7 @@
 ;;                Insn*-Seq)
 ;;  - (make-block Insn*-Seq)
 ;;
-;; an Insn*-Seq is a [ListOf Insn*]
+;; an Insn*-Seq is a (append [ListOf Insn] (list Insn*))
 ;; an ArgList is a [ListOf Symbol]
 (define-ustruct insn* ())
 (define-ustruct (label insn*) (ids param-lists bodies body))
