@@ -2,8 +2,8 @@
 (require "pdarisc-data.rkt")
 (provide read-pdarisc read-insn)
 
-(define (read-pdarisc sexp)
-  (make-pdarisc (map read-insn sexp)))
+(define (read-pdarisc insn*-seq)
+  (make-pdarisc (read-insn*-seq insn*-seq)))
 
 
 
@@ -13,9 +13,9 @@
 
   (match i
     (`(:= ,id ,val)
-     (make-assign id (read-rhs val)))
+     (make-assign id (read-var-rhs val)))
     (`(push ,val)
-     (make-push (read-rhs val)))
+     (make-push (read-pure-rhs val)))
     (`(semantic-action (,params ...)
                        (,retvars ...)
                        ,action)
@@ -27,36 +27,24 @@
     (`(stack-ensure ,hdrm)
      (make-stack-ensure hdrm))
     (`(block . ,insns)
-     (make-block (rs insns)))
-    ((or (? symbol? _)
-         (list (or 'state
-                   'nterm
-                   'current-token
-                   'pop) _ ...))
-     (read-rhs i))
-    ((or (list 'label _ ...)
-         (list 'block _ ...)
-         (list 'accept _ ...)
-         (list 'if-eos _ ...)
-         (list 'state-case _ ...)
-         (list 'token-case _ ...)
-         (list 'go _ ...))
-     (read-insn* i))))
+     (make-block (rs insns)))))
+
+(define (read-insn*-seq seq)
+  (foldr (lambda (x xs)
+           (if (empty? xs)
+               (list (read-insn* x))
+               (cons (read-insn x) xs)))
+         '()
+         seq))
 
 (define (read-insn* i)
   (define r* read-insn*)
-  (define (rs* ls)
-    (foldr (lambda (x xs)
-             (if (empty? xs)
-                 (list (read-insn* x))
-                 (cons (read-insn x) xs)))
-           '()
-           ls))
+  (define rs* read-insn*-seq)
 
   (match i
     (`(label ((,ids (,param-list ...) ,label-body ...) ...)
              ,body ...)
-     (make-label ids param-list (rs* label-body) (rs* body)))
+     (make-label ids param-list (map rs* label-body) (rs* body)))
     (`(block ,insns ...)
      (make-block* (rs* insns)))
     (`(accept ,vals ...)
@@ -64,16 +52,19 @@
     (`(if-eos ,cnsq ,altr)
      (make-if-eos (r* cnsq) (r* altr)))
     (`(state-case ,st (,looks . ,cnsqs) ...)
-     (make-state-case st looks (rs* cnsqs)))
+     (make-state-case st looks (map rs* cnsqs)))
     (`(token-case (,looks . ,cnsqs) ...)
-     (make-token-case looks (rs* cnsqs)))
+     (make-token-case looks (map rs* cnsqs)))
     (`(go ,target ,args ...)
-     (go target (map read-rhs args))))))
+     (go target (map read-pure-rhs args)))))
 
-(define (read-rhs r)
+(define (read-var-rhs r)
   (match r
-    (`(pop)
-     (make-pop))
+    (`(pop) (make-pop))
+    (_ (read-pure-rhs r))))
+
+(define (read-pure-rhs r)
+  (match r
     (`(state ,id)
      (make-state id))
     (`(nterm ,id)
