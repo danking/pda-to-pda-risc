@@ -9,13 +9,15 @@
     (EOS ,(pda-eos pda))
     (START ,(pda-start pda))
     ,@(map unparse-rule (pda-rules pda))
-    ,@(map unparse-state (pda-states pda))))
+    .
+    ,(map unparse-state (pda-states pda))))
 
 ;; unparse-state : State -> SExp
 ;; unparse-state produces an s-expression representation of the given State.
 (define (unparse-state state)
   `(STATE ,(state-name state)
-          ,(map unparse-non-goto (state-non-gotos state))
+          ,@(map unparse-non-goto (state-non-gotos state))
+          .
           ,(map unparse-goto (state-gotos state))))
 
 ;; unparse-non-goto : [U Shift Reduce Accept] -> SExp
