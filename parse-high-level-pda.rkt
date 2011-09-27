@@ -31,7 +31,10 @@
 
 ;; make-state/mixed-actions : Symbol [ListOf SExp] -> PDAState
 (define (make-state/mixed-actions name actions)
-  (let ((actions (filter (lambda (x) (not (eq? (car x) 'COMMENT))) actions)))
+  (let ((actions (filter (lambda (x)
+                           (not (or (eq? (car x) 'COMMENT)
+                                    (eq? (car x) 'comment))))
+                         actions)))
     (let-values
         (((gotos not-gotos)
           (partition (lambda (x)
