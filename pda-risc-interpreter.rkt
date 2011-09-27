@@ -201,4 +201,4 @@
 ;; case-clause-lookup : Symbol [ListOf CaseClause] -> (U #f CaseClause)
 (define (case-clause-lookup v clauses)
   (or (assq v clauses)
-      (assq #t clauses #f)))
+      (assq #t clauses)))
