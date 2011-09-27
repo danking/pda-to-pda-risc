@@ -2,6 +2,7 @@
 (require "pda-data.rkt")
 (provide parse-pda)
 
+;; parse-pda : SExp -> PDA
 ;; parse a sexp representation of a high-level pda into a structure
 (define (parse-pda sexp)
   (foldl (lambda (clause pda)
@@ -28,7 +29,7 @@
          empty-pda
          sexp))
 
-;; make-state/mixed-actions : Symbol [ListOf StateAction] -> PDAState
+;; make-state/mixed-actions : Symbol [ListOf SExp] -> PDAState
 (define (make-state/mixed-actions name actions)
   (let ((actions (filter (lambda (x) (not (eq? (car x) 'COMMENT))) actions)))
     (let-values
