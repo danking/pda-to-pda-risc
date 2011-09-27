@@ -32,6 +32,9 @@
               '((TOKENS A B $eos)
                 (EOS $eos)
                 (START s1)
+                (RULE r3 accept (v1 #f) v1)
+                (RULE r2 start  (#f #f) 2)
+                (RULE r1 start  (#f v2 #f) (+ 2 v2))
                 (STATE s6 (ACCEPT ($eos)))
                 (STATE s5 (REDUCE () r1))
                 (STATE s4 (SHIFT (B) s5))
@@ -40,10 +43,7 @@
                        (SHIFT (A) s2)
                        (SHIFT (B) s3)
                        (GOTO start s4))
-                (STATE s1 (SHIFT (A) s2) (GOTO start s6))
-                (RULE r3 accept (v1 #f) v1)
-                (RULE r2 start  (#f #f) 2)
-                (RULE r1 start  (#f v2 #f) (+ 2 v2))))
+                (STATE s1 (SHIFT (A) s2) (GOTO start s6))))
 
 (check-equal?
  (unparse-pda
