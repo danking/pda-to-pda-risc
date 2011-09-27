@@ -41,9 +41,7 @@
          (list 'state-case _ ...)
          (list 'token-case _ ...)
          (list 'go _ ...))
-     (read-insn* i))
-    ((list insns ...)
-     (rs insns))))
+     (read-insn* i))))
 
 (define (read-insn* i)
   (define r* read-insn*)
@@ -70,9 +68,7 @@
     (`(token-case (,looks . ,cnsqs) ...)
      (make-token-case looks (rs* cnsqs)))
     (`(go ,target ,args ...)
-     (go target (map read-rhs args)))
-    ((list insns ...) ;; this case is only reached by direct calls to read-insn*
-     (rs* insns))))
+     (go target (map read-rhs args))))))
 
 (define (read-rhs r)
   (match r
