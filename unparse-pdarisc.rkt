@@ -1,19 +1,18 @@
 #lang racket
 (require "pdarisc-data.rkt")
-(provide write-pdarisc write-insn)
+(provide unparse-pdarisc unparse-insn)
 
-(define (write-pdarisc p)
-  (map write-insn (pdarisc-insns p)))
+(define (unparse-pdarisc p)
+  (unparse-insn-seq* (pdarisc-insns p)))
 
-(define (write-insn i)
-  (define w write-insn)
-  (define (ws ls) (map w ls))
 
+
+(define (unparse-insn i)
   (match i
     ((assign id val)
-     `(:= ,id ,(w val)))
+     `(:= ,id ,(unparse-var-rhs val)))
     ((push val)
-     `(push ,(w val)))
+     `(push ,(unparse-pure-rhs val)))
     ((sem-act params retvars action)
      `(semantic-action ,params
                        ,retvars
@@ -25,33 +24,59 @@
     ((stack-ensure hdrm)
      `(stack-ensure ,hdrm))
     ((block insns)
-     `(block . ,(ws insns)))
-    ((label ids param-lists bodies body)
-     `(label ,(map list* ids param-lists (ws bodies))
-             . ,(ws body)))
-    ((block* insns)
-     `(block . ,(ws insns)))
-    ((accept vals)
-     `(accept . ,vals))
-    ((if-eos cnsq altr)
-     `(if-eos ,(w cnsq) ,(w altr)))
-    ((state-case st looks cnsqs)
-     `(state-case ,st . ,(map cons looks (ws cnsqs))))
-    ((token-case looks cnsqs)
-     `(token-case . ,(map cons looks (ws cnsqs))))
-    ((go target args)
-     `(go ,target . ,(ws args)))
-    ((pop)
-     `(pop))
-    ((var-ref id)
-     id)
-    ((state id)
-     `(state ,id))
-    ((nterm id)
-     `(nterm ,id))
-    ((curr-token #f)
-     '(current-token))
-    ((curr-token n)
-     `(current-token ,n))
-    ((list insns ...)
-     (ws insns))))
+     `(block . ,(map unparse-insn insns)))))
+
+(define (unparse-insn* i)
+  (define up-seq* unparse-insn-seq*)
+
+  (match i
+   ((label ids stack-types token-types param-lists rhses body)
+    `(label ,(unparse-label-clauses ids stack-types token-types param-lists rhses)
+            . ,(up-seq* body)))
+   ((block* insns)
+    `(block . ,(up-seq* insns)))
+   ((accept vars)
+    `(accept . ,vars))
+   ((if-eos cnsq altr)
+    `(if-eos ,(unparse-insn* cnsq) ,(unparse-insn* altr)))
+   ((state-case st looks cnsqs)
+    `(state-case ,st . ,(map cons looks (map up-seq* cnsqs))))
+   ((token-case looks cnsqs)
+    `(token-case . ,(map cons looks (map up-seq* cnsqs))))
+   ((go target args)
+    `(go ,target . ,(map unparse-pure-rhs args)))))
+
+(define (unparse-insn-seq* iseq)
+  (foldr (lambda (x xs)
+           (if (empty? xs)
+               (list (unparse-insn* x))
+               (cons (unparse-insn x) xs)))
+         '()
+         iseq))
+
+(define (unparse-var-rhs r)
+  (match r
+    ((pop) `(pop))
+    (_ (unparse-pure-rhs r))))
+
+(define (unparse-pure-rhs r)
+  (match r
+   ((var-ref id)
+    id)
+   ((state id)
+    `(state ,id))
+   ((nterm id)
+    `(nterm ,id))
+   ((curr-token #f)
+    '(current-token))
+   ((curr-token n)
+    `(current-token ,n))))
+
+(define (unparse-label-clauses ids stack-types token-types param-lists rhses)
+  (map (lambda (id stack-type token-type param rhs)
+         `(,id : ,stack-type ,token-type ,param . ,(unparse-insn-seq* rhs)))
+       ids
+       stack-types
+       token-types
+       param-lists
+       rhses))

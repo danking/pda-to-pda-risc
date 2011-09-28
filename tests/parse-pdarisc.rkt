@@ -3,7 +3,7 @@
          "../pdarisc-data.rkt"
          "../parse-pdarisc.rkt")
 
-(check-equal? (read-pdarisc '((:= foo (pop))
+(check-equal? (parse-pdarisc '((:= foo (pop))
                               (:= one two)
                               (:= 我 (state state-1))
                               (:= eat (nterm program))
@@ -22,7 +22,7 @@
                                   (make-curr-token #f))
                      (make-accept '()))))
 
-(check-equal? (read-pdarisc '((push me)
+(check-equal? (parse-pdarisc '((push me)
                               (push (state around))
                               (accept)))
               (make-pdarisc
@@ -30,7 +30,7 @@
                      (make-push (make-state 'around))
                      (make-accept '()))))
 
-(check-equal? (read-pdarisc '((semantic-action (exp exps)
+(check-equal? (parse-pdarisc '((semantic-action (exp exps)
                                                (yahoo #f)
                                                (values (cons exp exps)
                                                        'nothin-to-see-here))
@@ -44,7 +44,7 @@
                      (make-stack-ensure 3)
                      (make-accept '()))))
 
-(check-equal? (read-pdarisc '((block (:= foo (pop))
+(check-equal? (parse-pdarisc '((block (:= foo (pop))
                                      drop-token
                                      get-token)
                               (accept)))
@@ -56,7 +56,7 @@
                        (make-get-token)))
                      (make-accept '()))))
 
-(check-equal? (read-pdarisc '((block (:= foo (pop))
+(check-equal? (parse-pdarisc '((block (:= foo (pop))
                                      drop-token
                                      get-token
                                      (accept))))
@@ -68,12 +68,14 @@
                        (make-get-token)
                        (make-accept '()))))))
 
-(check-equal? (read-pdarisc '((label ((hiphoppop (foo bar)
+(check-equal? (parse-pdarisc '((label ((hiphoppop : ((STATE foo)) #f
+                                                 (foo bar)
                                                  (:= hiphop (pop))
                                                  (push foo)
                                                  (push bar)
                                                  (accept))
-                                      (indirection ()
+                                      (indirection : () #f
+                                                   ()
                                                    (go hiphoppop
                                                        (nterm kanye)
                                                        (nterm jay-z))))
@@ -81,6 +83,8 @@
               (make-pdarisc
                (list (make-label
                       '(hiphoppop indirection)
+                      '(((STATE foo)) ())
+                      '(#f #f)
                       '((foo bar) ())
                       (list (list
                              (make-assign 'hiphop
@@ -95,7 +99,7 @@
                                        (make-nterm 'jay-z)))))
                       (list (make-go 'indirection (list)))))))
 
-(check-equal? (read-pdarisc '((if-eos (go secret-stuff)
+(check-equal? (parse-pdarisc '((if-eos (go secret-stuff)
                                       (block get-token drop-token (go foo)))))
               (make-pdarisc
                (list (make-if-eos (make-go 'secret-stuff (list))
@@ -104,7 +108,7 @@
                                          (make-drop-token)
                                          (make-go 'foo (list))))))))
 
-(check-equal? (read-pdarisc '((state-case what-am-i
+(check-equal? (parse-pdarisc '((state-case what-am-i
                                           (pink (go pink-stuff))
                                           (blue drop-token (go azure))
                                           (green (go soylent!)))))
@@ -117,7 +121,7 @@
                                   (make-go 'azure '()))
                             (list (make-go 'soylent! '())))))))
 
-(check-equal? (read-pdarisc '((token-case
+(check-equal? (parse-pdarisc '((token-case
                                (small (push (current-token))
                                       (go tiny teeny weeny))
                                (big drop-token (go big!))

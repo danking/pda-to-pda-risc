@@ -32,7 +32,8 @@
 ;; an Insn*-Seq is a (append [ListOf Insn] (list Insn*))
 ;; an ArgList is a [ListOf Symbol]
 (define-ustruct insn* ())
-(define-ustruct (label insn*) (ids param-lists bodies body))
+(define-ustruct (label insn*) (ids stack-types token-types
+                                   param-lists bodies body))
 (define-ustruct (block* insn*) (insns))
 
 

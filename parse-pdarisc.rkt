@@ -1,21 +1,21 @@
 #lang racket
 (require "pdarisc-data.rkt")
-(provide read-pdarisc read-insn)
+(provide parse-pdarisc parse-insn)
 
-(define (read-pdarisc insn*-seq)
-  (make-pdarisc (read-insn*-seq insn*-seq)))
+(define (parse-pdarisc insn*-seq)
+  (make-pdarisc (parse-insn*-seq insn*-seq)))
 
 
 
-(define (read-insn i)
-  (define r read-insn)
+(define (parse-insn i)
+  (define r parse-insn)
   (define (rs ls) (map r ls))
 
   (match i
     (`(:= ,id ,val)
-     (make-assign id (read-var-rhs val)))
+     (make-assign id (parse-var-rhs val)))
     (`(push ,val)
-     (make-push (read-pure-rhs val)))
+     (make-push (parse-pure-rhs val)))
     (`(semantic-action (,params ...)
                        (,retvars ...)
                        ,action)
@@ -29,22 +29,28 @@
     (`(block . ,insns)
      (make-block (rs insns)))))
 
-(define (read-insn*-seq seq)
+(define (parse-insn*-seq seq)
   (foldr (lambda (x xs)
            (if (empty? xs)
-               (list (read-insn* x))
-               (cons (read-insn x) xs)))
+               (list (parse-insn* x))
+               (cons (parse-insn x) xs)))
          '()
          seq))
 
-(define (read-insn* i)
-  (define r* read-insn*)
-  (define rs* read-insn*-seq)
+(define (parse-insn* i)
+  (define r* parse-insn*)
+  (define rs* parse-insn*-seq)
 
   (match i
-    (`(label ((,ids (,param-list ...) ,label-body ...) ...)
+    (`(label ((,ids : ,stack-type ,token-type
+                    (,param-list ...) ,label-body ...) ...)
              ,body ...)
-     (make-label ids param-list (map rs* label-body) (rs* body)))
+     (make-label ids
+                 stack-type
+                 token-type
+                 param-list
+                 (map rs* label-body)
+                 (rs* body)))
     (`(block ,insns ...)
      (make-block* (rs* insns)))
     (`(accept ,vals ...)
@@ -56,14 +62,14 @@
     (`(token-case (,looks . ,cnsqs) ...)
      (make-token-case looks (map rs* cnsqs)))
     (`(go ,target ,args ...)
-     (go target (map read-pure-rhs args)))))
+     (go target (map parse-pure-rhs args)))))
 
-(define (read-var-rhs r)
+(define (parse-var-rhs r)
   (match r
     (`(pop) (make-pop))
-    (_ (read-pure-rhs r))))
+    (_ (parse-pure-rhs r))))
 
-(define (read-pure-rhs r)
+(define (parse-pure-rhs r)
   (match r
     (`(state ,id)
      (make-state id))
