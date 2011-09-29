@@ -7,13 +7,18 @@
 (define (parse-pda sexp)
   (foldl (lambda (clause pda)
            (match clause
-             [(list (or 'STATE 'state) name shifts-etc ...)
-              (pda-update-states (cons (make-state/mixed-actions name
-                                                                 shifts-etc)
+             [(list (or 'STATE 'state) name : stack-type shifts-etc ...)
+              (pda-update-states (cons (parse-state/mixed-actions name
+                                                                  stack-type
+                                                                  shifts-etc)
                                        (pda-states pda))
                                  pda)]
-             [(list (or 'RULE 'rule) name nt bindings sem-act)
-              (pda-update-rules (cons (make-rule name nt bindings sem-act)
+             [(list (or 'RULE 'rule) name : stack-type nt bindings sem-act)
+              (pda-update-rules (cons (make-rule name
+                                                 stack-type
+                                                 nt
+                                                 bindings
+                                                 sem-act)
                                       (pda-rules pda))
                                 pda)]
              [(list (or 'EOS 'eos) token)
@@ -29,8 +34,8 @@
          empty-pda
          sexp))
 
-;; make-state/mixed-actions : Symbol [ListOf SExp] -> PDAState
-(define (make-state/mixed-actions name actions)
+;; parse-state/mixed-actions : Symbol ST [ListOf SExp] -> PDAState
+(define (parse-state/mixed-actions name stack-type actions)
   (let ((actions (filter (lambda (x)
                            (not (or (eq? (car x) 'COMMENT)
                                     (eq? (car x) 'comment))))
@@ -42,6 +47,7 @@
                            (eq? (car x) 'goto)))
                      actions)))
       (make-state name
+                  stack-type
                   (map parse-non-goto not-gotos)
                   (map parse-goto gotos)))))
 

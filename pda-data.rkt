@@ -11,18 +11,22 @@
 
 (define empty-pda (make-pda '() #f #f '() '()))
 
+;; an ST or StackType is defined in the notes on semantics
+
 ;; a State is a (make-state Symbol
+;;                          ST
 ;;                          [ListOf (U Shift
 ;;                                     Reduce
 ;;                                     Accept)]
 ;;                          Goto)
-(define-ustruct state (name non-gotos gotos))
+(define-ustruct state (name stack-type non-gotos gotos))
 
 ;; a Rule is a (make-rule Symbol
+;;                        ST
 ;;                        Symbol
 ;;                        [ListOf [Maybe Symbol]]
 ;;                        SExp)
-(define-ustruct rule (name nt bindings sem-act))
+(define-ustruct rule (name stack-type nt bindings sem-act))
 
 
 ;; an Action is a (make-action Symbol)
