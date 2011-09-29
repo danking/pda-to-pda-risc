@@ -16,6 +16,8 @@
 ;; unparse-state produces an s-expression representation of the given State.
 (define (unparse-state state)
   `(STATE ,(state-name state)
+          :
+          ,(state-stack-type state)
           ,@(map unparse-non-goto (state-non-gotos state))
           .
           ,(map unparse-goto (state-gotos state))))
@@ -39,4 +41,5 @@
 ;; unparse-rule produces an s-expression representation of the given Rule
 (define (unparse-rule r)
   (match r
-    ((rule name nt bindings sem-act) `(RULE ,name ,nt ,bindings ,sem-act))))
+    ((rule name stack-type nt bindings sem-act)
+     `(RULE ,name : ,stack-type ,nt ,bindings ,sem-act))))
