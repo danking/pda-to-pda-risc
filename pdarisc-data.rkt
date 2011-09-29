@@ -2,7 +2,7 @@
 (provide (all-defined-out))
 (require "define-ustruct.rkt")
 
-;; a PDARisc is a (make-pdarisc Insn*-Seq)
+;; a PDA-RISC is a (make-pdarisc Insn*-Seq)
 (define-ustruct pdarisc (insns))
 
 ;; an Insn is one of
