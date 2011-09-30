@@ -117,22 +117,22 @@
              (rest args))))
 
 
-;; compile-action : Action Symbol -> Insn*
+;; compile-action : Action Symbol -> [ListOf Insn*]
 (define (compile-action a curr-state)
   (match a
     ((shift l st)
-     (make-block* (list (make-push (make-risc-state curr-state))
-                        (make-push (make-curr-token 0))
-                        (make-drop-token)
-                        (make-go st '()))))
+     (list (make-push (make-risc-state curr-state))
+           (make-push (make-curr-token 0))
+           (make-drop-token)
+           (make-go st '())))
     ((reduce l st)
-     (make-block* (list (make-drop-token)
-                        (make-go st '()))))
+     (list (make-drop-token)
+           (make-go st '())))
     ((goto nt st)
-     (make-block* (list (make-push (make-risc-state curr-state))
-                        (make-push (make-nterm nt))
-                        (make-go st '()))))
+     (list (make-push (make-risc-state curr-state))
+           (make-push (make-nterm nt))
+           (make-go st '())))
     ((accept l)
-     (make-block* (list (make-risc-accept '()))))))
+     (list (make-risc-accept '())))))
 
 

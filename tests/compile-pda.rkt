@@ -56,14 +56,12 @@
                           (make-token-case
                            '(A B)
                            (list
-                            (make-block*
-                             (list (make-push (make-risc-state 's0))
-                                   (make-push (make-curr-token 0))
-                                   (make-drop-token)
-                                   (make-go 's1 '())))
-                            (make-block*
-                             (list (make-drop-token)
-                                   (make-go 'r1'())))))))))))
+                            (list (make-push (make-risc-state 's0))
+                                  (make-push (make-curr-token 0))
+                                  (make-drop-token)
+                                  (make-go 's1 '()))
+                            (list (make-drop-token)
+                                  (make-go 'r1'()))))))))))
                (list (make-block*
                       (list
                        (make-if-eos
@@ -74,14 +72,12 @@
                           (make-token-case
                            '(A #t)
                            (list
-                            (make-block*
-                             (list (make-push (make-risc-state 's1))
-                                   (make-push (make-curr-token 0))
-                                   (make-drop-token)
-                                   (make-go 's1 '())))
-                            (make-block*
-                             (list (make-drop-token)
-                                   (make-go 'r1 '())))))))))))
+                            (list (make-push (make-risc-state 's1))
+                                  (make-push (make-curr-token 0))
+                                  (make-drop-token)
+                                  (make-go 's1 '()))
+                            (list (make-drop-token)
+                                  (make-go 'r1 '()))))))))))
                (list (make-block*
                       (list
                        (make-assign 'v (make-pop))
@@ -164,12 +160,12 @@
                    (make-token-case
                     '(A B)
                     (list
-                     (make-block* (list (make-push (make-risc-state 's0))
-                                        (make-push (make-curr-token 0))
-                                        (make-drop-token)
-                                        (make-go 's1 '())))
-                     (make-block* (list (make-drop-token)
-                                        (make-go 'r1 '())))))))))))
+                     (list (make-push (make-risc-state 's0))
+                           (make-push (make-curr-token 0))
+                           (make-drop-token)
+                           (make-go 's1 '()))
+                     (list (make-drop-token)
+                           (make-go 'r1 '()))))))))))
 
 (check-equal? (compile-rule (make-rule 'r1
                                        '((int plus int))
@@ -225,19 +221,19 @@
                     (make-push (make-var-ref 'v))
                     (make-push (make-var-ref 'target))))
 (check-equal? (compile-action (make-shift '(A) 's1) 's0)
-              (make-block* (list (make-push (make-risc-state 's0))
-                                 (make-push (make-curr-token 0))
-                                 (make-drop-token)
-                                 (make-go 's1 '()))))
+              (list (make-push (make-risc-state 's0))
+                    (make-push (make-curr-token 0))
+                    (make-drop-token)
+                    (make-go 's1 '())))
 (check-equal? (compile-action (make-reduce '(B) 'r1) 's0)
-              (make-block* (list (make-drop-token)
-                                 (make-go 'r1 '()))))
+              (list (make-drop-token)
+                    (make-go 'r1 '())))
 (check-equal? (compile-action (make-reduce '() 'r1) 's0)
-              (make-block* (list (make-drop-token)
-                                 (make-go 'r1 '()))))
+              (list (make-drop-token)
+                    (make-go 'r1 '())))
 (check-equal? (compile-action (make-goto 'nt 's1) 's0)
-              (make-block* (list (make-push (make-risc-state 's0))
-                                 (make-push (make-nterm 'nt))
-                                 (make-go 's1 '()))))
+              (list (make-push (make-risc-state 's0))
+                    (make-push (make-nterm 'nt))
+                    (make-go 's1 '())))
 (check-equal? (compile-action (make-accept '(A)) 's0)
-              (make-block* (list (make-risc-accept '()))))
+              (list (make-risc-accept '())))
