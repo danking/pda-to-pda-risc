@@ -42,7 +42,9 @@
                              'v))))
  (make-pdarisc
   (list (make-label
-         '(s0 s1 r1)
+         (list (make-label-name 's0)
+               (make-label-name 's1)
+               (make-label-name 'r1))
          '((()) (()) (s : ((A s)))) ; stacks
          '(#f #f #f) ; token-regs
          '(() () ()) ; arg-lists
@@ -59,9 +61,9 @@
                             (list (make-push (make-risc-state 's0))
                                   (make-push (make-curr-token #f))
                                   (make-drop-token)
-                                  (make-go 's1 '()))
+                                  (make-go (make-label-name 's1) '()))
                             (list (make-drop-token)
-                                  (make-go 'r1'()))))))))))
+                                  (make-go (make-label-name 'r1) '()))))))))))
                (list (make-block*
                       (list
                        (make-if-eos
@@ -75,21 +77,27 @@
                             (list (make-push (make-risc-state 's1))
                                   (make-push (make-curr-token #f))
                                   (make-drop-token)
-                                  (make-go 's1 '()))
+                                  (make-go (make-label-name 's1) '()))
                             (list (make-drop-token)
-                                  (make-go 'r1 '()))))))))))
+                                  (make-go (make-label-name 'r1) '()))))))))))
                (list (make-block*
                       (list
-                       (make-assign 'v (make-pop))
-                       (make-assign 'target (make-pop)) ; state
-                       (make-sem-act '(v) '(ret-val) 'v)
-                       (make-push (make-var-ref 'target))
-                       (make-push (make-var-ref 'ret-val))
-                       (make-state-case (make-var-ref 'target)
-                                        '(s0 s1)
-                                        (list (list (make-go 's1 '()))
-                                              (list (make-go 's0 '()))))))))
-         (list (make-go 's0 '()))))))
+                       (make-assign (make-reg-name 'v) (make-pop))
+                       (make-assign (make-reg-name 'target) (make-pop)) ; state
+                       (make-sem-act (list (make-reg-name 'v))
+                                     (list (make-reg-name 'ret-val))
+                                     'v)
+                       (make-push (make-reg-name 'target))
+                       (make-push (make-reg-name 'ret-val))
+                       (make-state-case (make-reg-name 'target)
+                                        (list (make-risc-state 's0)
+                                              (make-risc-state 's1))
+                                        (list
+                                         (list (make-go (make-label-name 's1)
+                                                        '()))
+                                         (list (make-go (make-label-name 's0)
+                                                        '()))))))))
+         (list (make-go (make-label-name 's0) '()))))))
 
 
 
@@ -163,9 +171,9 @@
                      (list (make-push (make-risc-state 's0))
                            (make-push (make-curr-token #f))
                            (make-drop-token)
-                           (make-go 's1 '()))
+                           (make-go (make-label-name 's1) '()))
                      (list (make-drop-token)
-                           (make-go 'r1 '()))))))))))
+                           (make-go (make-label-name 'r1) '()))))))))))
 
 (check-equal? (compile-rule (make-rule 'r1
                                        '((int plus int))
@@ -175,65 +183,76 @@
                             (make-dict 'nt (make-dict 's1 's2
                                                       's2 's0)))
               (make-block*
-               (list (make-assign 'v2 (make-pop))
-                     (make-assign '_ (make-pop)) ; state
-                     (make-assign '_ (make-pop))
-                     (make-assign '_ (make-pop)) ; state
-                     (make-assign 'v1 (make-pop))
-                     (make-assign 'target (make-pop)) ; state
-                     (make-sem-act '(v1 v2) '(ret-val) '(+ v1 v2))
-                     (make-push (make-var-ref 'target))
-                     (make-push (make-var-ref 'ret-val))
-                     (make-state-case (make-var-ref 'target)
-                                      '(s1 s2)
-                                      (list (list (make-go 's2 '()))
-                                            (list (make-go 's0 '())))))))
+               (list (make-assign (make-reg-name 'v2)  (make-pop))
+                     (make-assign (make-reg-name '_)   (make-pop)) ; state
+                     (make-assign (make-reg-name '_)   (make-pop))
+                     (make-assign (make-reg-name '_)   (make-pop)) ; state
+                     (make-assign (make-reg-name 'v1)  (make-pop))
+                     (make-assign (make-reg-name 'target) (make-pop)) ; state
+                     (make-sem-act (list (make-reg-name 'v1)
+                                         (make-reg-name 'v2))
+                                   (list (make-reg-name 'ret-val))
+                                   '(+ v1 v2))
+                     (make-push (make-reg-name 'target))
+                     (make-push (make-reg-name 'ret-val))
+                     (make-state-case (make-reg-name 'target)
+                                      (list (make-risc-state 's1)
+                                            (make-risc-state 's2))
+                                      (list (list (make-go (make-label-name 's2)
+                                                           '()))
+                                            (list (make-go (make-label-name 's0)
+                                                           '())))))))
 
 (check-equal? (compile-rule (make-rule 'r1 '(s : ((A s))) 'nt '(v) 'v)
                             (make-dict 'nt (make-dict 's0 's1
                                                       's1 's0)))
               (make-block*
-               (list (make-assign 'v (make-pop))
-                     (make-assign 'target (make-pop)) ; state
-                     (make-sem-act '(v) '(ret-val) 'v)
-                     (make-push (make-var-ref 'target))
-                     (make-push (make-var-ref 'ret-val))
-                     (make-state-case (make-var-ref 'target)
-                                      '(s0 s1)
-                                      (list (list (make-go 's1 '()))
-                                            (list (make-go 's0 '())))))))
+               (list (make-assign (make-reg-name 'v) (make-pop))
+                     (make-assign (make-reg-name 'target) (make-pop)) ; state
+                     (make-sem-act (list (make-reg-name 'v))
+                                   (list (make-reg-name 'ret-val))
+                                   'v)
+                     (make-push (make-reg-name 'target))
+                     (make-push (make-reg-name 'ret-val))
+                     (make-state-case (make-reg-name 'target)
+                                      (list (make-risc-state 's0)
+                                            (make-risc-state 's1))
+                                      (list (list (make-go (make-label-name 's1)
+                                                           '()))
+                                            (list (make-go (make-label-name 's0)
+                                                           '())))))))
 
 (check-equal? (compile-rule-args '(v1 #f v2))
-              (list (make-assign 'v2 (make-pop))
-                    (make-assign '_ (make-pop)) ; state
-                    (make-assign '_ (make-pop))
-                    (make-assign '_ (make-pop)) ; state
-                    (make-assign 'v1 (make-pop))
-                    (make-assign 'target (make-pop))))
+              (list (make-assign (make-reg-name 'v2) (make-pop))
+                    (make-assign (make-reg-name '_)  (make-pop)) ; state
+                    (make-assign (make-reg-name '_)  (make-pop))
+                    (make-assign (make-reg-name '_)  (make-pop)) ; state
+                    (make-assign (make-reg-name 'v1) (make-pop))
+                    (make-assign (make-reg-name 'target) (make-pop))))
 
 (check-equal? (compile-rule-args '(v))
-              (list (make-assign 'v (make-pop))
-                    (make-assign 'target (make-pop))))
+              (list (make-assign (make-reg-name 'v) (make-pop))
+                    (make-assign (make-reg-name 'target) (make-pop))))
 
 (check-equal? (compile-rule-args '())
-              (list (make-assign 'v (make-pop))
-                    (make-assign 'target (make-pop))
-                    (make-push (make-var-ref 'v))
-                    (make-push (make-var-ref 'target))))
+              (list (make-assign (make-reg-name 'v) (make-pop))
+                    (make-assign (make-reg-name 'target) (make-pop))
+                    (make-push (make-reg-name 'v))
+                    (make-push (make-reg-name 'target))))
 (check-equal? (compile-action (make-shift '(A) 's1) 's0)
               (list (make-push (make-risc-state 's0))
                     (make-push (make-curr-token #f))
                     (make-drop-token)
-                    (make-go 's1 '())))
+                    (make-go (make-label-name 's1) '())))
 (check-equal? (compile-action (make-reduce '(B) 'r1) 's0)
               (list (make-drop-token)
-                    (make-go 'r1 '())))
+                    (make-go (make-label-name 'r1) '())))
 (check-equal? (compile-action (make-reduce '() 'r1) 's0)
               (list (make-drop-token)
-                    (make-go 'r1 '())))
+                    (make-go (make-label-name 'r1) '())))
 (check-equal? (compile-action (make-goto 'nt 's1) 's0)
               (list (make-push (make-risc-state 's0))
                     (make-push (make-nterm 'nt))
-                    (make-go 's1 '())))
+                    (make-go (make-label-name 's1) '())))
 (check-equal? (compile-action (make-accept '(A)) 's0)
               (list (make-risc-accept '())))

@@ -6,9 +6,9 @@
 (define-ustruct pdarisc (insns))
 
 ;; an Insn is one of
-;;  - (make-assign Symbol Var-Rhs)
+;;  - (make-assign RegName Var-Rhs)
 ;;  - (make-push Pure-Rhs)
-;;  - (make-sem-act [ListOf Symbol] [ListOf [Maybe Symbol]] SExp)
+;;  - (make-sem-act [ListOf RegName] [ListOf [Maybe RegName]] SExp)
 ;;  - (make-drop-token)
 ;;  - (make-get-token)
 ;;  - (make-stack-ensure Natural)
@@ -23,14 +23,14 @@
 (define-ustruct (block insn) (insns))
 
 ;; an Insn* is one of
-;;  - (make-label [ListOf Symbol]
+;;  - (make-label [ListOf LabelName]
 ;;                [ListOf ArgList]
 ;;                [ListOf Insn*-Seq]
 ;;                Insn*-Seq)
 ;;  - (make-block Insn*-Seq)
 ;;
 ;; an Insn*-Seq is a (append [ListOf Insn] (list Insn*))
-;; an ArgList is a [ListOf Symbol]
+;; an ArgList is a [ListOf RegName]
 (define-ustruct insn* ())
 (define-ustruct (label insn*) (ids stack-types token-types
                                    param-lists bodies body))
@@ -38,11 +38,11 @@
 
 
 ;; a Branch is one of
-;;  - (make-accept [ListOf Symbol])
+;;  - (make-accept [ListOf RegName])
 ;;  - (make-if-eos Insn* Insn*)
-;;  - (make-state-case VarRef [ListOf Symbol] [ListOf Insn*-Seq])
-;;  - (make-token-case [ListOf Symbol] [ListOf Insn*-Seq])
-;;  - (make-go Symbol [ListOf Pure-Rhs])
+;;  - (make-state-case RegName [ListOf State] [ListOf Insn*-Seq])
+;;  - (make-token-case [ListOf Token] [ListOf Insn*-Seq])
+;;  - (make-go LabelName [ListOf Pure-Rhs])
 (define-ustruct (branch insn*) ())
 (define-ustruct (accept branch) (vals))
 (define-ustruct (if-eos branch) (cnsq altr))
@@ -57,15 +57,16 @@
 (define-ustruct (pop var-rhs) ())
 
 ;; A Pure-Rhs is one of
-;;  - (make-var-ref Symbol)
+;;  - RegName
 ;;  - (make-state Symbol)
 ;;  - (make-nterm Symbol)
 ;;  - (make-curr-token Natural)
 (define-ustruct (pure-rhs var-rhs) ())
-(define-ustruct (var-ref pure-rhs) (id))
+;; A RegName is a (make-reg-name Symbol)
+(define-ustruct (reg-name pure-rhs) (id))
 (define-ustruct (state pure-rhs) (id))
 (define-ustruct (nterm pure-rhs) (id))
 (define-ustruct (curr-token pure-rhs) (n))
 
-;; A Var is a (make-var Symbol)
-(define-ustruct var (id))
+;; A LabelName is a (make-label-name Symbol)
+(define-ustruct label-name (id))

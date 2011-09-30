@@ -13,13 +13,15 @@
 
   (match i
     (`(:= ,id ,val)
-     (make-assign id (parse-var-rhs val)))
+     (make-assign (make-reg-name id) (parse-var-rhs val)))
     (`(push ,val)
      (make-push (parse-pure-rhs val)))
     (`(semantic-action (,params ...)
                        (,retvars ...)
                        ,action)
-     (make-sem-act params retvars action))
+     (make-sem-act (map make-reg-name params)
+                   (map (lambda (x) (if x (make-reg-name x) x)) retvars)
+                   action))
     ('drop-token
      (make-drop-token))
     ('get-token
@@ -45,24 +47,26 @@
     (`(label ((,ids : ,stack-type ,token-type
                     (,param-list ...) ,label-body ...) ...)
              ,body ...)
-     (make-label ids
+     (make-label (map make-label-name ids)
                  stack-type
                  token-type
-                 param-list
+                 (map (lambda (plist) (map make-reg-name plist)) param-list)
                  (map rs* label-body)
                  (rs* body)))
     (`(block ,insns ...)
      (make-block* (rs* insns)))
-    (`(accept ,vals ...)
-     (make-accept vals))
+    (`(accept ,vars ...)
+     (make-accept (map make-reg-name vars)))
     (`(if-eos ,cnsq ,altr)
      (make-if-eos (r* cnsq) (r* altr)))
-    (`(state-case ,st (,looks . ,cnsqs) ...)
-     (make-state-case st looks (map rs* cnsqs)))
+    (`(state-case ,var (,looks . ,cnsqs) ...)
+     (make-state-case (make-reg-name var)
+                      (map make-state looks)
+                      (map rs* cnsqs)))
     (`(token-case (,looks . ,cnsqs) ...)
      (make-token-case looks (map rs* cnsqs)))
     (`(go ,target ,args ...)
-     (go target (map parse-pure-rhs args)))))
+     (go (make-label-name target) (map parse-pure-rhs args)))))
 
 (define (parse-var-rhs r)
   (match r
@@ -76,8 +80,8 @@
     (`(nterm ,id)
      (make-nterm id))
     ('(current-token)
-     (curr-token #f))
+     (make-curr-token #f))
     (`(current-token ,n)
-     (curr-token n))
+     (make-curr-token n))
     ((? symbol? id)
-     (var-ref id))))
+     (make-reg-name id))))
