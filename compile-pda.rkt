@@ -67,7 +67,7 @@
      (make-block*
       (list
        (make-if-eos
-        (accept '(reject))
+        (make-risc-accept '(reject))
         (make-block*
          (list
           (make-get-token)
@@ -133,6 +133,6 @@
                         (make-push (make-nterm nt))
                         (make-go st '()))))
     ((accept l)
-     (make-block* (list (make-accept '()))))))
+     (make-block* (list (make-risc-accept '()))))))
 
 

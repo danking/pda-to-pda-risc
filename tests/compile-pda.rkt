@@ -49,7 +49,7 @@
          (list (list (make-block*
                       (list
                        (make-if-eos
-                        (accept '(reject))
+                        (make-risc-accept '(reject))
                         (make-block*
                          (list
                           (make-get-token)
@@ -67,7 +67,7 @@
                (list (make-block*
                       (list
                        (make-if-eos
-                        (accept '(reject))
+                        (make-risc-accept '(reject))
                         (make-block*
                          (list
                           (make-get-token)
@@ -157,7 +157,7 @@
               (make-block*
                (list
                 (make-if-eos
-                 (accept '(reject))
+                 (make-risc-accept '(reject))
                  (make-block*
                   (list
                    (make-get-token)
@@ -240,4 +240,4 @@
                                  (make-push (make-nterm 'nt))
                                  (make-go 's1 '()))))
 (check-equal? (compile-action (make-accept '(A)) 's0)
-              (make-block* (list (make-accept '()))))
+              (make-block* (list (make-risc-accept '()))))
