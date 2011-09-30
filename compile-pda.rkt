@@ -72,7 +72,10 @@
          (list
           (make-get-token)
           (make-token-case
-           (map (lambda (x) (first (action-lookahead x)))
+           (map (lambda (x)
+                  (if (empty? (action-lookahead x))
+                      #t
+                      (first (action-lookahead x))))
                 token-actions)
            (map (lambda (x) (compile-action x name))
                 token-actions))))))))))

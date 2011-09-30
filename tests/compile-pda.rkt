@@ -34,7 +34,7 @@
                   (make-state 's1
                               '(())
                               (list (make-shift '(A) 's1)
-                                    (make-reduce '(B) 'r1))
+                                    (make-reduce '() 'r1))
                               (list (make-goto 'nt 's0))))
             (list (make-rule 'r1 '(s : ((A s)))
                              'nt
@@ -72,7 +72,7 @@
                          (list
                           (make-get-token)
                           (make-token-case
-                           '(A B)
+                           '(A #t)
                            (list
                             (make-block*
                              (list (make-push (make-risc-state 's1))
@@ -230,6 +230,9 @@
                                  (make-drop-token)
                                  (make-go 's1 '()))))
 (check-equal? (compile-action (make-reduce '(B) 'r1) 's0)
+              (make-block* (list (make-drop-token)
+                                 (make-go 'r1 '()))))
+(check-equal? (compile-action (make-reduce '() 'r1) 's0)
               (make-block* (list (make-drop-token)
                                  (make-go 'r1 '()))))
 (check-equal? (compile-action (make-goto 'nt 's1) 's0)
