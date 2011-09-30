@@ -112,7 +112,10 @@
                    (list* (make-assign '_ (make-pop))
                           (make-assign '_ (make-pop))
                           xs)))
-             (list (make-assign (first args) (make-pop))
+             (list (make-assign (if (first args)
+                                    (first args)
+                                    '_)
+                                (make-pop))
                    (make-assign 'target (make-pop)))
              (rest args))))
 
