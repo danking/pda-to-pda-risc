@@ -40,7 +40,7 @@
 ;; a Branch is one of
 ;;  - (make-accept [ListOf Symbol])
 ;;  - (make-if-eos Insn* Insn*)
-;;  - (make-state-case Symbol [ListOf Symbol] [ListOf Insn*-Seq])
+;;  - (make-state-case VarRef [ListOf Symbol] [ListOf Insn*-Seq])
 ;;  - (make-token-case [ListOf Symbol] [ListOf Insn*-Seq])
 ;;  - (make-go Symbol [ListOf Pure-Rhs])
 (define-ustruct (branch insn*) ())

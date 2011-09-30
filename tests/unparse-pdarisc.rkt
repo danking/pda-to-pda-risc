@@ -110,7 +110,7 @@
 
 (check-equal? (unparse-pdarisc (make-pdarisc
                               (list (make-state-case
-                                     'what-am-i
+                                     (make-var-ref 'what-am-i)
                                      '(pink blue green)
                                      (list (list (make-go 'pink-stuff '()))
                                            (list (make-drop-token)
