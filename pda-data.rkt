@@ -18,7 +18,7 @@
 ;;                          [ListOf (U Shift
 ;;                                     Reduce
 ;;                                     Accept)]
-;;                          Goto)
+;;                          [ListOf Goto])
 (define-ustruct state (name stack-type non-gotos gotos))
 
 ;; a Rule is a (make-rule Symbol
