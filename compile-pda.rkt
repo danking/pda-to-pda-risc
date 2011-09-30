@@ -122,7 +122,7 @@
   (match a
     ((shift l st)
      (list (make-push (make-risc-state curr-state))
-           (make-push (make-curr-token 0))
+           (make-push (make-curr-token #f))
            (make-drop-token)
            (make-go st '())))
     ((reduce l st)

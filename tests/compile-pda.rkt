@@ -57,7 +57,7 @@
                            '(A B)
                            (list
                             (list (make-push (make-risc-state 's0))
-                                  (make-push (make-curr-token 0))
+                                  (make-push (make-curr-token #f))
                                   (make-drop-token)
                                   (make-go 's1 '()))
                             (list (make-drop-token)
@@ -73,7 +73,7 @@
                            '(A #t)
                            (list
                             (list (make-push (make-risc-state 's1))
-                                  (make-push (make-curr-token 0))
+                                  (make-push (make-curr-token #f))
                                   (make-drop-token)
                                   (make-go 's1 '()))
                             (list (make-drop-token)
@@ -161,7 +161,7 @@
                     '(A B)
                     (list
                      (list (make-push (make-risc-state 's0))
-                           (make-push (make-curr-token 0))
+                           (make-push (make-curr-token #f))
                            (make-drop-token)
                            (make-go 's1 '()))
                      (list (make-drop-token)
@@ -222,7 +222,7 @@
                     (make-push (make-var-ref 'target))))
 (check-equal? (compile-action (make-shift '(A) 's1) 's0)
               (list (make-push (make-risc-state 's0))
-                    (make-push (make-curr-token 0))
+                    (make-push (make-curr-token #f))
                     (make-drop-token)
                     (make-go 's1 '())))
 (check-equal? (compile-action (make-reduce '(B) 'r1) 's0)
