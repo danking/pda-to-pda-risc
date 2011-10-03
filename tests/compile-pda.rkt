@@ -82,14 +82,14 @@
                                   (make-go (make-label-name 'r1) '()))))))))))
                (list (make-block*
                       (list
-                       (make-assign (make-reg-name 'v) (make-pop))
-                       (make-assign (make-reg-name 'target) (make-pop)) ; state
-                       (make-sem-act (list (make-reg-name 'v))
-                                     (list (make-reg-name 'ret-val))
+                       (make-assign (make-named-reg 'v) (make-pop))
+                       (make-assign (make-named-reg 'target) (make-pop)) ; state
+                       (make-sem-act (list (make-named-reg 'v))
+                                     (list (make-named-reg 'ret-val))
                                      'v)
-                       (make-push (make-reg-name 'target))
-                       (make-push (make-reg-name 'ret-val))
-                       (make-state-case (make-reg-name 'target)
+                       (make-push (make-named-reg 'target))
+                       (make-push (make-named-reg 'ret-val))
+                       (make-state-case (make-named-reg 'target)
                                         (list (make-risc-state 's0)
                                               (make-risc-state 's1))
                                         (list
@@ -183,19 +183,19 @@
                             (make-dict 'nt (make-dict 's1 's2
                                                       's2 's0)))
               (make-block*
-               (list (make-assign (make-reg-name 'v2)  (make-pop))
-                     (make-assign (make-reg-name '_)   (make-pop)) ; state
-                     (make-assign (make-reg-name '_)   (make-pop))
-                     (make-assign (make-reg-name '_)   (make-pop)) ; state
-                     (make-assign (make-reg-name 'v1)  (make-pop))
-                     (make-assign (make-reg-name 'target) (make-pop)) ; state
-                     (make-sem-act (list (make-reg-name 'v1)
-                                         (make-reg-name 'v2))
-                                   (list (make-reg-name 'ret-val))
+               (list (make-assign (make-named-reg 'v2)  (make-pop))
+                     (make-assign (make-nameless-reg)   (make-pop)) ; state
+                     (make-assign (make-nameless-reg)   (make-pop))
+                     (make-assign (make-nameless-reg)   (make-pop)) ; state
+                     (make-assign (make-named-reg 'v1)  (make-pop))
+                     (make-assign (make-named-reg 'target) (make-pop)) ; state
+                     (make-sem-act (list (make-named-reg 'v1)
+                                         (make-named-reg 'v2))
+                                   (list (make-named-reg 'ret-val))
                                    '(+ v1 v2))
-                     (make-push (make-reg-name 'target))
-                     (make-push (make-reg-name 'ret-val))
-                     (make-state-case (make-reg-name 'target)
+                     (make-push (make-named-reg 'target))
+                     (make-push (make-named-reg 'ret-val))
+                     (make-state-case (make-named-reg 'target)
                                       (list (make-risc-state 's1)
                                             (make-risc-state 's2))
                                       (list (list (make-go (make-label-name 's2)
@@ -207,14 +207,14 @@
                             (make-dict 'nt (make-dict 's0 's1
                                                       's1 's0)))
               (make-block*
-               (list (make-assign (make-reg-name 'v) (make-pop))
-                     (make-assign (make-reg-name 'target) (make-pop)) ; state
-                     (make-sem-act (list (make-reg-name 'v))
-                                   (list (make-reg-name 'ret-val))
+               (list (make-assign (make-named-reg 'v) (make-pop))
+                     (make-assign (make-named-reg 'target) (make-pop)) ; state
+                     (make-sem-act (list (make-named-reg 'v))
+                                   (list (make-named-reg 'ret-val))
                                    'v)
-                     (make-push (make-reg-name 'target))
-                     (make-push (make-reg-name 'ret-val))
-                     (make-state-case (make-reg-name 'target)
+                     (make-push (make-named-reg 'target))
+                     (make-push (make-named-reg 'ret-val))
+                     (make-state-case (make-named-reg 'target)
                                       (list (make-risc-state 's0)
                                             (make-risc-state 's1))
                                       (list (list (make-go (make-label-name 's1)
@@ -223,22 +223,22 @@
                                                            '())))))))
 
 (check-equal? (compile-rule-args '(v1 #f v2))
-              (list (make-assign (make-reg-name 'v2) (make-pop))
-                    (make-assign (make-reg-name '_)  (make-pop)) ; state
-                    (make-assign (make-reg-name '_)  (make-pop))
-                    (make-assign (make-reg-name '_)  (make-pop)) ; state
-                    (make-assign (make-reg-name 'v1) (make-pop))
-                    (make-assign (make-reg-name 'target) (make-pop))))
+              (list (make-assign (make-named-reg 'v2) (make-pop))
+                    (make-assign (make-nameless-reg)  (make-pop)) ; state
+                    (make-assign (make-nameless-reg)  (make-pop))
+                    (make-assign (make-nameless-reg)  (make-pop)) ; state
+                    (make-assign (make-named-reg 'v1) (make-pop))
+                    (make-assign (make-named-reg 'target) (make-pop))))
 
 (check-equal? (compile-rule-args '(v))
-              (list (make-assign (make-reg-name 'v) (make-pop))
-                    (make-assign (make-reg-name 'target) (make-pop))))
+              (list (make-assign (make-named-reg 'v) (make-pop))
+                    (make-assign (make-named-reg 'target) (make-pop))))
 
 (check-equal? (compile-rule-args '())
-              (list (make-assign (make-reg-name 'v) (make-pop))
-                    (make-assign (make-reg-name 'target) (make-pop))
-                    (make-push (make-reg-name 'v))
-                    (make-push (make-reg-name 'target))))
+              (list (make-assign (make-named-reg 'v) (make-pop))
+                    (make-assign (make-named-reg 'target) (make-pop))
+                    (make-push (make-named-reg 'v))
+                    (make-push (make-named-reg 'target))))
 (check-equal? (compile-action (make-shift '(A) 's1) 's0)
               (list (make-push (make-risc-state 's0))
                     (make-push (make-curr-token #f))

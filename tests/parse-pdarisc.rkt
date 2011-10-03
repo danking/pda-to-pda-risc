@@ -10,15 +10,15 @@
                                (:= pie (current-token))
                                (accept)))
               (make-pdarisc
-               (list (make-assign (make-reg-name 'foo)
+               (list (make-assign (make-named-reg 'foo)
                                   (make-pop))
-                     (make-assign (make-reg-name 'one)
-                                  (make-reg-name 'two))
-                     (make-assign (make-reg-name '我)
+                     (make-assign (make-named-reg 'one)
+                                  (make-named-reg 'two))
+                     (make-assign (make-named-reg '我)
                                   (make-state 'state-1))
-                     (make-assign (make-reg-name 'eat)
+                     (make-assign (make-named-reg 'eat)
                                   (make-nterm 'program))
-                     (make-assign (make-reg-name 'pie)
+                     (make-assign (make-named-reg 'pie)
                                   (make-curr-token #f))
                      (make-accept '()))))
 
@@ -26,7 +26,7 @@
                                (push (state around))
                                (accept)))
               (make-pdarisc
-               (list (make-push (make-reg-name 'me))
+               (list (make-push (make-named-reg 'me))
                      (make-push (make-state 'around))
                      (make-accept '()))))
 
@@ -37,9 +37,9 @@
                                (stack-ensure 3)
                                (accept)))
               (make-pdarisc
-               (list (make-sem-act (list (make-reg-name 'exp)
-                                         (make-reg-name 'exps))
-                                   (list (make-reg-name 'yahoo)
+               (list (make-sem-act (list (make-named-reg 'exp)
+                                         (make-named-reg 'exps))
+                                   (list (make-named-reg 'yahoo)
                                          #f)
                                    '(values (cons exp exps)
                                             'nothin-to-see-here))
@@ -53,7 +53,7 @@
               (make-pdarisc
                (list (make-block
                       (list
-                       (make-assign (make-reg-name 'foo) (make-pop))
+                       (make-assign (make-named-reg 'foo) (make-pop))
                        (make-drop-token)
                        (make-get-token)))
                      (make-accept '()))))
@@ -65,7 +65,7 @@
               (make-pdarisc
                (list (make-block*
                       (list
-                       (make-assign (make-reg-name 'foo) (make-pop))
+                       (make-assign (make-named-reg 'foo) (make-pop))
                        (make-drop-token)
                        (make-get-token)
                        (make-accept '()))))))
@@ -88,12 +88,12 @@
                             (make-label-name 'indirection))
                       '(((STATE foo)) ())
                       '(#f #f)
-                      `((,(make-reg-name 'foo) ,(make-reg-name 'bar)) ())
+                      `((,(make-named-reg 'foo) ,(make-named-reg 'bar)) ())
                       (list (list
-                             (make-assign (make-reg-name 'hiphop)
+                             (make-assign (make-named-reg 'hiphop)
                                           (make-pop))
-                             (make-push (make-reg-name 'foo))
-                             (make-push (make-reg-name 'bar))
+                             (make-push (make-named-reg 'foo))
+                             (make-push (make-named-reg 'bar))
                              (make-accept '()))
                             (list
                              (make-go (make-label-name 'hiphoppop)
@@ -119,7 +119,7 @@
                                            (green (go soylent!)))))
               (make-pdarisc
                (list (make-state-case
-                      (make-reg-name 'what-am-i)
+                      (make-named-reg 'what-am-i)
                       (list (make-state 'pink)
                             (make-state 'blue)
                             (make-state 'green))
@@ -144,11 +144,11 @@
                                   (make-go
                                    (make-label-name 'tiny)
                                    (list
-                                    (make-reg-name 'teeny)
-                                    (make-reg-name 'weeny))))
+                                    (make-named-reg 'teeny)
+                                    (make-named-reg 'weeny))))
                             (list (make-drop-token)
                                   (make-go (make-label-name 'big!) '()))
                             (list (make-assign
-                                   (make-reg-name 'you)
-                                   (make-reg-name 'out))
+                                   (make-named-reg 'you)
+                                   (make-named-reg 'out))
                                   (make-go (make-label-name 'home) '())))))))

@@ -57,16 +57,21 @@
 (define-ustruct (pop var-rhs) ())
 
 ;; A Pure-Rhs is one of
-;;  - RegName
+;;  - Register
 ;;  - (make-state Symbol)
 ;;  - (make-nterm Symbol)
 ;;  - (make-curr-token Natural)
 (define-ustruct (pure-rhs var-rhs) ())
-;; A RegName is a (make-reg-name Symbol)
-(define-ustruct (reg-name pure-rhs) (id))
 (define-ustruct (state pure-rhs) (id))
 (define-ustruct (nterm pure-rhs) (id))
 (define-ustruct (curr-token pure-rhs) (n))
+
+;; A Register is either
+;;  - a (make-named-reg Symbol), or
+;;  - a (make-nameless-reg)
+(define-ustruct (register pure-rhs) ())
+(define-ustruct (named-reg register) (id))
+(define-ustruct (nameless-reg register) ())
 
 ;; A LabelName is a (make-label-name Symbol)
 (define-ustruct label-name (id))

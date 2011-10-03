@@ -10,12 +10,12 @@
 (define (unparse-insn i)
   (match i
     ((assign id val)
-     `(:= ,(unparse-reg-name id) ,(unparse-var-rhs val)))
+     `(:= ,(unparse-register id) ,(unparse-var-rhs val)))
     ((push val)
      `(push ,(unparse-pure-rhs val)))
     ((sem-act params retvars action)
-     `(semantic-action ,(map unparse-reg-name params)
-                       ,(map unparse-maybe-reg-name retvars)
+     `(semantic-action ,(map unparse-register params)
+                       ,(map unparse-maybe-register retvars)
                        ,action))
     ((drop-token)
      'drop-token)
@@ -36,11 +36,11 @@
    ((block* insns)
     `(block . ,(up-seq* insns)))
    ((accept vars)
-    `(accept . ,(map unparse-reg-name vars)))
+    `(accept . ,(map unparse-register vars)))
    ((if-eos cnsq altr)
     `(if-eos ,(unparse-insn* cnsq) ,(unparse-insn* altr)))
    ((state-case var looks cnsqs)
-    `(state-case ,(unparse-reg-name var)
+    `(state-case ,(unparse-register var)
                  . ,(map (lambda (look cnsq)
                            (cons (strip-state look)
                                  (up-seq* cnsq)))
@@ -66,8 +66,8 @@
 
 (define (unparse-pure-rhs r)
   (match r
-   ((reg-name id)
-    (unparse-reg-name r))
+   ((register)
+    (unparse-register r))
    ((state id)
     (unparse-state r))
    ((nterm id)
@@ -77,14 +77,15 @@
    ((curr-token n)
     `(current-token ,n))))
 
-(define (unparse-reg-name r)
+(define (unparse-register r)
   (match r
-    ((reg-name id) id)))
+    ((named-reg id) id)
+    ((nameless-reg) '<nameless-register>)))
 
-(define (unparse-maybe-reg-name r)
+(define (unparse-maybe-register r)
   (match r
-    ((reg-name id) id)
-    (#f #f)))
+    (#f #f)
+    (_ (unparse-register r))))
 
 (define (unparse-state s)
   (match s
@@ -101,7 +102,7 @@
 (define (unparse-label-clauses ids stack-types token-types param-lists rhses)
   (map (lambda (id stack-type token-type param rhs)
          `(,(unparse-label-name id) : ,stack-type ,token-type
-                                      ,(map unparse-reg-name param)
+                                      ,(map unparse-register param)
                                       . ,(unparse-insn-seq* rhs)))
        ids
        stack-types
