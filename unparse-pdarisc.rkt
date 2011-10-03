@@ -97,6 +97,8 @@
 
 (define (unparse-label-name l)
   (match l
+    ((label-polynym id extra-id)
+     (symbol-append id '- extra-id))
     ((label-name id) id)))
 
 (define (unparse-label-clauses ids stack-types token-types param-lists rhses)
@@ -109,3 +111,8 @@
        token-types
        param-lists
        rhses))
+
+(define-syntax symbol-append
+  (syntax-rules ()
+    [(_ sym ...)
+     (string->symbol (string-append (symbol->string sym) ...))]))

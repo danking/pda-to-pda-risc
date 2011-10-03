@@ -95,8 +95,10 @@
           ,(make-state-case (make-named-reg 'target)
                             (map make-risc-state (dict-keys rto-states))
                             (map (lambda (target)
-                                   (list (make-go (make-label-name target)
-                                                  '())))
+                                   (list (make-go
+                                          (make-label-polynym target
+                                                              'have-token)
+                                          '())))
                                  (dict-values rto-states)))))))))
 
 
@@ -130,14 +132,13 @@
      (list (make-push (make-risc-state curr-state))
            (make-push (make-curr-token #f))
            (make-drop-token)
-           (make-go (make-label-name st) '())))
+           (make-go (make-label-polynym st 'unknown) '())))
     ((reduce l st)
-     (list (make-drop-token)
-           (make-go (make-label-name st) '())))
+     (list (make-go (make-label-polynym st 'have-token) '())))
     ((goto nt st)
      (list (make-push (make-risc-state curr-state))
            (make-push (make-nterm nt))
-           (make-go (make-label-name st) '())))
+           (make-go (make-label-polynym st 'have-token) '())))
     ((accept l)
      (list (make-risc-accept '())))))
 

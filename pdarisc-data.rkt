@@ -73,5 +73,8 @@
 (define-ustruct (named-reg register) (id))
 (define-ustruct (nameless-reg register) ())
 
-;; A LabelName is a (make-label-name Symbol)
+;; A LabelName is either
+;;  - a (make-label-name Symbol), or
+;;  - a (make-label-polynym Symbol Symbol)
 (define-ustruct label-name (id))
+(define-ustruct (label-polynym label-name) (extra-id))

@@ -61,9 +61,12 @@
                             (list (make-push (make-risc-state 's0))
                                   (make-push (make-curr-token #f))
                                   (make-drop-token)
-                                  (make-go (make-label-name 's1) '()))
-                            (list (make-drop-token)
-                                  (make-go (make-label-name 'r1) '()))))))))))
+                                  (make-go (make-label-polynym 's1
+                                                               'unknown)
+                                           '()))
+                            (list (make-go (make-label-polynym 'r1
+                                                               'have-token)
+                                           '()))))))))))
                (list (make-block*
                       (list
                        (make-if-eos
@@ -77,9 +80,12 @@
                             (list (make-push (make-risc-state 's1))
                                   (make-push (make-curr-token #f))
                                   (make-drop-token)
-                                  (make-go (make-label-name 's1) '()))
-                            (list (make-drop-token)
-                                  (make-go (make-label-name 'r1) '()))))))))))
+                                  (make-go (make-label-polynym 's1
+                                                               'unknown)
+                                           '()))
+                            (list (make-go (make-label-polynym 'r1
+                                                               'have-token)
+                                           '()))))))))))
                (list (make-block*
                       (list
                        (make-assign (make-named-reg 'v) (make-pop))
@@ -93,10 +99,16 @@
                                         (list (make-risc-state 's0)
                                               (make-risc-state 's1))
                                         (list
-                                         (list (make-go (make-label-name 's1)
-                                                        '()))
-                                         (list (make-go (make-label-name 's0)
-                                                        '()))))))))
+                                         (list
+                                          (make-go
+                                           (make-label-polynym 's1
+                                                               'have-token)
+                                           '()))
+                                         (list
+                                          (make-go
+                                           (make-label-polynym 's0
+                                                               'have-token)
+                                           '()))))))))
          (list (make-go (make-label-name 's0) '()))))))
 
 
@@ -171,9 +183,12 @@
                      (list (make-push (make-risc-state 's0))
                            (make-push (make-curr-token #f))
                            (make-drop-token)
-                           (make-go (make-label-name 's1) '()))
-                     (list (make-drop-token)
-                           (make-go (make-label-name 'r1) '()))))))))))
+                           (make-go (make-label-polynym 's1
+                                                        'unknown)
+                                    '()))
+                     (list (make-go (make-label-polynym 'r1
+                                                        'have-token)
+                                    '()))))))))))
 
 (check-equal? (compile-rule (make-rule 'r1
                                        '((int plus int))
@@ -198,10 +213,17 @@
                      (make-state-case (make-named-reg 'target)
                                       (list (make-risc-state 's1)
                                             (make-risc-state 's2))
-                                      (list (list (make-go (make-label-name 's2)
-                                                           '()))
-                                            (list (make-go (make-label-name 's0)
-                                                           '())))))))
+                                      (list
+                                       (list
+                                        (make-go
+                                         (make-label-polynym 's2
+                                                             'have-token)
+                                         '()))
+                                       (list
+                                        (make-go
+                                         (make-label-polynym 's0
+                                                             'have-token)
+                                         '())))))))
 
 (check-equal? (compile-rule (make-rule 'r1 '(s : ((A s))) 'nt '(v) 'v)
                             (make-dict 'nt (make-dict 's0 's1
@@ -217,10 +239,17 @@
                      (make-state-case (make-named-reg 'target)
                                       (list (make-risc-state 's0)
                                             (make-risc-state 's1))
-                                      (list (list (make-go (make-label-name 's1)
-                                                           '()))
-                                            (list (make-go (make-label-name 's0)
-                                                           '())))))))
+                                      (list
+                                       (list
+                                        (make-go
+                                         (make-label-polynym 's1
+                                                             'have-token)
+                                         '()))
+                                       (list
+                                        (make-go
+                                         (make-label-polynym 's0
+                                                             'have-token)
+                                         '())))))))
 
 (check-equal? (compile-rule-args '(v1 #f v2))
               (list (make-assign (make-named-reg 'v2) (make-pop))
@@ -243,16 +272,14 @@
               (list (make-push (make-risc-state 's0))
                     (make-push (make-curr-token #f))
                     (make-drop-token)
-                    (make-go (make-label-name 's1) '())))
+                    (make-go (make-label-polynym 's1 'unknown) '())))
 (check-equal? (compile-action (make-reduce '(B) 'r1) 's0)
-              (list (make-drop-token)
-                    (make-go (make-label-name 'r1) '())))
+              (list (make-go (make-label-polynym 'r1 'have-token) '())))
 (check-equal? (compile-action (make-reduce '() 'r1) 's0)
-              (list (make-drop-token)
-                    (make-go (make-label-name 'r1) '())))
+              (list (make-go (make-label-polynym 'r1 'have-token) '())))
 (check-equal? (compile-action (make-goto 'nt 's1) 's0)
               (list (make-push (make-risc-state 's0))
                     (make-push (make-nterm 'nt))
-                    (make-go (make-label-name 's1) '())))
+                    (make-go (make-label-polynym 's1 'have-token) '())))
 (check-equal? (compile-action (make-accept '(A)) 's0)
               (list (make-risc-accept '())))
