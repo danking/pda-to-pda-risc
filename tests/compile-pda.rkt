@@ -51,7 +51,7 @@
          (list (list (make-block*
                       (list
                        (make-if-eos
-                        (make-risc-accept '(reject))
+                        (make-risc-accept (list (make-named-reg 'reject)))
                         (make-block*
                          (list
                           (make-get-token)
@@ -70,7 +70,7 @@
                (list (make-block*
                       (list
                        (make-if-eos
-                        (make-risc-accept '(reject))
+                        (make-risc-accept (list (make-named-reg 'reject)))
                         (make-block*
                          (list
                           (make-get-token)
@@ -173,7 +173,7 @@
               (make-block*
                (list
                 (make-if-eos
-                 (make-risc-accept '(reject))
+                 (make-risc-accept (list (make-named-reg 'reject)))
                  (make-block*
                   (list
                    (make-get-token)
