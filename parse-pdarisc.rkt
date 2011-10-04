@@ -16,10 +16,12 @@
      (make-assign (make-named-reg id) (parse-var-rhs val)))
     (`(push ,val)
      (make-push (parse-pure-rhs val)))
-    (`(semantic-action (,params ...)
+    (`(semantic-action ,name
+                       (,params ...)
                        (,retvars ...)
                        ,action)
-     (make-sem-act (map make-named-reg params)
+     (make-sem-act name
+                   (map make-named-reg params)
                    (map (lambda (x) (if x (make-named-reg x) x)) retvars)
                    action))
     ('drop-token

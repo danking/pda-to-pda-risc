@@ -111,7 +111,8 @@
                       (list
                        (make-assign (make-named-reg 'v) (make-pop))
                        (make-assign (make-named-reg 'target) (make-pop)) ; state
-                       (make-sem-act (list (make-named-reg 'v))
+                       (make-sem-act 'r1
+                                     (list (make-named-reg 'v))
                                      (list (make-named-reg 'ret-val))
                                      'v)
                        (make-push (make-named-reg 'target))
@@ -134,7 +135,8 @@
                       (list
                        (make-assign (make-named-reg 'v) (make-pop))
                        (make-assign (make-named-reg 'target) (make-pop)) ; state
-                       (make-sem-act (list (make-named-reg 'v))
+                       (make-sem-act 'r1
+                                     (list (make-named-reg 'v))
                                      (list (make-named-reg 'ret-val))
                                      'v)
                        (make-push (make-named-reg 'target))
@@ -306,7 +308,8 @@
                      (make-assign (make-nameless-reg)   (make-pop)) ; state
                      (make-assign (make-named-reg 'v1)  (make-pop))
                      (make-assign (make-named-reg 'target) (make-pop)) ; state
-                     (make-sem-act (list (make-named-reg 'v1)
+                     (make-sem-act 'r1
+                                   (list (make-named-reg 'v1)
                                          (make-named-reg 'v2))
                                    (list (make-named-reg 'ret-val))
                                    '(+ v1 v2))
@@ -342,7 +345,8 @@
                      (make-assign (make-nameless-reg)   (make-pop)) ; state
                      (make-assign (make-named-reg 'v1)  (make-pop))
                      (make-assign (make-named-reg 'target) (make-pop)) ; state
-                     (make-sem-act (list (make-named-reg 'v1)
+                     (make-sem-act 'r1
+                                   (list (make-named-reg 'v1)
                                          (make-named-reg 'v2))
                                    (list (make-named-reg 'ret-val))
                                    '(+ v1 v2))
@@ -370,7 +374,8 @@
               (make-block*
                (list (make-assign (make-named-reg 'v) (make-pop))
                      (make-assign (make-named-reg 'target) (make-pop)) ; state
-                     (make-sem-act (list (make-named-reg 'v))
+                     (make-sem-act 'r1
+                                   (list (make-named-reg 'v))
                                    (list (make-named-reg 'ret-val))
                                    'v)
                      (make-push (make-named-reg 'target))
@@ -397,7 +402,8 @@
               (make-block*
                (list (make-assign (make-named-reg 'v) (make-pop))
                      (make-assign (make-named-reg 'target) (make-pop)) ; state
-                     (make-sem-act (list (make-named-reg 'v))
+                     (make-sem-act 'r1
+                                   (list (make-named-reg 'v))
                                    (list (make-named-reg 'ret-val))
                                    'v)
                      (make-push (make-named-reg 'target))
@@ -424,7 +430,8 @@
               (make-block*
                (list (make-assign (make-named-reg 'v) (make-pop))
                      (make-assign (make-named-reg 'target) (make-pop)) ; state
-                     (make-sem-act (list (make-named-reg 'v))
+                     (make-sem-act 'r1
+                                   (list (make-named-reg 'v))
                                    (list (make-named-reg 'ret-val))
                                    'v)
                      (make-push (make-named-reg 'target))

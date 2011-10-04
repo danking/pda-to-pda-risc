@@ -30,14 +30,16 @@
                      (make-push (make-state 'around))
                      (make-accept '()))))
 
-(check-equal? (parse-pdarisc '((semantic-action (exp exps)
+(check-equal? (parse-pdarisc '((semantic-action sem-act-name
+                                                (exp exps)
                                                 (yahoo #f)
                                                 (values (cons exp exps)
                                                         'nothin-to-see-here))
                                (stack-ensure 3)
                                (accept)))
               (make-pdarisc
-               (list (make-sem-act (list (make-named-reg 'exp)
+               (list (make-sem-act 'sem-act-name
+                                   (list (make-named-reg 'exp)
                                          (make-named-reg 'exps))
                                    (list (make-named-reg 'yahoo)
                                          #f)

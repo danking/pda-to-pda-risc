@@ -8,7 +8,7 @@
 ;; an Insn is one of
 ;;  - (make-assign RegName Var-Rhs)
 ;;  - (make-push Pure-Rhs)
-;;  - (make-sem-act [ListOf RegName] [ListOf [Maybe RegName]] SExp)
+;;  - (make-sem-act Symbol [ListOf RegName] [ListOf [Maybe RegName]] SExp)
 ;;  - (make-drop-token)
 ;;  - (make-get-token)
 ;;  - (make-stack-ensure Natural)
@@ -16,7 +16,7 @@
 (define-ustruct insn ())
 (define-ustruct (assign insn) (id val))
 (define-ustruct (push insn) (val))
-(define-ustruct (sem-act insn) (params retvars action))
+(define-ustruct (sem-act insn) (name params retvars action))
 (define-ustruct (drop-token insn) ())
 (define-ustruct (get-token insn) ())
 (define-ustruct (stack-ensure insn) (hdrm))

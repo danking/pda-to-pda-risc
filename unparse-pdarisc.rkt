@@ -13,8 +13,9 @@
      `(:= ,(unparse-register id) ,(unparse-var-rhs val)))
     ((push val)
      `(push ,(unparse-pure-rhs val)))
-    ((sem-act params retvars action)
-     `(semantic-action ,(map unparse-register params)
+    ((sem-act name params retvars action)
+     `(semantic-action ,name
+                       ,(map unparse-register params)
                        ,(map unparse-maybe-register retvars)
                        ,action))
     ((drop-token)

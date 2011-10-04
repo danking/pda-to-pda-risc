@@ -41,7 +41,8 @@
 
 (check-equal? (unparse-pdarisc (make-pdarisc
                                 (list
-                                 (make-sem-act (list (make-named-reg 'exp)
+                                 (make-sem-act 'sem-act-name
+                                               (list (make-named-reg 'exp)
                                                      (make-named-reg 'exps))
                                                (list (make-named-reg 'yahoo)
                                                      #f)
@@ -49,7 +50,8 @@
                                                         'nothin-to-see-here))
                                  (make-stack-ensure 3)
                                  (make-accept '()))))
-              '((semantic-action (exp exps)
+              '((semantic-action sem-act-name
+                                 (exp exps)
                                  (yahoo #f)
                                  (values (cons exp exps)
                                          'nothin-to-see-here))

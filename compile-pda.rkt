@@ -138,7 +138,8 @@
      (let ((rto-states (dict-ref rto-table nt)))
        (make-block*
         `(,@(compile-rule-args args)
-          ,(make-sem-act (map make-named-reg (filter (lambda (x) x) args))
+          ,(make-sem-act name
+                         (map make-named-reg (filter (lambda (x) x) args))
                          (list (make-named-reg 'ret-val))
                          sem-act)
           ,(make-push (make-named-reg 'target))
