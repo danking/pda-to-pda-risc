@@ -81,6 +81,8 @@
           (make-go (make-label-polynym name 'have-token) '())))))))))
 
 ;; compile-have-token-state : State -> Insn*
+;; produces an insn* that encapsulates the behavior of the given PDA state when
+;; the PDA-RISC has a token from the stream.
 (define (compile-have-token-state st)
   (match st
     ((state name stype token-actions gotos)
