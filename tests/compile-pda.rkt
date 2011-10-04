@@ -20,7 +20,8 @@
                              compile-rule
                              compile-rule-args
                              compile-action
-                             make-dict))
+                             make-dict
+                             action-has-no-lookahead?))
 
 (check-equal?
  (compile-pda
@@ -287,6 +288,7 @@
                     (make-assign (make-named-reg 'target) (make-pop))
                     (make-push (make-named-reg 'v))
                     (make-push (make-named-reg 'target))))
+
 (check-equal? (compile-action (make-shift '(A) 's1) 's0)
               (list (make-push (make-risc-state 's0))
                     (make-push (make-curr-token #f))
@@ -302,3 +304,12 @@
                     (make-go (make-label-polynym 's1 'have-token) '())))
 (check-equal? (compile-action (make-accept '(A)) 's0)
               (list (make-risc-accept '())))
+
+(check-equal? (action-has-no-lookahead? (make-accept '(A))) #f)
+(check-equal? (action-has-no-lookahead? (make-accept '())) #t)
+(check-equal? (action-has-no-lookahead? (make-goto '(A) 's0)) #f)
+(check-equal? (action-has-no-lookahead? (make-goto '() 's0)) #t)
+(check-equal? (action-has-no-lookahead? (make-reduce '(A) 'r1)) #f)
+(check-equal? (action-has-no-lookahead? (make-reduce '() 'r1)) #t)
+(check-equal? (action-has-no-lookahead? (make-shift '(A) 's0)) #f)
+(check-equal? (action-has-no-lookahead? (make-shift '() 's0)) #t)

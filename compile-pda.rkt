@@ -156,3 +156,9 @@
            (make-go (make-label-polynym st 'have-token) '())))
     ((accept l)
      (list (make-risc-accept '())))))
+
+;; action-has-no-lookahead? : Action -> Boolean
+;; determines if the given action has no lookahead, i.e. the action can be taken
+;; when the stream is at EOS
+(define (action-has-no-lookahead? act)
+  (empty? (action-lookahead act)))
