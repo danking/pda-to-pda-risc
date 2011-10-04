@@ -31,19 +31,40 @@
                               (make-label-polynym (state-name s)
                                                   'have-token))
                             states)
-                       (map (compose make-label-name rule-name)  rules))
+                       (map (lambda (s)
+                              (make-label-polynym (state-name s)
+                                                  'eos))
+                            states)
+                       (map (compose make-label-name rule-name) rules)
+                       (map (lambda (r)
+                              (make-label-polynym (rule-name r)
+                                                  'eos))
+                            rules))
                (append (map state-stack-type states)
                        (map state-stack-type states)
+                       (map state-stack-type states)
+                       (map rule-stack-type  rules)
                        (map rule-stack-type  rules))
                (append (map (lambda (x) #f) states) ; current-token type
                        (map (lambda (x) #f) states)
+                       (map (lambda (x) #f) states)
+                       (map (lambda (x) #f) rules)
                        (map (lambda (x) #f) rules))
                (append (map (lambda (x) '()) states) ; label arguments
                        (map (lambda (x) '()) states)
+                       (map (lambda (x) '()) states)
+                       (map (lambda (x) '()) rules)
                        (map (lambda (x) '()) rules))
                (append (map (compose list compile-state) states)
                        (map (compose list compile-have-token-state) states)
-                       (map (lambda (x) (list (compile-rule x rto-table)))
+                       (map (compose list compile-eos-state) states)
+                       (map (lambda (x) (list (compile-rule x
+                                                            'have-token
+                                                            rto-table)))
+                            rules)
+                       (map (lambda (x) (list (compile-rule x
+                                                            'eos
+                                                            rto-table)))
                             rules))
                (list (make-go (make-label-name start) '())))))))))
 
@@ -74,7 +95,7 @@
      (make-block*
       (list
        (make-if-eos
-        (make-risc-accept (list (make-named-reg 'reject)))
+        (make-go (make-label-polynym name 'eos) '())
         (make-block*
          (list
           (make-get-token)
@@ -94,11 +115,24 @@
                    #t
                    (first (action-lookahead x))))
              token-actions)
-        (map (lambda (x) (compile-action x name))
+        (map (lambda (x) (compile-non-eos-action x name))
              token-actions)))))))
 
-;; compile-rule : Rule Reduce-To-Table -> Insn*
-(define (compile-rule r rto-table)
+;; compile-eos-state : State -> Insn*
+;; produces an insn* that encapsulates the behavior of the given PDA state when
+;; the stream is empty.
+(define (compile-eos-state st)
+  (match st
+    ((state name stype token-actions gotos)
+     (make-block*
+      (maybe-compile-eos-action (filter action-has-no-lookahead?
+                                        token-actions)
+                                name)))))
+
+;; compile-rule : Rule Symbol Reduce-To-Table -> Insn*
+;; Produces an insn* which encapsulates the behavior of the given rule, assuming
+;; the stream is in the given state.
+(define (compile-rule r stream-state rto-table)
   (match r
     ((rule name stype nt args sem-act)
      (let ((rto-states (dict-ref rto-table nt)))
@@ -114,10 +148,9 @@
                             (map (lambda (target)
                                    (list (make-go
                                           (make-label-polynym target
-                                                              'have-token)
+                                                              stream-state)
                                           '())))
                                  (dict-values rto-states)))))))))
-
 
 ;; compile-rule-args : [ListOf Symbol] -> [ListOf Insn]
 (define (compile-rule-args args)
@@ -142,22 +175,52 @@
              (rest args))))
 
 
-;; compile-action : Action Symbol -> [ListOf Insn*]
-(define (compile-action a curr-state)
+;; compile-eos-action : Action Symbol -> [ListOf Insn*]
+(define (compile-eos-action a curr-state)
+  (compile-action a curr-state #t))
+
+;; compile-non-eos-action : Action Symbol -> [ListOf Insn*]
+(define (compile-non-eos-action a curr-state)
+  (compile-action a curr-state #f))
+
+;; compile-action : Action Symbol Boolean -> [ListOf Insn*]
+;; If eos? is true, make all go branches branch to EOS states; otherwise,
+;; assume these actions are called from the have-token state and branch
+;; to the appropriate labels.
+(define (compile-action a curr-state eos?)
   (match a
     ((shift l st)
      (list (make-push (make-risc-state curr-state))
            (make-push (make-curr-token #f))
            (make-drop-token)
-           (make-go (make-label-polynym st 'unknown) '())))
+           (make-go (make-label-polynym
+                     st
+                     (if eos?
+                         (error 'compile-action
+                                "cannot compile a shift as an eos action")
+                         'unknown))
+                    '())))
     ((reduce l st)
-     (list (make-go (make-label-polynym st 'have-token) '())))
+     (list (make-go (make-label-polynym st (if eos?
+                                               'eos
+                                               'have-token)) '())))
     ((goto nt st)
      (list (make-push (make-risc-state curr-state))
            (make-push (make-nterm nt))
-           (make-go (make-label-polynym st 'have-token) '())))
+           (make-go (make-label-polynym st (if eos?
+                                               'eos
+                                               'have-token)) '())))
     ((accept l)
      (list (make-risc-accept '())))))
+
+;; maybe-compile-action : [ListOf Action] -> [ListOf Insn*]
+;; This first checks if the list of actions is empty, if not it compiles
+;; the first action, as an eos action, and returns it. If the list of actions
+;; is empty, it returns a error-halt state.
+(define (maybe-compile-eos-action actions curr-state)
+  (if (empty? actions)
+      (list (make-risc-accept (list (make-named-reg 'reject))))
+      (compile-eos-action (first actions) curr-state)))
 
 ;; action-has-no-lookahead? : Action -> Boolean
 ;; determines if the given action has no lookahead, i.e. the action can be taken
