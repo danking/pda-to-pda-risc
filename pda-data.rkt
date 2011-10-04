@@ -29,7 +29,7 @@
 (define-ustruct rule (name stack-type nt bindings sem-act))
 
 
-;; an Action is a (make-action Symbol)
+;; an Action is a (make-action [ListOf Symbol])
 (define-ustruct action (lookahead))
 ;; a TAction is a (make-taction Symbol Symbol)
 (define-ustruct (taction action) (target))
