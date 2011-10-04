@@ -27,14 +27,22 @@
        (make-pdarisc
         (list (make-label
                (append (map (compose make-label-name state-name) states)
+                       (map (lambda (s)
+                              (make-label-polynym (state-name s)
+                                                  'have-token))
+                            states)
                        (map (compose make-label-name rule-name)  rules))
                (append (map state-stack-type states)
+                       (map state-stack-type states)
                        (map rule-stack-type  rules))
-               (append (map (lambda (x) #f) states)
+               (append (map (lambda (x) #f) states) ; current-token type
+                       (map (lambda (x) #f) states)
                        (map (lambda (x) #f) rules))
-               (append (map (lambda (x) '()) states)
+               (append (map (lambda (x) '()) states) ; label arguments
+                       (map (lambda (x) '()) states)
                        (map (lambda (x) '()) rules))
                (append (map (compose list compile-state) states)
+                       (map (compose list compile-have-token-state) states)
                        (map (lambda (x) (list (compile-rule x rto-table)))
                             rules))
                (list (make-go (make-label-name start) '())))))))))
@@ -66,19 +74,26 @@
      (make-block*
       (list
        (make-if-eos
-        (make-risc-accept '(reject))
+        (make-risc-accept (list (make-named-reg 'reject)))
         (make-block*
          (list
           (make-get-token)
-          (make-token-case
-           (map (lambda (x)
-                  (if (empty? (action-lookahead x))
-                      #t
-                      (first (action-lookahead x))))
-                token-actions)
-           (map (lambda (x) (compile-action x name))
-                token-actions))))))))))
+          (make-go (make-label-polynym name 'have-token) '())))))))))
 
+;; compile-have-token-state : State -> Insn*
+(define (compile-have-token-state st)
+  (match st
+    ((state name stype token-actions gotos)
+     (make-block*
+      (list
+       (make-token-case
+        (map (lambda (x)
+               (if (empty? (action-lookahead x))
+                   #t
+                   (first (action-lookahead x))))
+             token-actions)
+        (map (lambda (x) (compile-action x name))
+             token-actions)))))))
 
 ;; compile-rule : Rule Reduce-To-Table -> Insn*
 (define (compile-rule r rto-table)
@@ -141,5 +156,3 @@
            (make-go (make-label-polynym st 'have-token) '())))
     ((accept l)
      (list (make-risc-accept '())))))
-
-
