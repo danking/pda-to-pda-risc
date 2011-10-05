@@ -60,7 +60,7 @@
 ;;  - Register
 ;;  - (make-state Symbol)
 ;;  - (make-nterm Symbol)
-;;  - (make-curr-token Natural)
+;;  - (make-curr-token [Maybe Natural])
 (define-ustruct (pure-rhs var-rhs) ())
 (define-ustruct (state pure-rhs) (id))
 (define-ustruct (nterm pure-rhs) (id))
