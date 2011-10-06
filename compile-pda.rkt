@@ -191,16 +191,15 @@
 (define (compile-action a curr-state eos?)
   (match a
     ((shift l st)
-     (list (make-push (make-risc-state curr-state))
-           (make-push (make-curr-token #f))
-           (make-drop-token)
-           (make-go (make-label-polynym
-                     st
-                     (if eos?
-                         (error 'compile-action
-                                "cannot compile a shift as an eos action")
-                         'unknown))
-                    '())))
+     (if eos?
+         (error 'compile-action
+                "cannot compile a shift as an eos action")
+
+         (list (make-push (make-risc-state curr-state))
+               (make-push (make-curr-token #f))
+               (make-drop-token)
+               (make-go (make-label-name st)
+                        '()))))
     ((reduce l st)
      (list (make-go (make-label-polynym st (if eos?
                                                'eos
