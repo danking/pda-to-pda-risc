@@ -107,7 +107,11 @@
          in tr regs stack)))
     ((list (accept regs))
      `(lambda (in tr regs stack)
-        ,(cons 'list (map (lambda (x) (cref x 'regs)) regs))))))
+        ,(cons 'list (map (lambda (x) (cref x 'regs)) regs))))
+    ((list (reject))
+     `(lambda (in tr regs stack)
+        (format "no match in: ~a tr: ~a regs: ~a stack: ~a"
+                in tr regs stack)))))
 
 (define (compile-label-name label)
   (match label
