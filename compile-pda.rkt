@@ -26,7 +26,10 @@
      (let ((rto-table (gather-rto-table states)))
        (make-pdarisc
         (list (make-label
-               (append (map (compose make-label-name state-name) states)
+               (append (map (lambda (s)
+                              (make-label-polynym (state-name s)
+                                                  'unknown))
+                            states)
                        (map (lambda (s)
                               (make-label-polynym (state-name s)
                                                   'have-token))
@@ -35,7 +38,10 @@
                               (make-label-polynym (state-name s)
                                                   'eos))
                             states)
-                       (map (compose make-label-name rule-name) rules)
+                       (map (lambda (r)
+                              (make-label-polynym (rule-name r)
+                                                  'have-token))
+                            rules)
                        (map (lambda (r)
                               (make-label-polynym (rule-name r)
                                                   'eos))
@@ -66,7 +72,7 @@
                                                             'eos
                                                             rto-table)))
                             rules))
-               (list (make-go (make-label-name start) '())))))))))
+               (list (make-go (make-label-polynym start 'unknown) '())))))))))
 
 ;; gather-rto-table : [ListOf State] -> Reduce-To-Table
 (define (gather-rto-table states)
@@ -198,7 +204,7 @@
          (list (make-push (make-risc-state curr-state))
                (make-push (make-curr-token #f))
                (make-drop-token)
-               (make-go (make-label-name st)
+               (make-go (make-label-polynym st 'unknown)
                         '()))))
     ((reduce l st)
      (list (make-go (make-label-polynym st (if eos?

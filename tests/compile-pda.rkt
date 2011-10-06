@@ -45,13 +45,13 @@
                              'v))))
  (make-pdarisc
   (list (make-label
-         (list (make-label-name 's0)
-               (make-label-name 's1)
+         (list (make-label-polynym 's0 'unknown)
+               (make-label-polynym 's1 'unknown)
                (make-label-polynym 's0 'have-token)
                (make-label-polynym 's1 'have-token)
                (make-label-polynym 's0 'eos)
                (make-label-polynym 's1 'eos)
-               (make-label-name 'r1)
+               (make-label-polynym 'r1 'have-token)
                (make-label-polynym 'r1 'eos))
          '((()) (()) (()) (()) (()) (()) (s : ((A s))) (s : ((A s)))) ; stacks
          '(#f #f #f #f #f #f #f #f) ; token-regs
@@ -81,7 +81,7 @@
                               (list (make-push (make-risc-state 's0))
                                     (make-push (make-curr-token #f))
                                     (make-drop-token)
-                                    (make-go (make-label-name 's1)
+                                    (make-go (make-label-polynym 's1 'unknown)
                                              '()))
                               (list (make-go (make-label-polynym 'r1
                                                                  'have-token)
@@ -93,7 +93,7 @@
                             (list (make-push (make-risc-state 's1))
                                   (make-push (make-curr-token #f))
                                   (make-drop-token)
-                                  (make-go (make-label-name 's1)
+                                  (make-go (make-label-polynym 's1 'unknown)
                                            '()))
                             (list (make-go (make-label-polynym 'r1
                                                                'have-token)
@@ -153,7 +153,7 @@
                                            (make-label-polynym 's0
                                                                'eos)
                                            '()))))))))
-         (list (make-go (make-label-name 's0) '()))))))
+         (list (make-go (make-label-polynym 's0 'unknown) '()))))))
 
 
 
@@ -237,7 +237,7 @@
                   (list (make-push (make-risc-state 's0))
                         (make-push (make-curr-token #f))
                         (make-drop-token)
-                        (make-go (make-label-name 's1)
+                        (make-go (make-label-polynym 's1 'unknown)
                                  '()))
                   (list (make-go (make-label-polynym 'r1
                                                      'have-token)
@@ -257,7 +257,7 @@
                   (list (make-push (make-risc-state 's1))
                         (make-push (make-curr-token #f))
                         (make-drop-token)
-                        (make-go (make-label-name 's1)
+                        (make-go (make-label-polynym 's1 'unknown)
                                  '()))
                   (list (make-go (make-label-polynym 'r1
                                                      'have-token)
@@ -469,7 +469,7 @@
               (list (make-push (make-risc-state 's0))
                     (make-push (make-curr-token #f))
                     (make-drop-token)
-                    (make-go (make-label-name 's1) '())))
+                    (make-go (make-label-polynym 's1 'unknown) '())))
 (check-equal? (compile-action (make-reduce '(B) 'r1) 's0 #f)
               (list (make-go (make-label-polynym 'r1 'have-token) '())))
 (check-equal? (compile-action (make-reduce '() 'r1) 's0 #f)
