@@ -19,6 +19,7 @@
           :
           ,(state-stack-type state)
           ,@(map unparse-non-goto (state-non-gotos state))
+          ,@(map unparse-non-goto (state-eos-actions state))
           .
           ,(map unparse-goto (state-gotos state))))
 
