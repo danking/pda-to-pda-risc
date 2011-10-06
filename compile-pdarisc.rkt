@@ -86,7 +86,7 @@
         (case (state-id ,(cref reg 'regs))
           .
           ,(map (lambda (gaurd cnsq)
-                  `(,(state-id gaurd)
+                  `((,(state-id gaurd))
                     (,(c cnsq) in tr regs stack)))
                 gaurds
                 cnsqs))))
@@ -95,7 +95,8 @@
         (case tr
           .
           ,(map (lambda (gaurd cnsq)
-                  `(,gaurd (,(c cnsq) in tr regs stack)))
+                  `((,gaurd)
+                    (,(c cnsq) in tr regs stack)))
                 gaurds
                 cnsqs))))
     ((list (go label args))
