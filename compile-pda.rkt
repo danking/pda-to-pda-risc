@@ -97,7 +97,7 @@
 ;; compile-state : State -> Insn*
 (define (compile-state st)
   (match st
-    ((state name stype token-actions gotos)
+    ((state name stype token-actions eos-actions gotos)
      (make-block*
       (list
        (make-if-eos
@@ -112,7 +112,7 @@
 ;; the PDA-RISC has a token from the stream.
 (define (compile-have-token-state st)
   (match st
-    ((state name stype token-actions gotos)
+    ((state name stype token-actions eos-actions gotos)
      (make-block*
       (list
        (make-token-case
@@ -129,10 +129,11 @@
 ;; the stream is empty.
 (define (compile-eos-state st)
   (match st
-    ((state name stype token-actions gotos)
+    ((state name stype token-actions eos-actions gotos)
      (make-block*
-      (maybe-compile-eos-action (filter action-has-no-lookahead?
-                                        token-actions)
+      (maybe-compile-eos-action (append (filter action-has-no-lookahead?
+                                                token-actions)
+                                        eos-actions)
                                 name)))))
 
 ;; compile-rule : Rule Symbol Reduce-To-Table -> Insn*
