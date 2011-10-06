@@ -33,11 +33,13 @@
                               '(())
                               (list (make-shift '(A) 's1)
                                     (make-reduce '(B) 'r1))
+                              (list)
                               (list (make-goto 'nt 's1)))
                   (make-state 's1
                               '(())
                               (list (make-shift '(A) 's1)
                                     (make-reduce '() 'r1))
+                              (list)
                               (list (make-goto 'nt 's0))))
             (list (make-rule 'r1 '(s : ((A s)))
                              'nt
@@ -162,11 +164,13 @@
                                  '(())
                                  (list (make-shift '(A) 's1)
                                        (make-reduce '(B) 'r1))
+                                 (list)
                                  (list (make-goto 'nt 's1)))
                      (make-state 's1
                                  '(())
                                  (list (make-shift '(A) 's1)
                                        (make-reduce '(B) 'r1))
+                                 (list)
                                  (list (make-goto 'nt 's0)))))
               (make-dict 'nt (make-dict 's0 's1 's1 's0)))
 
@@ -175,11 +179,13 @@
                                  '(())
                                  (list (make-shift '(A) 's1)
                                        (make-reduce '(B) 'r1))
+                                 (list)
                                  (list (make-goto 'nt 's1)))
                      (make-state 's1
                                  '(())
                                  (list (make-shift '(A) 's1)
                                        (make-reduce '(B) 'r1))
+                                 (list)
                                  (list (make-goto 'nt2 's0)))))
               (make-dict 'nt (make-dict 's0 's1)
                          'nt2 (make-dict 's1 's0)))
@@ -213,6 +219,7 @@
                                          '(())
                                          (list (make-shift '(A) 's1)
                                                (make-reduce '(B) 'r1))
+                                         (list)
                                          (list (make-goto 'nt 's1))))
               (make-block*
                (list
@@ -228,6 +235,7 @@
                            '(())
                            (list (make-shift '(A) 's1)
                                  (make-reduce '(B) 'r1))
+                           (list)
                            (list (make-goto 'nt 's1))))
               (make-block*
                (list
@@ -248,6 +256,7 @@
                            '(())
                            (list (make-shift '(A) 's1)
                                  (make-reduce '() 'r1))
+                           (list)
                            (list (make-goto 'nt 's0))))
               (make-block*
                (list
@@ -267,6 +276,7 @@
                                              '(())
                                              (list (make-shift '(A) 's1)
                                                    (make-reduce '(B) 'r1))
+                                             (list)
                                              (list (make-goto 'nt 's1))))
               (make-block*
                (list
@@ -276,6 +286,7 @@
                                              '(())
                                              (list (make-shift '(A) 's1)
                                                    (make-reduce '() 'r1))
+                                             (list)
                                              (list (make-goto 'nt 's0))))
               (make-block*
                (list (make-go (make-label-polynym 'r1 'eos) '()))))
@@ -285,6 +296,7 @@
                                              (list (make-shift '(A) 's1)
                                                    (make-reduce '() 'r1)
                                                    (make-reduce '() 'r3))
+                                             (list)
                                              (list (make-goto 'nt 's0))))
               (make-block*
                (list (make-go (make-label-polynym 'r1 'eos) '()))))
