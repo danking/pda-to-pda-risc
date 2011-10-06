@@ -311,7 +311,7 @@
 (define s1-have-token
   (list (make-block*
          (list (make-token-case
-                '(A #t)
+                '(A #f)
                 (list
                  (list (make-push (make-state 's1))
                        (make-push (make-curr-token #f))
@@ -334,7 +334,7 @@
                    in tr regs (cons tr stack)))
                 in tr regs (cons (make-state 's1) stack)))
              in tr regs stack))
-       ((#t) ((lambda (in tr regs stack)
+       (else ((lambda (in tr regs stack)
                 ((r1-have-token) in tr regs stack))
               in tr regs stack)))))
 

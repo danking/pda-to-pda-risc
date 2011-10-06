@@ -95,7 +95,9 @@
         (case tr
           .
           ,(map (lambda (gaurd cnsq)
-                  `((,gaurd)
+                  `(,(if gaurd
+                         (list gaurd)
+                         'else)
                     (,(c cnsq) in tr regs stack)))
                 gaurds
                 cnsqs))))
