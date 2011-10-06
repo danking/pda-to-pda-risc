@@ -89,7 +89,7 @@
                                              '())))))))
                (list (make-block*
                       (list (make-token-case
-                           '(A #t)
+                           '(A #f)
                            (list
                             (list (make-push (make-risc-state 's1))
                                   (make-push (make-curr-token #f))
@@ -255,7 +255,7 @@
               (make-block*
                (list
                 (make-token-case
-                 '(A #t)
+                 '(A #f)
                  (list
                   (list (make-push (make-risc-state 's1))
                         (make-push (make-curr-token #f))

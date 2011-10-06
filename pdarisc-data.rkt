@@ -41,7 +41,7 @@
 ;;  - (make-accept [ListOf RegName])
 ;;  - (make-if-eos Insn* Insn*)
 ;;  - (make-state-case RegName [ListOf State] [ListOf Insn*-Seq])
-;;  - (make-token-case [ListOf Token] [ListOf Insn*-Seq])
+;;  - (make-token-case [ListOf [Maybe Token]] [ListOf Insn*-Seq])
 ;;  - (make-go LabelName [ListOf Pure-Rhs])
 (define-ustruct (branch insn*) ())
 (define-ustruct (accept branch) (vals))

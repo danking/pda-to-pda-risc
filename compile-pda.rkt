@@ -112,7 +112,7 @@
        (make-token-case
         (map (lambda (x)
                (if (empty? (action-lookahead x))
-                   #t
+                   #f
                    (first (action-lookahead x))))
              token-actions)
         (map (lambda (x) (compile-non-eos-action x name))
