@@ -101,8 +101,7 @@
                                                                'have-token)
                                            '())))))))
                (list (make-block*
-                      (list (make-risc-accept (list
-                                               (make-named-reg 'reject))))))
+                      (list (make-reject))))
                (list (make-block*
                       (list (make-go (make-label-polynym 'r1
                                                          'eos)
@@ -279,8 +278,7 @@
                                              (list)
                                              (list (make-goto 'nt 's1))))
               (make-block*
-               (list
-                (make-risc-accept (list (make-named-reg 'reject))))))
+               (list (make-reject))))
 
 (check-equal? (compile-eos-state (make-state 's1
                                              '(())

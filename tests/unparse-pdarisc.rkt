@@ -40,6 +40,10 @@
               '((accept foo bar)))
 
 (check-equal? (unparse-pdarisc (make-pdarisc
+                                (list (make-reject))))
+              '((reject)))
+
+(check-equal? (unparse-pdarisc (make-pdarisc
                                 (list
                                  (make-sem-act 'sem-act-name
                                                (list (make-named-reg 'exp)

@@ -38,6 +38,8 @@
     `(block . ,(up-seq* insns)))
    ((accept vars)
     `(accept . ,(map unparse-register vars)))
+   ((reject)
+    `(reject))
    ((if-eos cnsq altr)
     `(if-eos ,(unparse-insn* cnsq) ,(unparse-insn* altr)))
    ((state-case var looks cnsqs)

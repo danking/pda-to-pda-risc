@@ -30,6 +30,10 @@
                      (make-push (make-state 'around))
                      (make-accept '()))))
 
+(check-equal? (parse-pdarisc '((reject)))
+              (make-pdarisc
+               (list (make-reject))))
+
 (check-equal? (parse-pdarisc '((semantic-action sem-act-name
                                                 (exp exps)
                                                 (yahoo #f)

@@ -59,6 +59,8 @@
      (make-block* (rs* insns)))
     (`(accept ,vars ...)
      (make-accept (map make-named-reg vars)))
+    (`(reject)
+     (make-reject))
     (`(if-eos ,cnsq ,altr)
      (make-if-eos (r* cnsq) (r* altr)))
     (`(state-case ,var (,looks . ,cnsqs) ...)

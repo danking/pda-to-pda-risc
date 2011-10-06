@@ -39,12 +39,14 @@
 
 ;; a Branch is one of
 ;;  - (make-accept [ListOf RegName])
+;;  - (make-reject)
 ;;  - (make-if-eos Insn* Insn*)
 ;;  - (make-state-case RegName [ListOf State] [ListOf Insn*-Seq])
 ;;  - (make-token-case [ListOf [Maybe Token]] [ListOf Insn*-Seq])
 ;;  - (make-go LabelName [ListOf Pure-Rhs])
 (define-ustruct (branch insn*) ())
 (define-ustruct (accept branch) (vals))
+(define-ustruct (reject branch) ())
 (define-ustruct (if-eos branch) (cnsq altr))
 (define-ustruct (state-case branch) (st lookaheads cnsqs))
 (define-ustruct (token-case branch) (lookaheads cnsqs))

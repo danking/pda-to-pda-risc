@@ -226,7 +226,7 @@
 ;; is empty, it returns a error-halt state.
 (define (maybe-compile-eos-action actions curr-state)
   (if (empty? actions)
-      (list (make-risc-accept (list (make-named-reg 'reject))))
+      (list (make-reject))
       (compile-eos-action (first actions) curr-state)))
 
 ;; action-has-no-lookahead? : Action -> Boolean
