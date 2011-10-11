@@ -18,14 +18,14 @@
   (let ((eos-token (find-eos-token sexp)))
    (foldl (lambda (clause pda)
             (match clause
-              [(list (or 'STATE 'state) name : stack-type shifts-etc ...)
+              [(list (or 'STATE 'state) name ': stack-type shifts-etc ...)
                (pda-update-states (cons (parse-state/mixed-actions name
                                                                    stack-type
                                                                    shifts-etc
                                                                    eos-token)
                                         (pda-states pda))
                                   pda)]
-              [(list (or 'RULE 'rule) name : stack-type nt bindings sem-act)
+              [(list (or 'RULE 'rule) name ': stack-type nt bindings sem-act)
                (pda-update-rules (cons (make-rule name
                                                   stack-type
                                                   nt
