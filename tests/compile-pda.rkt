@@ -489,7 +489,8 @@
                     (make-push (make-nterm 'nt))
                     (make-go (make-label-polynym 's1 'have-token) '())))
 (check-equal? (compile-action (make-accept '(A)) 's0 #f)
-              (list (make-risc-accept '())))
+              (list (make-assign (make-named-reg 'result) (make-pop))
+                    (make-risc-accept (list (make-named-reg 'result)))))
 
 (check-exn exn:fail?
            (lambda ()
@@ -503,7 +504,8 @@
                     (make-push (make-nterm 'nt))
                     (make-go (make-label-polynym 's1 'eos) '())))
 (check-equal? (compile-action (make-accept '(A)) 's0 #t)
-              (list (make-risc-accept '())))
+              (list (make-assign (make-named-reg 'result) (make-pop))
+                    (make-risc-accept (list (make-named-reg 'result)))))
 
 (check-equal? (action-has-no-lookahead? (make-accept '(A))) #f)
 (check-equal? (action-has-no-lookahead? (make-accept '())) #t)

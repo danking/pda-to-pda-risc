@@ -218,7 +218,8 @@
                                                'eos
                                                'have-token)) '())))
     ((accept l)
-     (list (make-risc-accept '())))))
+     (list (make-assign (make-named-reg 'result) (make-pop))
+           (make-risc-accept (list (make-named-reg 'result)))))))
 
 ;; maybe-compile-action : [ListOf Action] -> [ListOf Insn*]
 ;; This first checks if the list of actions is empty, if not it compiles
