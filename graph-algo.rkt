@@ -28,6 +28,31 @@ while (not (empty? work)) and?? (type is unchanged)
              ((3 d))
              ((3 a))))
 
+(define g-loop '#(((3 a) (6 c) (1 a) (4 b))
+                  ((2 b) (5 d))
+                  ((3 c))
+                  ((3 z))
+                  ((5 c))
+                  ((3 d))
+                  ((3 a))))
+
+(define g-double-loop '#(((3 a) (6 c) (1 a) (4 b))
+                         ((2 b) (5 d))
+                         ((3 c) (2 z))
+                         ((3 z))
+                         ((5 c))
+                         ((3 d))
+                         ((3 a))))
+
+(define g-double-loop-no-0-3-edge
+           '#(((6 c) (1 a) (4 b))
+              ((2 b) (5 d))
+              ((3 c) (2 z))
+              ((3 z))
+              ((5 c))
+              ((3 d))
+              ((3 a))))
+
 ;; Graph Number -> [ListOf [Pair Number Symbol]]
 (define (edges g s) (vector-ref g s))
 
