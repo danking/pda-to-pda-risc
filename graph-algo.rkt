@@ -18,7 +18,7 @@
 ;; where the pairs are edges of the form (destination shift-token) and the
 ;; source node is the vector index
 
-;; assign-types : Graph -> [Dict Number StackType]
+;; assign-types : Graph Number -> [Dict Number StackType]
 (define (assign-types g s)
   (let loop ((work (aug-edges g s))
              (types (hasheq s '(()))))
