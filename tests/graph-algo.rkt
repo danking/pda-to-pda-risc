@@ -1,0 +1,101 @@
+#lang racket
+(require rackunit)
+(require/expose "../graph-algo.rkt"
+                (aug-edges
+                 add-trans
+                 assign-types
+                 unvisited-err
+                 union-stack-sets
+                 match-lengths-in-sets
+                 truncate-to))
+
+(define g '#(((3 a) (6 c) (1 a) (4 b))
+             ((2 b) (5 d))
+             ((3 c))
+             ()
+             ((5 c))
+             ((3 d))
+             ((3 a))))
+
+(define g-loop '#(((3 a) (6 c) (1 a) (4 b))
+                  ((2 b) (5 d))
+                  ((3 c))
+                  ((3 z))
+                  ((5 c))
+                  ((3 d))
+                  ((3 a))))
+
+(define g-double-loop '#(((3 a) (6 c) (1 a) (4 b))
+                         ((2 b) (5 d))
+                         ((3 c) (2 z))
+                         ((3 z))
+                         ((5 c))
+                         ((3 d))
+                         ((3 a))))
+
+(define g-double-loop-no-0-3-edge
+           '#(((6 c) (1 a) (4 b))
+              ((2 b) (5 d))
+              ((3 c) (2 z))
+              ((3 z))
+              ((5 c))
+              ((3 d))
+              ((3 a))))
+
+(check-equal? (assign-types g 0)
+                   '#hasheq((1 . ((a 0)))
+                            (0 . (()))
+                            (3 . ((d 5) (c 2) (a 6) (a 0)))
+                            (2 . ((b 1 a 0)))
+                            (5 . ((c 4 b 0) (d 1 a 0)))
+                            (4 . ((b 0)))
+                            (6 . ((c 0)))))
+
+(check-equal? (assign-types g-loop 0)
+                   '#hasheq((1 . ((a 0)))
+                            (0 . (()))
+                            (3 . ((d 5) (c 2) (a 6) (z 3) (a 0)))
+                            (2 . ((b 1 a 0)))
+                            (5 . ((c 4 b 0) (d 1 a 0)))
+                            (4 . ((b 0)))
+                            (6 . ((c 0)))))
+
+(check-equal? (assign-types g-double-loop 0)
+                   '#hasheq((1 . ((a 0)))
+                            (0 . (()))
+                            (2 . ((z 2 z 2) (z 2 b 1) (b 1 a 0)))
+                            (3 . ((d 5) (c 2) (a 6) (z 3) (a 0)))
+                            (5 . ((c 4 b 0) (d 1 a 0)))
+                            (4 . ((b 0)))
+                            (6 . ((c 0)))))
+
+(check-equal? (assign-types g-double-loop-no-0-3-edge 0)
+                   '#hasheq((1 . ((a 0)))
+                            (0 . (()))
+                            (2 . ((z 2 z 2) (z 2 b 1) (b 1 a 0)))
+                            (3 . ((c 2 z 2)
+                                  (z 3 z 3)
+                                  (z 3 c 2)
+                                  (z 3 d 5)
+                                  (d 5 d 1)
+                                  (d 5 c 4)
+                                  (c 2 b 1)
+                                  (z 3 a 6)
+                                  (a 6 c 0)))
+                            (5 . ((c 4 b 0) (d 1 a 0)))
+                            (4 . ((b 0)))
+                            (6 . ((c 0)))))
+
+(check-equal? (truncate-to '((C B A) (D E F) (B A C) (A B C)) 2)
+              '((C B) (D E) (B A) (A B)))
+(check-equal? (truncate-to '((D D) (D C)) 1)
+              '((D) (D)))
+
+(check-equal? (union-stack-sets '((C B A) (D E F) (B A C) (A B C))
+                                '((D E) (F G) (C B) (A B) (A C)))
+              '((A C) (F G) (C B) (D E) (B A) (A B)))
+(check-equal? (union-stack-sets '((D D)) '((D C)))
+              '((D C) (D D)))
+(check-equal? (union-stack-sets '((D D) (A B)) '((B A) (A B) (D C)))
+              '((D C) (B A) (D D) (A B)))
+(check-equal? (union-stack-sets '(()) '(())) '(()))
