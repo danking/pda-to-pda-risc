@@ -2,23 +2,23 @@
 (require srfi/1)
 (provide assign-types)
 
-;; Graph Number -> [ListOf [Pair Number Symbol]]
-(define (edges g s) (vector-ref g s))
+;; [Graph T] T -> [ListOf [Pair T Symbol]]
+(define (edges g s) (dict-ref g s))
 
-;; Graph Number -> [ListOf (list Number Number Symbol)]
+;; [Graph T] T -> [ListOf (list T T Symbol)]
 (define (aug-edges g s)
   (map (curry cons s) (edges g s)))
 
-;; add-trans : Number Symbol StackType -> StackType
+;; add-trans : Any Symbol StackType -> StackType
 ;; adds a note of the transition to the stack type
 (define (add-trans source token type)
   (map (curry list* token source) type))
 
-;; a Graph is a [Vector [ListOf [Pair Number Symbol]]]
+;; a [Graph T] is a [Dict T [ListOf [Pair T Symbol]]]
 ;; where the pairs are edges of the form (destination shift-token) and the
 ;; source node is the vector index
 
-;; assign-types : Graph Number -> [Dict Number StackType]
+;; assign-types : [Graph T] T -> [Dict T StackType]
 (define (assign-types g s)
   (let loop ((work (aug-edges g s))
              (types (hasheq s '(()))))
