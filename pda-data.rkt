@@ -14,7 +14,7 @@
 ;; an ST or StackType is defined in the notes on semantics
 
 ;; a State is a (make-state Symbol
-;;                          ST
+;;                          [Maybe ST]
 ;;                          [ListOf (U Shift
 ;;                                     Reduce
 ;;                                     Accept)]

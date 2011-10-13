@@ -1,6 +1,7 @@
 #lang racket
 (require "pda-data.rkt")
-(provide parse-pda)
+(provide parse-pda
+         parse-untyped-pda)
 
 ;; find-eos-token : SExp -> Symbol
 (define (find-eos-token sexp)
@@ -16,37 +17,72 @@
 ;; parse a sexp representation of a high-level pda into a structure
 (define (parse-pda sexp)
   (let ((eos-token (find-eos-token sexp)))
-   (foldl (lambda (clause pda)
-            (match clause
-              [(list (or 'STATE 'state) name ': stack-type shifts-etc ...)
-               (pda-update-states (cons (parse-state/mixed-actions name
-                                                                   stack-type
-                                                                   shifts-etc
-                                                                   eos-token)
-                                        (pda-states pda))
+    (foldl (curry parse-pda-clause eos-token)
+           (pda-update-eos eos-token empty-pda)
+           sexp)))
+
+;; parse-untyped-pda : SExp -> PDA
+;; Parse a sexp representation of a high-level pda which lacks stack type
+;; annotations. The stack type annotations are left unspecified in the resulting
+;; pda structure
+(define (parse-untyped-pda sexp)
+  (let ((eos-token (find-eos-token sexp)))
+    (foldl (lambda (cls pda)
+             (match cls
+               [(list (or 'STATE 'state) name shifts-etc ...)
+                (pda-update-states (cons (parse-state/mixed-actions name
+                                                                    shifts-etc
+                                                                    eos-token)
+                                         (pda-states pda))
+                                   pda)]
+               [(list (or 'RULE 'rule) name nt bindings sem-act)
+                (pda-update-rules (cons (make-rule name
+                                                   #f
+                                                   nt
+                                                   bindings
+                                                   sem-act)
+                                        (pda-rules pda))
                                   pda)]
-              [(list (or 'RULE 'rule) name ': stack-type nt bindings sem-act)
-               (pda-update-rules (cons (make-rule name
-                                                  stack-type
-                                                  nt
-                                                  bindings
-                                                  sem-act)
-                                       (pda-rules pda))
-                                 pda)]
-              [(list (or 'EOS 'eos) token) pda]
-              [(list (or 'START 'start) token)
-               (pda-update-start token pda)]
-              [(list (or 'TOKENS 'tokens) tokens ...)
-               (pda-update-tokens tokens pda)]
-              [(list (or 'COMMENT 'comment) _ ...)
-               pda]
-              [else (begin (printf "ignoring unknown pda clause ~a\n" clause)
-                           pda)]))
-          (pda-update-eos eos-token empty-pda)
-          sexp)))
+               [else (parse-pda-clause eos-token cls pda)]))
+           (pda-update-eos eos-token empty-pda)
+           sexp)))
+
+;; parse-pda-clause : Symbol SExp PDA -> PDA
+;; parses one clause of a PDA and adds it to the given pda
+(define (parse-pda-clause eos-token clause pda)
+  (match clause
+    [(list (or 'STATE 'state) name ': stack-type shifts-etc ...)
+     (pda-update-states (cons (state-update-stack-type
+                               stack-type
+                               (parse-state/mixed-actions name
+                                                          shifts-etc
+                                                          eos-token))
+                              (pda-states pda))
+                        pda)]
+    [(list (or 'RULE 'rule) name ': stack-type nt bindings sem-act)
+     (pda-update-rules (cons (make-rule name
+                                        stack-type
+                                        nt
+                                        bindings
+                                        sem-act)
+                             (pda-rules pda))
+                       pda)]
+    [(list (or 'EOS 'eos) token) pda]
+    [(list (or 'START 'start) token)
+     (pda-update-start token pda)]
+    [(list (or 'TOKENS 'tokens) tokens ...)
+     (pda-update-tokens tokens pda)]
+    [(list (or 'COMMENT 'comment) _ ...)
+     pda]
+    [else (begin (printf "ignoring unknown pda clause ~a\n" clause)
+                 pda)]))
 
 ;; parse-state/mixed-actions : Symbol ST [ListOf SExp] Symbol -> PDAState
-(define (parse-state/mixed-actions name stack-type actions eos-token)
+;; Parses a state's list of actions into a series of structures which are then
+;; placed into a state structure.
+;; This procedure IGNORES stack type. It sets the stack type of the produced
+;; state to #f.
+(define (parse-state/mixed-actions name actions eos-token)
   (let ((actions (filter (lambda (x)
                            (not (or (eq? (car x) 'COMMENT)
                                     (eq? (car x) 'comment))))
@@ -65,7 +101,7 @@
                          (else #f)))
                      not-gotos)))
       (make-state name
-                  stack-type
+                  #f
                   (map parse-non-goto not-eos)
                   (map parse-non-goto eos)
                   (map parse-goto gotos)))))
