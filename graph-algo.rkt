@@ -86,13 +86,17 @@ while (not (empty? work)) and?? (type is unchanged)
              (dest-stack-types (dict-ref types
                                          dest
                                          #f)))
-         (loop (append more-work (aug-edges g dest))
-               (if (false? dest-stack-types)
-                   (dict-set types dest new-stack-types)
-                   (dict-set types
-                             dest
-                             (union-stack-sets dest-stack-types
-                                               new-stack-types)))))))))
+         (if (false? dest-stack-types)
+             (loop (append more-work (aug-edges g dest))
+                   (dict-set types dest new-stack-types))
+             (let ((union-of-types (union-stack-sets dest-stack-types
+                                                     new-stack-types)))
+               (loop (if (equal? union-of-types dest-stack-types)
+                         more-work
+                         (append more-work (aug-edges g dest)))
+                     (dict-set types
+                               dest
+                               union-of-types)))))))))
 
 (define (unvisited-err source dest token)
   (lambda ()
