@@ -16,36 +16,28 @@
 ;; parse-pda : SExp -> PDA
 ;; parse a sexp representation of a high-level pda into a structure
 (define (parse-pda sexp)
-  (let ((eos-token (find-eos-token sexp)))
-    (foldl (curry parse-pda-clause eos-token)
-           (pda-update-eos eos-token empty-pda)
-           sexp)))
+  (parse-any-pda sexp parse-pda-clause))
 
 ;; parse-untyped-pda : SExp -> PDA
 ;; Parse a sexp representation of a high-level pda which lacks stack type
 ;; annotations. The stack type annotations are left unspecified in the resulting
 ;; pda structure
 (define (parse-untyped-pda sexp)
-  (let ((eos-token (find-eos-token sexp)))
-    (foldl (lambda (cls pda)
-             (match cls
-               [(list (or 'STATE 'state) name shifts-etc ...)
-                (pda-update-states (cons (parse-state/mixed-actions name
-                                                                    shifts-etc
-                                                                    eos-token)
-                                         (pda-states pda))
-                                   pda)]
-               [(list (or 'RULE 'rule) name nt bindings sem-act)
-                (pda-update-rules (cons (make-rule name
-                                                   #f
-                                                   nt
-                                                   bindings
-                                                   sem-act)
-                                        (pda-rules pda))
-                                  pda)]
-               [else (parse-pda-clause eos-token cls pda)]))
-           (pda-update-eos eos-token empty-pda)
-           sexp)))
+  (parse-any-pda sexp parse-untyped-pda-clause))
+
+;; parse-any-pda : SExp (Symbol SExp PDA -> PDA) -> PDA
+;; An abstraction over untyped and typed pdas. It handles finding eos and
+;; checking for a start state.
+(define (parse-any-pda sexp clause-parser)
+  (let* ((eos-token (find-eos-token sexp))
+         (pda (foldl (curry clause-parser eos-token)
+                     (pda-update-eos eos-token empty-pda)
+                     sexp)))
+    (if (pda-start pda)
+        pda
+        (error 'parse-pda
+               "A PDA form must have a start state. None found in: ~a"
+               sexp))))
 
 ;; parse-pda-clause : Symbol SExp PDA -> PDA
 ;; parses one clause of a PDA and adds it to the given pda
@@ -76,6 +68,25 @@
      pda]
     [else (begin (printf "ignoring unknown pda clause ~a\n" clause)
                  pda)]))
+
+(define (parse-untyped-pda-clause eos-token clause pda)
+  (match clause
+    [(list (or 'STATE 'state) name shifts-etc ...)
+     (pda-update-states (cons (parse-state/mixed-actions
+                               name
+                               shifts-etc
+                               eos-token)
+                              (pda-states pda))
+                        pda)]
+    [(list (or 'RULE 'rule) name nt bindings sem-act)
+     (pda-update-rules (cons (make-rule name
+                                        #f
+                                        nt
+                                        bindings
+                                        sem-act)
+                             (pda-rules pda))
+                       pda)]
+    [else (parse-pda-clause eos-token clause pda)]))
 
 ;; parse-state/mixed-actions : Symbol ST [ListOf SExp] Symbol -> PDAState
 ;; Parses a state's list of actions into a series of structures which are then
