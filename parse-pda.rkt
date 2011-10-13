@@ -36,8 +36,11 @@
     (if (pda-start pda)
         pda
         (error 'parse-pda
-               "A PDA form must have a start state. None found in: ~a"
-               sexp))))
+               "A PDA form must have a start state. None found in:\n ~a."
+               (with-output-to-string
+                 (lambda ()
+                   (parameterize ((pretty-print-depth 2))
+                     (pretty-write sexp))))))))
 
 ;; parse-pda-clause : Symbol SExp PDA -> PDA
 ;; parses one clause of a PDA and adds it to the given pda
