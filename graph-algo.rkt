@@ -1,27 +1,32 @@
 #lang racket
 (require rackunit
          srfi/1)
+(provide (all-defined-out))
 #|
 
 while (not (empty? work)) and?? (type is unchanged)
   (from, to, tok) = work
-  if type [to] = empty
-    type [to] = tok :: from :: type [from]
+
+  new-stack-types = tok :: form :: type [from]
+
+  if uninitialized?( type[to] )
+    type[to] = new-stack-types
   else
-    n = minlength (type [to])
-    new-stack-types = truncate-to (tok :: form :: type [from], n)
-    type [to] = Union (t, type [to])
+    n = min( length(first(type[to])), length(first(new-stack-types)))
+    new-stack-types = truncate-to (new-stack-types, n)
+    type[to] = truncate-to (type[to], n)
+    type [to] = Union (new-stack-types, type [to])
 
 |#
 
 
-(define g '#(((4 a) (7 c) (2 a) (5 b))
-             ((3 b) (6 d))
-             ((4 c))
+(define g '#(((3 a) (6 c) (1 a) (4 b))
+             ((2 b) (5 d))
+             ((3 c))
              ()
-             ((6 c))
-             ((4 d))
-             ((4 a))))
+             ((5 c))
+             ((3 d))
+             ((3 a))))
 
 ;; Graph Number -> [ListOf [Pair Number Symbol]]
 (define (edges g s) (vector-ref g s))
@@ -30,20 +35,44 @@ while (not (empty? work)) and?? (type is unchanged)
 (define (aug-edges g s)
   (map (curry cons s) (edges g s)))
 
+;; add-trans : Number Symbol StackType -> StackType
+;; adds a note of the transition to the stack type
+(define (add-trans source token type)
+  (map (curry list* token source) type))
+
 ;; a Graph is a [Vector [ListOf [Pair Number Symbol]]]
 ;; where the pairs are edges of the form (destination shift-token) and the
 ;; source node is the vector index
 
 ;; assign-types : Graph -> [Dict Number StackType]
 (define (assign-types g s)
-  (let loop ((work (aug-edges ))
-             (types (hasheq)))
-    (if (empty? work)
-        types
-        (match ))))
+  (let loop ((work (aug-edges g s))
+             (types (hasheq s '(()))))
+    (match work
+      (`() types)
+      (`((,source ,dest ,token) ,more-work ...)
+       (let ((new-stack-types (add-trans source
+                                         token
+                                         (dict-ref types
+                                                   source
+                                                   (unvisited-err source
+                                                                  dest
+                                                                  token))))
+             (dest-stack-types (dict-ref types
+                                         dest
+                                         #f)))
+         (loop (append more-work (aug-edges g dest))
+               (if (false? dest-stack-types)
+                   (dict-set types dest new-stack-types)
+                   (dict-set types
+                             dest
+                             (union-stack-sets dest-stack-types
+                                               new-stack-types)))))))))
 
-
-
+(define (unvisited-err source dest token)
+  (lambda ()
+    (error 't "must visit the source node first! (~a ~a ~a)"
+           source dest token)))
 
 
 ;; A Stack is either
