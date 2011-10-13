@@ -1,6 +1,7 @@
 #lang racket
 (require srfi/1)
-(provide assign-types)
+(provide assign-types
+         union-stack-sets)
 
 ;; [Graph T] T -> [ListOf [Pair T Symbol]]
 (define (edges g s) (dict-ref g s))
