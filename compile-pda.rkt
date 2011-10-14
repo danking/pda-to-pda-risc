@@ -165,8 +165,8 @@
   (if (empty? args)
       (list (make-assign (make-named-reg 'v) (make-pop))
             (make-assign (make-named-reg 'target) (make-pop))
-            (make-push (make-named-reg 'v))
-            (make-push (make-named-reg 'target)))
+            (make-push (make-named-reg 'target))
+            (make-push (make-named-reg 'v)))
       (foldl (lambda (x xs)
                (if x
                    (list* (make-assign (make-named-reg x) (make-pop))
