@@ -100,7 +100,6 @@
     ((state name stype token-actions eos-actions gotos)
      (make-block*
       (list
-       (make-push (make-risc-state name))
        (make-if-eos
         (make-go (make-label-polynym name 'eos) '())
         (make-block*
@@ -116,6 +115,7 @@
     ((state name stype token-actions eos-actions gotos)
      (make-block*
       (list
+       (make-push (make-risc-state name))
        (make-token-case
         (map (lambda (x)
                (if (empty? (action-lookahead x))
@@ -132,10 +132,11 @@
   (match st
     ((state name stype token-actions eos-actions gotos)
      (make-block*
-      (maybe-compile-eos-action (append (filter action-has-no-lookahead?
-                                                token-actions)
-                                        eos-actions)
-                                name)))))
+      (cons (make-push (make-risc-state name))
+            (maybe-compile-eos-action (append (filter action-has-no-lookahead?
+                                                      token-actions)
+                                              eos-actions)
+                                      name))))))
 
 ;; compile-rule : Rule Symbol Reduce-To-Table -> Insn*
 ;; Produces an insn* which encapsulates the behavior of the given rule, assuming
