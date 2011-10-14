@@ -100,6 +100,7 @@
     ((state name stype token-actions eos-actions gotos)
      (make-block*
       (list
+       (make-push (make-risc-state name))
        (make-if-eos
         (make-go (make-label-polynym name 'eos) '())
         (make-block*
@@ -163,10 +164,7 @@
 ;; compile-rule-args : [ListOf Symbol] -> [ListOf Insn]
 (define (compile-rule-args args)
   (if (empty? args)
-      (list (make-assign (make-named-reg 'v) (make-pop))
-            (make-assign (make-named-reg 'target) (make-pop))
-            (make-push (make-named-reg 'target))
-            (make-push (make-named-reg 'v)))
+      (list (make-assign (make-named-reg 'target) (make-pop)))
       (foldl (lambda (x xs)
                (if x
                    (list* (make-assign (make-named-reg x) (make-pop))
@@ -202,8 +200,7 @@
          (error 'compile-action
                 "cannot compile a shift as an eos action")
 
-         (list (make-push (make-risc-state curr-state))
-               (make-push (make-curr-token #f))
+         (list (make-push (make-curr-token #f))
                (make-drop-token)
                (make-go (make-label-polynym st 'unknown)
                         '()))))
