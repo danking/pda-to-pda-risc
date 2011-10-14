@@ -507,7 +507,8 @@
 (check-equal? (compile-action (make-reduce '() 'r1) 's0 #f)
               (list (make-go (make-label-polynym 'r1 'have-token) '())))
 (check-equal? (compile-action (make-accept '(A)) 's0 #f)
-              (list (make-assign (make-named-reg 'result) (make-pop))
+              (list (make-assign (make-nameless-reg) (make-pop))
+                    (make-assign (make-named-reg 'result) (make-pop))
                     (make-risc-accept (list (make-named-reg 'result)))))
 
 (check-exn exn:fail?
@@ -518,7 +519,8 @@
 (check-equal? (compile-action (make-reduce '() 'r1) 's0 #t)
               (list (make-go (make-label-polynym 'r1 'eos) '())))
 (check-equal? (compile-action (make-accept '(A)) 's0 #t)
-              (list (make-assign (make-named-reg 'result) (make-pop))
+              (list (make-assign (make-nameless-reg) (make-pop))
+                    (make-assign (make-named-reg 'result) (make-pop))
                     (make-risc-accept (list (make-named-reg 'result)))))
 
 (check-equal? (action-has-no-lookahead? (make-accept '(A))) #f)
