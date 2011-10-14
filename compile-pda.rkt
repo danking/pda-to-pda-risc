@@ -166,20 +166,22 @@
 (define (compile-rule-args args)
   (if (empty? args)
       (list (make-assign (make-named-reg 'target) (make-pop)))
-      (foldl (lambda (x xs)
-               (if x
-                   (list* (make-assign (make-named-reg x) (make-pop))
-                          (make-assign (make-nameless-reg) (make-pop))
-                          xs)
-                   (list* (make-assign (make-nameless-reg) (make-pop))
-                          (make-assign (make-nameless-reg) (make-pop))
-                          xs)))
-             (list (make-assign (if (first args)
-                                    (make-named-reg (first args))
-                                    (make-nameless-reg))
-                                (make-pop))
-                   (make-assign (make-named-reg 'target) (make-pop)))
-             (rest args))))
+      (cons ; pop the state which called for the reduce
+            (make-assign (make-nameless-reg) (make-pop))
+            (foldl (lambda (x xs)
+                     (if x
+                         (list* (make-assign (make-named-reg x) (make-pop))
+                                (make-assign (make-nameless-reg) (make-pop))
+                                xs)
+                         (list* (make-assign (make-nameless-reg) (make-pop))
+                                (make-assign (make-nameless-reg) (make-pop))
+                                xs)))
+                   (list (make-assign (if (first args)
+                                          (make-named-reg (first args))
+                                          (make-nameless-reg))
+                                      (make-pop))
+                         (make-assign (make-named-reg 'target) (make-pop)))
+                   (rest args)))))
 
 
 ;; compile-eos-action : Action Symbol -> [ListOf Insn*]
