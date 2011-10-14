@@ -211,12 +211,6 @@
      (list (make-go (make-label-polynym st (if eos?
                                                'eos
                                                'have-token)) '())))
-    ((goto nt st)
-     (list (make-push (make-risc-state curr-state))
-           (make-push (make-nterm nt))
-           (make-go (make-label-polynym st (if eos?
-                                               'eos
-                                               'have-token)) '())))
     ((accept l)
      (list (make-assign (make-named-reg 'result) (make-pop))
            (make-risc-accept (list (make-named-reg 'result)))))))
