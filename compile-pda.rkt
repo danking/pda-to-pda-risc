@@ -209,7 +209,8 @@
                                                'eos
                                                'have-token)) '())))
     ((accept l)
-     (list (make-assign (make-named-reg 'result) (make-pop))
+     (list (make-assign (make-nameless-reg) (make-pop))
+           (make-assign (make-named-reg 'result) (make-pop))
            (make-risc-accept (list (make-named-reg 'result)))))))
 
 ;; maybe-compile-action : [ListOf Action] -> [ListOf Insn*]
