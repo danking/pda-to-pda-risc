@@ -4,10 +4,18 @@
 
 (define (compile-pdarisc p token-convert get-token drop-token)
   (match p
-    ((pdarisc insns) (compile-insn-seq* insns
-                                        token-convert
-                                        get-token
-                                        drop-token))))
+    ((pdarisc insns)
+     `(lambda (input-stream)
+        (define-struct nterm (id))
+        (define-struct state (id))
+        (,(compile-insn-seq* insns
+                             token-convert
+                             get-token
+                             drop-token)
+         input-stream
+         #f
+         (hasheq)
+         '())))))
 
 ;; compile-pure-rhs : Pure-Rhs Symbol Symbol -> SExp
 ;; tr and regs are the corresponding symbols to the token-register and

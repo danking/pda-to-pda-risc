@@ -503,37 +503,44 @@
                '(lambda (x) x)
                'car
                'cdr)
-              `(lambda (in tr regs stack)
-                 (letrec ((s0 (lambda ()
-                                (lambda (in tr regs stack)
-                                  (,s0/racket in tr regs stack))))
-                          (s1 (lambda ()
-                                (lambda (in tr regs stack)
-                                  (,s1/racket in tr regs stack))))
-                          (s0-have-token (lambda ()
-                                           (lambda (in tr regs stack)
-                                             (,s0-have-token/racket in
-                                                                    tr
-                                                                    regs
-                                                                    stack))))
-                          (s1-have-token (lambda ()
-                                           (lambda (in tr regs stack)
-                                             (,s1-have-token/racket in
-                                                                    tr
-                                                                    regs
-                                                                    stack))))
-                          (s0-eos (lambda ()
-                                    (lambda (in tr regs stack)
-                                      (,s0-eos/racket in tr regs stack))))
-                          (s1-eos (lambda ()
-                                    (lambda (in tr regs stack)
-                                      (,s1-eos/racket in tr regs stack))))
-                          (r1 (lambda ()
-                                (lambda (in tr regs stack)
-                                  (,r1/racket in tr regs stack))))
-                          (r1-eos (lambda ()
-                                    (lambda (in tr regs stack)
-                                      (,r1-eos/racket in tr regs stack)))))
-                   ((lambda (in tr regs stack)
-                      ((s0) in tr regs stack))
-                    in tr regs stack))))
+              `(lambda (input-stream)
+                 (define-struct nterm (id))
+                 (define-struct state (id))
+                 ((lambda (in tr regs stack)
+                    (letrec ((s0 (lambda ()
+                                   (lambda (in tr regs stack)
+                                     (,s0/racket in tr regs stack))))
+                             (s1 (lambda ()
+                                   (lambda (in tr regs stack)
+                                     (,s1/racket in tr regs stack))))
+                             (s0-have-token (lambda ()
+                                              (lambda (in tr regs stack)
+                                                (,s0-have-token/racket in
+                                                                       tr
+                                                                       regs
+                                                                       stack))))
+                             (s1-have-token (lambda ()
+                                              (lambda (in tr regs stack)
+                                                (,s1-have-token/racket in
+                                                                       tr
+                                                                       regs
+                                                                       stack))))
+                             (s0-eos (lambda ()
+                                       (lambda (in tr regs stack)
+                                         (,s0-eos/racket in tr regs stack))))
+                             (s1-eos (lambda ()
+                                       (lambda (in tr regs stack)
+                                         (,s1-eos/racket in tr regs stack))))
+                             (r1 (lambda ()
+                                   (lambda (in tr regs stack)
+                                     (,r1/racket in tr regs stack))))
+                             (r1-eos (lambda ()
+                                       (lambda (in tr regs stack)
+                                         (,r1-eos/racket in tr regs stack)))))
+                      ((lambda (in tr regs stack)
+                         ((s0) in tr regs stack))
+                       in tr regs stack)))
+                  input-stream
+                  #f
+                  (hasheq)
+                  '())))
