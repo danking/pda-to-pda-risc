@@ -1,0 +1,2 @@
+#!/bin/bash
+for fn in *.rkt ; do echo "------ $fn ------";  racket $fn; done
