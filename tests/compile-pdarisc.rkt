@@ -6,6 +6,10 @@
                  compile-pure-rhs
                  compile-insn-seq*))
 
+
+(define (compile-insn-seq*/default insn-seq*)
+  (compile-insn-seq* insn-seq* '(lambda (x) x) 'car 'cdr))
+
 ;; Pure-RHS
 (check-equal? (compile-pure-rhs (make-state 's1) 'tr 'regs)
               '(make-state 's1))
@@ -25,9 +29,10 @@
   '(lambda (in tr regs stack)
      (list (dict-ref regs 'dummy))))
 
-(check-equal? (compile-insn-seq* (list dummy-accept)) dummy-accept/racket)
+(check-equal? (compile-insn-seq*/default (list dummy-accept))
+              dummy-accept/racket)
 
-(check-equal? (compile-insn-seq*
+(check-equal? (compile-insn-seq*/default
                (list (make-assign (make-named-reg 'v) (make-pop))
                      dummy-accept))
               `(lambda (in tr regs stack)
@@ -36,7 +41,7 @@
                                        (dict-set regs 'v (car stack))
                                        (cdr stack))))
 
-(check-equal? (compile-insn-seq*
+(check-equal? (compile-insn-seq*/default
                (list (make-assign (make-named-reg 'v) (make-curr-token #f))
                      dummy-accept))
               `(lambda (in tr regs stack)
@@ -45,7 +50,7 @@
                                        (dict-set regs 'v tr)
                                        stack)))
 
-(check-equal? (compile-insn-seq*
+(check-equal? (compile-insn-seq*/default
                (list (make-push (make-curr-token #f))
                      dummy-accept))
               `(lambda (in tr regs stack)
@@ -54,7 +59,7 @@
                                        regs
                                        (cons tr stack))))
 
-(check-equal? (compile-insn-seq*
+(check-equal? (compile-insn-seq*/default
                (list (make-push (make-state 's0))
                      dummy-accept))
               `(lambda (in tr regs stack)
@@ -63,7 +68,7 @@
                                        regs
                                        (cons (make-state 's0) stack))))
 
-(check-equal? (compile-insn-seq*
+(check-equal? (compile-insn-seq*/default
                (list (make-push (make-named-reg 'foo))
                      dummy-accept))
               `(lambda (in tr regs stack)
@@ -72,7 +77,7 @@
                                        regs
                                        (cons (dict-ref regs 'foo) stack))))
 
-(check-equal? (compile-insn-seq*
+(check-equal? (compile-insn-seq*/default
                (list (make-sem-act 'r1
                                    (list (make-named-reg 'v1)
                                          (make-named-reg 'v2))
@@ -90,24 +95,25 @@
                                                   (dict-ref regs 'v2)))
                                        stack)))
 
-(check-equal? (compile-insn-seq*
+(check-equal? (compile-insn-seq*/default
                (list (make-drop-token) dummy-accept))
               `(lambda (in tr regs stack)
                  (,dummy-accept/racket in #f regs stack)))
 
-(check-equal? (compile-insn-seq*
+(check-equal? (compile-insn-seq*/default
                (list (make-get-token) dummy-accept))
               `(lambda (in tr regs stack)
                  (,dummy-accept/racket (cdr in) (car in) regs stack)))
 
-(check-equal? (compile-insn-seq* (list (make-block
-                                        (list
-                                         (make-get-token)
-                                         (make-drop-token)))
-                                       (make-go (make-label-name 's0)
-                                                (list (make-named-reg 'x)
-                                                      (make-named-reg 'y)
-                                                      (make-named-reg 'z)))))
+(check-equal? (compile-insn-seq*/default
+               (list (make-block
+                      (list
+                       (make-get-token)
+                       (make-drop-token)))
+                     (make-go (make-label-name 's0)
+                              (list (make-named-reg 'x)
+                                    (make-named-reg 'y)
+                                    (make-named-reg 'z)))))
               `(lambda (in tr regs stack)
                  ((lambda (in tr regs stack)
                     ((lambda (in tr regs stack)
@@ -119,7 +125,7 @@
 
 ;; this test must be verified by hand because x and y are gensym'ed
 #;
-(check-equal? (compile-insn-seq*
+(check-equal? (compile-insn-seq*/default
                (list (make-label (list (make-label-name 's0))
                                  '((())) ; stacks
                                  '(#f) ; token-regs
@@ -145,26 +151,27 @@
                                            regs
                                            stack)))))
 
-(check-equal? (compile-insn-seq* (list (make-block*
-                                        (list
-                                         (make-get-token)
-                                         (make-go (make-label-name 's0)
-                                                  '())))))
+(check-equal? (compile-insn-seq*/default (list (make-block*
+                                                (list
+                                                 (make-get-token)
+                                                 (make-go (make-label-name 's0)
+                                                          '())))))
               `(lambda (in tr regs stack)
                  ((lambda (in tr regs stack)
                     ((s0) in tr regs stack))
                   (cdr in) (car in) regs stack)))
 
-(check-equal? (compile-insn-seq* (list dummy-accept)) dummy-accept/racket)
+(check-equal? (compile-insn-seq*/default (list dummy-accept))
+              dummy-accept/racket)
 
-(check-equal? (compile-insn-seq*
+(check-equal? (compile-insn-seq*/default
                (list (make-if-eos dummy-accept dummy-accept)))
               `(lambda (in tr regs stack)
                  (if (empty? in)
                      (,dummy-accept/racket in tr regs stack)
                      (,dummy-accept/racket in tr regs stack))))
 
-(check-equal? (compile-insn-seq*
+(check-equal? (compile-insn-seq*/default
                (list (make-state-case (make-named-reg 'target)
                                       (list (make-state 's1)
                                             (make-state 's2))
@@ -186,7 +193,7 @@
                             ((s0) in tr regs stack))
                           in tr regs stack)))))
 
-(check-equal? (compile-insn-seq*
+(check-equal? (compile-insn-seq*/default
                (list (make-token-case
                       '(A B)
                       (list
@@ -195,7 +202,7 @@
                        (list (make-go (make-label-name 'r1)
                                       '()))))))
               `(lambda (in tr regs stack)
-                 (case tr
+                 (case ((lambda (x) x) tr)
                    ((A) ((lambda (in tr regs stack)
                            ((s1) in tr regs stack))
                          in tr regs stack))
@@ -203,25 +210,27 @@
                            ((r1) in tr regs stack))
                          in tr regs stack)))))
 
-(check-equal? (compile-insn-seq*
+(check-equal? (compile-insn-seq*/default
                (list (make-go (make-label-name 's0) '())))
               `(lambda (in tr regs stack)
                  ((s0) in tr regs stack)))
 
-(check-equal? (compile-insn-seq*
-               (list (make-go (make-label-name 's0) (list (make-named-reg 'x)
-                                                          (make-named-reg 'y)
-                                                          (make-named-reg 'z)))))
+(check-equal? (compile-insn-seq*/default
+               (list (make-go (make-label-name 's0)
+                              (list (make-named-reg 'x)
+                                    (make-named-reg 'y)
+                                    (make-named-reg 'z)))))
               `(lambda (in tr regs stack)
                  ((s0 (dict-ref regs 'x)
                       (dict-ref regs 'y)
                       (dict-ref regs 'z))
                   in tr regs stack)))
 
-(check-equal? (compile-insn-seq*
-               (list (make-go (make-label-name 's0) (list (make-named-reg 'x)
-                                                          (make-named-reg 'y)
-                                                          (make-named-reg 'z)))))
+(check-equal? (compile-insn-seq*/default
+               (list (make-go (make-label-name 's0)
+                              (list (make-named-reg 'x)
+                                    (make-named-reg 'y)
+                                    (make-named-reg 'z)))))
               `(lambda (in tr regs stack)
                  ((s0 (dict-ref regs 'x)
                       (dict-ref regs 'y)
@@ -250,7 +259,7 @@
              (cdr in) (car in) regs stack))
           in tr regs stack))))
 
-(check-equal? (compile-insn-seq* s0) s0/racket)
+(check-equal? (compile-insn-seq*/default s0) s0/racket)
 
 (define s1
   (list (make-block*
@@ -275,7 +284,7 @@
              (cdr in) (car in) regs stack))
           in tr regs stack))))
 
-(check-equal? (compile-insn-seq* s1) s1/racket)
+(check-equal? (compile-insn-seq*/default s1) s1/racket)
 
 (define s0-have-token
   (list (make-block*
@@ -292,7 +301,7 @@
                                 '()))))))))
 (define s0-have-token/racket
   '(lambda (in tr regs stack)
-     (case tr
+     (case ((lambda (x) x) tr)
        ((A) ((lambda (in tr regs stack)
                ((lambda (in tr regs stack)
                   ((lambda (in tr regs stack)
@@ -306,7 +315,7 @@
                ((r1-have-token) in tr regs stack))
              in tr regs stack)))))
 
-(check-equal? (compile-insn-seq* s0-have-token) s0-have-token/racket)
+(check-equal? (compile-insn-seq*/default s0-have-token) s0-have-token/racket)
 
 (define s1-have-token
   (list (make-block*
@@ -324,7 +333,7 @@
 
 (define s1-have-token/racket
   '(lambda (in tr regs stack)
-     (case tr
+     (case ((lambda (x) x) tr)
        ((A) ((lambda (in tr regs stack)
                ((lambda (in tr regs stack)
                   ((lambda (in tr regs stack)
@@ -338,7 +347,7 @@
                 ((r1-have-token) in tr regs stack))
               in tr regs stack)))))
 
-(check-equal? (compile-insn-seq* s1-have-token) s1-have-token/racket)
+(check-equal? (compile-insn-seq*/default s1-have-token) s1-have-token/racket)
 
 (define s0-eos
   (list (make-block*
@@ -348,7 +357,7 @@
   '(lambda (in tr regs stack)
      (list (dict-ref regs 'reject))))
 
-(check-equal? (compile-insn-seq* s0-eos) s0-eos/racket)
+(check-equal? (compile-insn-seq*/default s0-eos) s0-eos/racket)
 
 (define s1-eos
   (list (make-block*
@@ -360,7 +369,7 @@
   '(lambda (in tr regs stack)
      ((r1-eos) in tr regs stack)))
 
-(check-equal? (compile-insn-seq* s1-eos) s1-eos/racket)
+(check-equal? (compile-insn-seq*/default s1-eos) s1-eos/racket)
 
 (define r1
   (list (make-block*
@@ -412,7 +421,7 @@
          in tr (dict-set regs 'target (car stack)) (cdr stack)))
       in tr (dict-set regs 'v (car stack)) (cdr stack))))
 
-(check-equal? (compile-insn-seq* r1) r1/racket)
+(check-equal? (compile-insn-seq*/default r1) r1/racket)
 
 (define r1-eos
   (list (make-block*
@@ -464,7 +473,7 @@
          in tr (dict-set regs 'target (car stack)) (cdr stack)))
       in tr (dict-set regs 'v (car stack)) (cdr stack))))
 
-(check-equal? (compile-insn-seq* r1-eos) r1-eos/racket)
+(check-equal? (compile-insn-seq*/default r1-eos) r1-eos/racket)
 
 ;; compile-pdarisc
 (check-equal? (compile-pdarisc
@@ -490,7 +499,10 @@
                              s1-eos
                              r1
                              r1-eos)
-                       (list (make-go (make-label-name 's0) '()))))))
+                       (list (make-go (make-label-name 's0) '())))))
+               '(lambda (x) x)
+               'car
+               'cdr)
               `(lambda (in tr regs stack)
                  (letrec ((s0 (lambda ()
                                 (lambda (in tr regs stack)
@@ -500,10 +512,16 @@
                                   (,s1/racket in tr regs stack))))
                           (s0-have-token (lambda ()
                                            (lambda (in tr regs stack)
-                                             (,s0-have-token/racket in tr regs stack))))
+                                             (,s0-have-token/racket in
+                                                                    tr
+                                                                    regs
+                                                                    stack))))
                           (s1-have-token (lambda ()
                                            (lambda (in tr regs stack)
-                                             (,s1-have-token/racket in tr regs stack))))
+                                             (,s1-have-token/racket in
+                                                                    tr
+                                                                    regs
+                                                                    stack))))
                           (s0-eos (lambda ()
                                     (lambda (in tr regs stack)
                                       (,s0-eos/racket in tr regs stack))))

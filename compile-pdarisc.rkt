@@ -2,9 +2,12 @@
 (require "pdarisc-data.rkt")
 (provide compile-pdarisc)
 
-(define (compile-pdarisc p)
+(define (compile-pdarisc p token-convert get-token drop-token)
   (match p
-    ((pdarisc insns) (compile-insn-seq* insns))))
+    ((pdarisc insns) (compile-insn-seq* insns
+                                        token-convert
+                                        get-token
+                                        drop-token))))
 
 ;; compile-pure-rhs : Pure-Rhs Symbol Symbol -> SExp
 ;; tr and regs are the corresponding symbols to the token-register and
@@ -26,11 +29,17 @@
 (define (compile-register-ref r regs)
   `(dict-ref ,regs ',(compile-register-name r)))
 
-;; compile-insn-seq* : Insn-Seq* -> SExp
+;; compile-insn-seq* : Insn-Seq*
+;;                     (Token -> Symbol)
+;;                     (Input-Stream -> Token)
+;;                     (Input-Stream -> Input-Stream)
+;;                     -> SExp
 ;; produces the continuation representing this Insn-Seq*. The continuation
 ;; is a lambda of type: Token* Token (Symbol x Value) Value* -> Value
-(define (compile-insn-seq* insns)
-  (define c compile-insn-seq*)
+(define (compile-insn-seq* insns
+                           token-convert stream-get-token stream-drop-token)
+  (define (c insns)
+    (compile-insn-seq* insns token-convert stream-get-token stream-drop-token))
   (define cp compile-pure-rhs)
   (define creg compile-register-name)
   (define cref compile-register-ref)
@@ -66,13 +75,15 @@
     ((list (get-token)
            etc ...)
      `(lambda (in tr regs stack)
-        (,(c etc) (cdr in) (car in) regs stack)))
+        (,(c etc) (,stream-drop-token in) (,stream-get-token in) regs stack)))
     ((list (block insns)
            etc ...)
      (c (append insns etc)))
     ((list (label names stacks token-regs arg-lists bodies label-body))
      `(lambda (in tr regs stack)
-        (letrec ,(map compile-cond-clause names arg-lists bodies)
+        (letrec ,(map (lambda (name arg-list body)
+                        (compile-cond-clause name arg-list body c))
+                      names arg-lists bodies)
           (,(c label-body) in tr regs stack))))
     ((list (block* insns))
      (c insns))
@@ -92,7 +103,7 @@
                 cnsqs))))
     ((list (token-case gaurds cnsqs))
      `(lambda (in tr regs stack)
-        (case tr
+        (case (,token-convert tr)
           .
           ,(map (lambda (gaurd cnsq)
                   `(,(if gaurd
@@ -118,7 +129,7 @@
     ((label-polynym id id2) (symbol-append id '- id2))
     ((label-name id) id)))
 
-(define (compile-cond-clause name arg-registers body)
+(define (compile-cond-clause name arg-registers body compile-cnsq)
   (define (make-dict-set key val regs)
     `(dict-set ,regs ',(compile-register-name key) ,val))
 
@@ -126,7 +137,7 @@
                           arg-registers)))
     `(,(compile-label-name name) (lambda ,lambda-args
                                    (lambda (in tr regs stack)
-                                     (,(compile-insn-seq* body)
+                                     (,(compile-cnsq body)
                                       in
                                       tr
                                       ,(foldl make-dict-set
