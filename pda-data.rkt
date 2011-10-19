@@ -13,7 +13,7 @@
 
 ;; an ST or StackType is defined in the notes on semantics
 
-;; a State is a (make-state Symbol
+;; a State is a (make-state [Syntax Identifier]
 ;;                          [Maybe ST]
 ;;                          [ListOf (U Shift
 ;;                                     Reduce
@@ -27,14 +27,15 @@
 ;; a Rule is a (make-rule Symbol
 ;;                        ST
 ;;                        Symbol
-;;                        [ListOf [Maybe Symbol]]
-;;                        SExp)
+;;                        [ListOf [Maybe [Syntax Identifier]]]
+;;                        [Syntax Expression])
 (define-ustruct rule (name stack-type nt bindings sem-act))
 
 
-;; an Action is a (make-action [ListOf Symbol])
+;; an Action is a (make-action Symbol)
 (define-ustruct action (lookahead))
-;; a TAction is a (make-taction Symbol Symbol)
+;; a TAction is a (make-taction [U [Syntax Identifier] Symbol]
+;;                              [Syntax Identifier])
 (define-ustruct (taction action) (target))
 
 (define-ustruct (shift   taction) ())
