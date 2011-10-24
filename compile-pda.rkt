@@ -16,7 +16,9 @@
 (provide compile-pda)
 
 (define make-dict hasheq)
-;; a Reduce-To-Table is a [Dict Non-Terminal [Dict State-Name State-Name]]
+;; a Reduce-To-Table is a [Dict Non-Terminal
+;;                              [Dict [Syntax Identifier]
+;;                                    [Syntax Identifier]]]
 
 
 ;; compile-pda : PDA -> PDA-RISC
@@ -149,11 +151,11 @@
         `(,@(compile-rule-args args)
           ,(make-sem-act name
                          (map make-named-reg (filter (lambda (x) x) args))
-                         (list (make-named-reg 'ret-val))
+                         (list (make-named-reg #'ret-val))
                          sem-act)
-          ,(make-push (make-named-reg 'target))
-          ,(make-push (make-named-reg 'ret-val))
-          ,(make-state-case (make-named-reg 'target)
+          ,(make-push (make-named-reg #'target))
+          ,(make-push (make-named-reg #'ret-val))
+          ,(make-state-case (make-named-reg #'target)
                             (map make-risc-state (dict-keys rto-states))
                             (map (lambda (target)
                                    (list (make-go
@@ -165,7 +167,7 @@
 ;; compile-rule-args : [ListOf Symbol] -> [ListOf Insn]
 (define (compile-rule-args args)
   (if (empty? args)
-      (list (make-assign (make-named-reg 'target) (make-pop)))
+      (list (make-assign (make-named-reg #'target) (make-pop)))
       (cons ; pop the state which called for the reduce
             (make-assign (make-nameless-reg) (make-pop))
             (foldl (lambda (x xs)
@@ -180,7 +182,7 @@
                                           (make-named-reg (first args))
                                           (make-nameless-reg))
                                       (make-pop))
-                         (make-assign (make-named-reg 'target) (make-pop)))
+                         (make-assign (make-named-reg #'target) (make-pop)))
                    (rest args)))))
 
 
@@ -213,8 +215,8 @@
                                                'have-token)) '())))
     ((accept l)
      (list (make-assign (make-nameless-reg) (make-pop))
-           (make-assign (make-named-reg 'result) (make-pop))
-           (make-risc-accept (list (make-named-reg 'result)))))))
+           (make-assign (make-named-reg #'result) (make-pop))
+           (make-risc-accept (list (make-named-reg #'result)))))))
 
 ;; maybe-compile-action : [ListOf Action] -> [ListOf Insn*]
 ;; This first checks if the list of actions is empty, if not it compiles
