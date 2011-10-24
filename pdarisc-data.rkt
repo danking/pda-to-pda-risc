@@ -8,7 +8,10 @@
 ;; an Insn is one of
 ;;  - (make-assign RegName Var-Rhs)
 ;;  - (make-push Pure-Rhs)
-;;  - (make-sem-act Symbol [ListOf RegName] [ListOf [Maybe RegName]] SExp)
+;;  - (make-sem-act [Syntax Identifier]
+;;                  [ListOf RegName]
+;;                  [ListOf [Maybe RegName]]
+;;                  SExp)
 ;;  - (make-drop-token)
 ;;  - (make-get-token)
 ;;  - (make-stack-ensure Natural)
@@ -24,6 +27,8 @@
 
 ;; an Insn* is one of
 ;;  - (make-label [ListOf LabelName]
+;;                [ListOf ST] ;; ST is defined in pda-data.rkt
+;;                TokenType ;; TokenType is defined in the semantics notes
 ;;                [ListOf ArgList]
 ;;                [ListOf Insn*-Seq]
 ;;                Insn*-Seq)
@@ -41,7 +46,9 @@
 ;;  - (make-accept [ListOf RegName])
 ;;  - (make-reject)
 ;;  - (make-if-eos Insn* Insn*)
-;;  - (make-state-case RegName [ListOf State] [ListOf Insn*-Seq])
+;;  - (make-state-case RegName
+;;                     [ListOf [Syntax Identifier]]
+;;                     [ListOf Insn*-Seq])
 ;;  - (make-token-case [ListOf [Maybe Token]] [ListOf Insn*-Seq])
 ;;  - (make-go LabelName [ListOf Pure-Rhs])
 (define-ustruct (branch insn*) ())
@@ -60,7 +67,7 @@
 
 ;; A Pure-Rhs is one of
 ;;  - Register
-;;  - (make-state Symbol)
+;;  - (make-state [Syntax Identifier])
 ;;  - (make-nterm Symbol)
 ;;  - (make-curr-token [Maybe Natural])
 (define-ustruct (pure-rhs var-rhs) ())
@@ -69,14 +76,16 @@
 (define-ustruct (curr-token pure-rhs) (n))
 
 ;; A Register is either
-;;  - a (make-named-reg Symbol), or
+;;  - a (make-named-reg [Syntax Idnetifier]), or
 ;;  - a (make-nameless-reg)
 (define-ustruct (register pure-rhs) ())
 (define-ustruct (named-reg register) (id))
 (define-ustruct (nameless-reg register) ())
 
 ;; A LabelName is either
-;;  - a (make-label-name Symbol), or
-;;  - a (make-label-polynym Symbol Symbol)
+;;  - a (make-label-name [Syntax Identifier]), or
+;;  - a (make-label-polynym [Syntax Identifier] Symbol)
 (define-ustruct label-name (id))
 (define-ustruct (label-polynym label-name) (extra-id))
+
+;; A Token is [Syntax Identifier]
