@@ -113,17 +113,33 @@
 (define (compile-have-token-state st)
   (match st
     ((state name stype token-actions eos-actions gotos)
-     (make-block*
-      (list
-       (make-push (make-risc-state name))
-       (make-token-case
-        (map (lambda (x)
-               (if (empty? (action-lookahead x))
-                   #f
-                   (first (action-lookahead x))))
-             token-actions)
-        (map (lambda (x) (compile-non-eos-action x name))
-             token-actions)))))))
+     (let-values (((guards consequences)
+                   (compile-case-clauses token-actions name)))
+       (make-block*
+        (list
+         (make-push (make-risc-state name))
+         (make-token-case guards consequences)))))))
+
+;; compile-case-clauses : [ListOf Action]
+;;                        [Syntax Identifier]
+;;                        ->
+;;                        [ListOf [Maybe [Syntax Identifier]]]
+;;                        [ListOf [ListOf Insn*]]
+(define (compile-case-clauses actions name)
+  (let-values (((else non-else) (partition (lambda (act)
+                                             (empty? (action-lookahead act)))
+                                           actions)))
+    (values (foldr (lambda (x xs)
+                     (cons (first (action-lookahead x)) xs))
+                   '(#f)
+                   non-else)
+            (foldr (lambda (x xs)
+                     (cons (compile-non-eos-action x name)
+                           xs))
+                   (if (empty? else)
+                       (list (list (make-reject)))
+                       (list (compile-non-eos-action (first else) name)))
+                   non-else))))
 
 ;; compile-eos-state : State -> Insn*
 ;; produces an insn* that encapsulates the behavior of the given PDA state when
