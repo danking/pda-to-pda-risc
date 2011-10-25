@@ -13,25 +13,26 @@
 (define (infer-rule-types partly-untyped-pda)
   (let* ((states (pda-states partly-untyped-pda))
          (types (cleanup-rule-types (foldl gather-rule-types-from-state
-                                            (hasheq)
-                                            states))))
+                                           (hasheq)
+                                           states))))
     (pda-update-rules (map (lambda (r)
-                             (rule-update-stack-type (dict-ref types
-                                                               (rule-name r))
-                                                     r))
+                             (rule-update-stack-type
+                              (dict-ref types
+                                        (syntax-e (rule-name r)))
+                              r))
                            (pda-rules partly-untyped-pda))
                       partly-untyped-pda)))
 
 ;; infer-state-types : PDA -> PDA
 (define (infer-state-types untyped-pda)
   (let* ((states (pda-states untyped-pda))
-         (nodes (map state-name states))
+         (nodes (map (compose syntax-e state-name) states))
          (edges (map get-edges states))
          (types (assign-types (make-hash (map list* nodes edges))
-                              (pda-start untyped-pda))))
+                              (syntax-e (pda-start untyped-pda)))))
     (pda-update-states (map (lambda (st)
                               (state-update-stack-type
-                               (get-stack-type types (state-name st))
+                               (get-stack-type types (syntax-e (state-name st)))
                                st))
                             states)
                        untyped-pda)))
@@ -45,9 +46,13 @@
     (foldl (lambda (act ls)
              (match act
                ((shift (list token) target)
-                (cons (list target token) ls))
+                (cons (list (syntax-e target)
+                            (syntax-e token))
+                      ls))
                ((goto nt target)
-                (cons (list target nt) ls))
+                (cons (list (syntax-e target)
+                            nt)
+                      ls))
                (_ ls)))
            '()
            stack-acts)))
@@ -61,21 +66,27 @@
                      name)
              '(()))))
 
-;; [Dict Symbol [ListOf StackType]] -> [Dict Symbol StackType]
+;; cleanup-rule-types : [Dict Symbol [ListOf StackType]]
+;;                      ->
+;;                      [Dict Symbol StackType]
 (define (cleanup-rule-types dict)
   (for/hash ([rule (in-dict-keys dict)])
             (let ((types (dict-ref dict rule)))
-             (values rule (foldl union-stack-sets
-                                 (first types)
-                                 (rest types))))))
+              (values rule (foldl union-stack-sets
+                                  (first types)
+                                  (rest types))))))
 
+;; gather-rule-types-from-state : State
+;;                                [Dict Symbol [ListOf StackType]]
+;;                                ->
+;;                                [Dict Symbol [ListOf StackType]]
 (define (gather-rule-types-from-state st dict)
   (match st
     ((state name stack-type non-gotos eos-actions gotos)
      (foldl (lambda (act dict)
               (match act
                 ((reduce lookahead rule)
-                 (dict-cons dict rule stack-type))
+                 (dict-cons dict (syntax-e rule) stack-type))
                 (_ dict)))
             dict
             (append non-gotos eos-actions)))))

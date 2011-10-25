@@ -1,30 +1,13 @@
 #lang racket
 (require "../pda-data.rkt"
          rackunit
+         "check-syntax-equal.rkt"
          "../parse-pda.rkt")
-
-;; don't pass infinite sequences to this.
-(define (datum-equal? x y)
-  (let-values (((x y) (if (and (syntax? x) (syntax? y))
-                          (values (syntax->datum x) (syntax->datum y))
-                          (values x y))))
-    (let-values (((x y) (if (and (struct? x) (struct? y))
-                            (values (struct->vector x) (struct->vector y))
-                            (values x y))))
-      (if (and (sequence? x) (sequence? y)
-               (= (sequence-length x)
-                  (sequence-length y)))
-          (for/and ([x-element x]
-                    [y-element y])
-            (datum-equal? x-element y-element))
-          (equal? x y)))))
-
-(define-binary-check (check-datum-equal? datum-equal? actual expected))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Typed PDAs
 
-(check-datum-equal?
+(check-syntax-equal?
  (parse-pda #'(parse-pda
                (TOKENS A B $eos)
                (EOS $eos)
@@ -89,7 +72,7 @@
                  (make-rule #'r2 (list (list #'B #'s2 #'A #'s2))
                             'start '(#f #f) #'2))))
 
-(check-datum-equal?
+(check-syntax-equal?
  (parse-pda
   #'(parse-pda
      (TOKENS NUM L-PAREN R-PAREN SEMICOLON TIMES DIVIDE PLUS MINUS *EOF*)
@@ -207,7 +190,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; UnTyped PDAs
 
-(check-datum-equal?
+(check-syntax-equal?
  (parse-pda #'(parse-pda
                (TOKENS A B $eos)
                (EOS $eos)
@@ -268,7 +251,7 @@
                             (list #f #f)
                             #'2))))
 
-(check-datum-equal?
+(check-syntax-equal?
  (parse-pda
   #'(parse-pda
      (TOKENS NUM L-PAREN R-PAREN SEMICOLON TIMES DIVIDE PLUS MINUS *EOF*)

@@ -79,7 +79,7 @@
                (list (make-block*
                       (list (make-push (make-risc-state 's0))
                             (make-token-case
-                             '(A B)
+                             '(A B #f)
                              (list
                               (list (make-push (make-curr-token #f))
                                     (make-drop-token)
@@ -87,7 +87,8 @@
                                              '()))
                               (list (make-go (make-label-polynym 'r1
                                                                  'have-token)
-                                             '())))))))
+                                             '()))
+                              (list (make-reject)))))))
                (list (make-block*
                       (list (make-push (make-risc-state 's1))
                             (make-token-case
@@ -244,7 +245,7 @@
                (list
                 (make-push (make-risc-state 's0))
                 (make-token-case
-                 '(A B)
+                 '(A B #f)
                  (list
                   (list (make-push (make-curr-token #f))
                         (make-drop-token)
@@ -252,7 +253,8 @@
                                  '()))
                   (list (make-go (make-label-polynym 'r1
                                                      'have-token)
-                                 '())))))))
+                                 '()))
+                  (list (make-reject)))))))
 
 (check-equal? (compile-have-token-state
                (make-state 's1
