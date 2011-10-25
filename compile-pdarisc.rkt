@@ -13,8 +13,8 @@
   (match p
     ((pdarisc insns)
      #`(lambda (input-stream)
-         (define-struct nterm (id))
-         (define-struct state (id))
+         (define-struct nterm (id) #:transparent)
+         (define-struct state (id) #:transparent)
          (#,(compile-insn-seq* insns
                                token-convert
                                get-token
