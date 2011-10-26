@@ -512,8 +512,8 @@
                       #'cdr
                       #'empty?)
                      #`(lambda (input-stream)
-                         (define-struct nterm (id))
-                         (define-struct state (id))
+                         (define-struct nterm (id) #:transparent)
+                         (define-struct state (id) #:transparent)
                          ((lambda (in tr regs stack)
                             (letrec ((s0 (lambda ()
                                            (lambda (in tr regs stack)
