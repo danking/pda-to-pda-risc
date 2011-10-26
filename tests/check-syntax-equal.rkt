@@ -10,13 +10,20 @@
     (let-values (((x y) (if (and (struct? x) (struct? y))
                             (values (struct->vector x) (struct->vector y))
                             (values x y))))
-      (if (and (sequence? x) (sequence? y)
-               (= (sequence-length x)
-                  (sequence-length y)))
-          (for/and ([x-element x]
-                    [y-element y])
-            (syntax-equal? x-element y-element))
-          (equal? x y)))))
+      (cond [(and (hash? x) (hash? y)
+                  (= (sequence-length x)
+                     (sequence-length y)))
+             (for/and ([(x-key x-val) x]
+                       [(y-key y-val) y])
+                      (and (syntax-equal? x-key y-key)
+                           (syntax-equal? x-val y-val)))]
+            [(and (sequence? x) (sequence? y)
+                  (= (sequence-length x)
+                     (sequence-length y)))
+             (for/and ([x-element x]
+                       [y-element y])
+                      (syntax-equal? x-element y-element))]
+            [else (equal? x y)]))))
 
 (define-binary-check (check-syntax-equal? syntax-equal? actual expected))
 
