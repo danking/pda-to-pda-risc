@@ -106,9 +106,9 @@
 
 (define (unparse-label-clauses ids stack-types token-types param-lists rhses)
   (map (lambda (id stack-type token-type param rhs)
-         `(,(unparse-label-name id) : ,stack-type ,token-type
-                                      ,(map unparse-register param)
-                                      . ,(unparse-insn-seq* rhs)))
+         `(,(unparse-label-name id) ,stack-type ,token-type
+                                    ,(map unparse-register param)
+                                    . ,(unparse-insn-seq* rhs)))
        ids
        stack-types
        token-types

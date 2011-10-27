@@ -81,7 +81,7 @@
   #:description "a pda state"
   #:attributes (compiled)
   #:literal-sets (pda-literals)
-  (pattern (STATE name:identifier (~datum :) st:stack-type-stx
+  (pattern (STATE name:identifier st:stack-type-stx
                   (~or _:comment-stx
                        action:non-goto-action-stx
                        goto:goto-stx) ...)
@@ -96,7 +96,7 @@
   #:description "a pda rule"
   #:attributes (compiled)
   #:literal-sets (pda-literals)
-  (pattern (RULE name:identifier (~datum :) st:stack-type-stx
+  (pattern (RULE name:identifier st:stack-type-stx
                  non-terminal:identifier
                  (bindings:maybe-id ...)
                  sem-act)

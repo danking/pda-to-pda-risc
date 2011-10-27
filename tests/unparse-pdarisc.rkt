@@ -113,13 +113,13 @@
                                        (list (make-go
                                               (make-label-name 'indirection)
                                               (list)))))))
-              '((label ((hiphoppop : ((NTERM id) tok (STATE foo)) #f
+              '((label ((hiphoppop (id tok foo) #f
                                    (foo bar)
                                    (:= hiphop (pop))
                                    (push foo)
                                    (push bar)
                                    (accept))
-                        (indirection : () plus-sign
+                        (indirection () plus-sign
                                      ()
                                      (go hiphoppop
                                          (nterm kanye)
