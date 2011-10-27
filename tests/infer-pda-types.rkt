@@ -12,6 +12,34 @@
                                 (EOS $eos)
                                 (START s1)
                                 (STATE s1
+                                       (SHIFT (A) s1))
+                                (STATE s2
+                                       (SHIFT (A) s1)
+                                       (GOTO start s1))
+                                (RULE r1
+                                      start
+                                      (#f v2 #f) (+ 2 v2)))))
+ (make-pda (list #'A #'B #'$eos)
+           #'$eos
+           #'s1
+           (list (make-state #'s1 '(())
+                             (list (make-shift (list #'A) #'s1))
+                             (list)
+                             (list))
+                 (make-state #'s2 'bottom
+                             (list (make-shift (list #'A) #'s1))
+                             (list)
+                             (list (make-goto 'start #'s1))))
+           (list (make-rule #'r1 'bottom
+                            'start (list #f #'v2 #f) #'(+ 2 v2))))
+ "unreachable states")
+
+(check-syntax-equal?
+ (infer-pda-types (parse-pda #'(parse-pda
+                                (TOKENS A B $eos)
+                                (EOS $eos)
+                                (START s1)
+                                (STATE s1
                                        (SHIFT (A) s2)
                                        (GOTO start s6))
                                 (STATE s2
