@@ -17,8 +17,8 @@
                                            states))))
     (pda-update-rules (map (lambda (r)
                              (rule-update-stack-type
-                              (dict-ref types
-                                        (syntax-e (rule-name r)))
+                              (get-stack-type types
+                                              (syntax-e (rule-name r)))
                               r))
                            (pda-rules partly-untyped-pda))
                       partly-untyped-pda)))
@@ -62,9 +62,9 @@
 (define (get-stack-type types name)
   (if (dict-has-key? types name)
       (dict-ref types name #f)
-      (begin (printf "State ~a is unreachable, assuming empty stack type.\n"
+      (begin (printf "~a is unreachable, assigning bottom.\n"
                      name)
-             '(()))))
+             'bottom)))
 
 ;; cleanup-rule-types : [Dict Symbol [ListOf StackType]]
 ;;                      ->
