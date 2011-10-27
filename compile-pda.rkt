@@ -202,15 +202,15 @@
                    (rest args)))))
 
 
-;; compile-eos-action : Action Symbol -> [ListOf Insn*]
+;; compile-eos-action : Action State-Name -> [ListOf Insn*]
 (define (compile-eos-action a curr-state)
   (compile-action a curr-state #t))
 
-;; compile-non-eos-action : Action Symbol -> [ListOf Insn*]
+;; compile-non-eos-action : Action State-Name -> [ListOf Insn*]
 (define (compile-non-eos-action a curr-state)
   (compile-action a curr-state #f))
 
-;; compile-action : Action Symbol Boolean -> [ListOf Insn*]
+;; compile-action : Action State-Name Boolean -> [ListOf Insn*]
 ;; If eos? is true, make all go branches branch to EOS states; otherwise,
 ;; assume these actions are called from the have-token state and branch
 ;; to the appropriate labels.
