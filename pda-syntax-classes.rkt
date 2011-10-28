@@ -193,7 +193,7 @@
   #:description "a stack configuration"
   #:attributes (compiled)
   (pattern (stack-element:identifier ...)
-           #:attr compiled (syntax->list #'(stack-element ...))))
+           #:attr compiled (syntax->datum #'(stack-element ...))))
 
 (define (unsyntax-action-list x)
   (map syntax-e (syntax->list x)))

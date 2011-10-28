@@ -52,7 +52,7 @@
                (make-label-polynym #'r1 'eos)
                (make-label-polynym #'r2 'eos))
          `((()) (()) (()) (()) (()) (())
-           (,(list #'A #'s)) (()) (,(list #'A #'s)) (()))
+           ((A s)) (()) ((A s)) (()))
          '(#f #f #f #f #f #f #f #f #f #f) ; token-regs
          '(() () () () () () () () () ()) ; arg-lists
          (list (list (make-block*
