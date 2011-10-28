@@ -1,0 +1,29 @@
+PDA Compiler
+====================
+
+macro-glue.rkt provides the pda macro which has the following form:
+
+  (pda token-convert get-token drop-token eos-stream?
+       (clauses ...))
+
+token-convert : X -> TokenSymbol
+get-token : InputStream -> X
+drop-token : InputStream -> InputStream
+eos-stream? : InputStream -> Boolean
+
+We can take the output from the DeRemer Penello algorithm and feed it to the pda
+macro after minor modifications. First, the DRP algorithm produces unreachable
+states and never-used rules. We must remove these because the stack type
+inference algorithm will fail if it finds unreachable states. Then, we must
+remove the NO-SHIFT and ERROR forms because these are not found in the PDA
+grammar used by the pda macro. Furthermore, we must add a START form specifying
+the initial state. Finally, we must convert scheme48/scsh idioms, such as
+(if #f #f), to proper Racket code.
+
+The procedure parameters used in DRP are slightly different than the ones
+expected by the pda macro. Instead of token-case, a piece of syntax which
+creates a case form, pda asks for token-convert which converts a token from the
+stream into a token declared in the TOKENS form. The pda get-token argument
+expects only one argument, the stream; the DRP's get-token argument expected
+both a stream and a lookahead. Finally, the pda macro neglects an error handler
+and adds an empty-stream? procedure, which checks if the stream is empty.

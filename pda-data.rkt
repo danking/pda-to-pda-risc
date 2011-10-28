@@ -1,59 +1,44 @@
 #lang racket
 (provide (all-defined-out))
+(require "define-ustruct.rkt")
 
-(define-struct pda (tokens eos start states rules reducible-states)
-  #:transparent)
-(define-struct state (name not-gotos gotos)
-  #:transparent)
-(define-struct rule (name nt bindings sem-act)
-  #:transparent)
+;; A PDA is a (make-pda [ListOf Symbol]
+;;                      [Maybe Symbol]
+;;                      [Maybe Symbol]
+;;                      [ListOf State]
+;;                      [ListOf Rule])
+(define-ustruct pda (tokens eos start states rules))
 
-(define empty-pda (make-pda '() #f #f '() '() (hasheq)))
+(define empty-pda (make-pda '() #f #f '() '()))
 
-(define (pda-set-reducible-states hsh pda)
-  (make-pda (pda-tokens pda)
-            (pda-eos pda)
-            (pda-start pda)
-            (pda-states pda)
-            (pda-rules pda)
-            hsh))
+;; an ST or StackType is defined in the notes on semantics
 
-(define (pda-set-tokens tokens pda)
-  (make-pda tokens
-            (pda-eos pda)
-            (pda-start pda)
-            (pda-states pda)
-            (pda-rules pda)
-            (pda-reducible-states pda)))
+;; a State is a (make-state [Syntax Identifier]
+;;                          [Maybe ST]
+;;                          [ListOf (U Shift
+;;                                     Reduce
+;;                                     Accept)]
+;;                          [ListOf (U Shift
+;;                                     Reduce
+;;                                     Accept)]
+;;                          [ListOf Goto])
+(define-ustruct state (name stack-type non-gotos eos-actions gotos))
 
-(define (pda-set-eos token pda)
-  (make-pda (pda-tokens pda)
-            token
-            (pda-start pda)
-            (pda-states pda)
-            (pda-rules pda)
-            (pda-reducible-states pda)))
+;; a Rule is a (make-rule Symbol
+;;                        ST
+;;                        Symbol
+;;                        [ListOf [Maybe [Syntax Identifier]]]
+;;                        [Syntax Expression])
+(define-ustruct rule (name stack-type nt bindings sem-act))
 
-(define (pda-set-start state pda)
-  (make-pda (pda-tokens pda)
-            (pda-eos pda)
-            state
-            (pda-states pda)
-            (pda-rules pda)
-            (pda-reducible-states pda)))
 
-(define (pda-add-state state pda)
-  (make-pda (pda-tokens pda)
-            (pda-eos pda)
-            (pda-start pda)
-            (cons state (pda-states pda))
-            (pda-rules pda)
-            (pda-reducible-states pda)))
+;; an Action is a (make-action Symbol)
+(define-ustruct action (lookahead))
+;; a TAction is a (make-taction [U [Syntax Identifier] Symbol]
+;;                              [Syntax Identifier])
+(define-ustruct (taction action) (target))
 
-(define (pda-add-rule rule pda)
-  (make-pda (pda-tokens pda)
-            (pda-eos pda)
-            (pda-start pda)
-            (pda-states pda)
-            (cons rule (pda-rules pda))
-            (pda-reducible-states pda)))
+(define-ustruct (shift   taction) ())
+(define-ustruct (reduce  taction) ())
+(define-ustruct (goto    taction) ())
+(define-ustruct (accept  action) ())
