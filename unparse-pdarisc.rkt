@@ -14,10 +14,10 @@
     ((push val)
      `(push ,(unparse-pure-rhs val)))
     ((sem-act name params retvars action)
-     `(semantic-action ,name
+     `(semantic-action ,(syntax-e name)
                        ,(map unparse-register params)
                        ,(map unparse-maybe-register retvars)
-                       ,action))
+                       ,(syntax->datum action)))
     ((drop-token)
      'drop-token)
     ((get-token)
@@ -50,7 +50,11 @@
                          looks
                          cnsqs)))
    ((token-case looks cnsqs)
-    `(token-case . ,(map cons looks (map up-seq* cnsqs))))
+    `(token-case . ,(map (lambda (x y)
+                           (cons (if x (syntax-e x) #f) ; looks : [Maybe Syntax]
+                                 y))
+                         looks
+                         (map up-seq* cnsqs))))
    ((go target args)
     `(go ,(unparse-label-name target) . ,(map unparse-pure-rhs args)))))
 
@@ -82,7 +86,7 @@
 
 (define (unparse-register r)
   (match r
-    ((named-reg id) id)
+    ((named-reg id) (syntax-e id))
     ((nameless-reg) '<nameless-register>)))
 
 (define (unparse-maybe-register r)
@@ -92,21 +96,22 @@
 
 (define (unparse-state s)
   (match s
-    ((state id) `(state ,id))))
+    ((state id) `(state ,(syntax-e id)))))
 
 (define (strip-state s)
   (match s
-    ((state id) id)))
+    ((state id) (syntax-e id))))
 
 (define (unparse-label-name l)
   (match l
     ((label-polynym id extra-id)
-     (symbol-append id '- extra-id))
-    ((label-name id) id)))
+     (symbol-append (syntax-e id) '- extra-id))
+    ((label-name id) (syntax-e id))))
 
 (define (unparse-label-clauses ids stack-types token-types param-lists rhses)
   (map (lambda (id stack-type token-type param rhs)
-         `(,(unparse-label-name id) ,stack-type ,token-type
+         `(,(unparse-label-name id) ,stack-type
+                                    ,token-type
                                     ,(map unparse-register param)
                                     . ,(unparse-insn-seq* rhs)))
        ids
