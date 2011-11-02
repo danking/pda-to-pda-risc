@@ -1,6 +1,14 @@
 #lang racket
+(provide check-syntax-equal?
+         syntax-equal?
+         vs->ls)
+
+(define-syntax vs->ls
+  (syntax-rules ()
+    ((_ exp)
+     (call-with-values (lambda () exp) list))))
+
 (require rackunit)
-(provide check-syntax-equal?)
 
 ;; don't pass infinite sequences to this.
 (define (syntax-equal? x y)
@@ -33,4 +41,3 @@
             [else (equal? x y)]))))
 
 (define-binary-check (check-syntax-equal? syntax-equal? actual expected))
-

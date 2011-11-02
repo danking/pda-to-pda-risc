@@ -1,7 +1,7 @@
 #lang racket
 (require "../pdarisc-data.rkt"
          rackunit
-         "check-syntax-equal.rkt")
+         "test-util.rkt")
 (require/expose "../compile-pdarisc.rkt"
                 (compile-pdarisc
                  compile-pure-rhs

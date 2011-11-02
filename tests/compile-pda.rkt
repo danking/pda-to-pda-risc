@@ -7,7 +7,7 @@
                   [make-accept make-pda-accept])
          "../parse-pda.rkt"
          "../pdarisc-data.rkt"
-         "check-syntax-equal.rkt"
+         "test-util.rkt"
          rackunit)
 (require/expose "../compile-pda.rkt"
                 (compile-pda gather-rto-table

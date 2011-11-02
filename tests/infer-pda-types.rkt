@@ -2,7 +2,7 @@
 (require rackunit
          "../pda-data.rkt"
          "../parse-pda.rkt"
-         "check-syntax-equal.rkt")
+         "test-util.rkt")
 (require/expose "../infer-pda-types.rkt"
                 (infer-pda-types get-edges))
 

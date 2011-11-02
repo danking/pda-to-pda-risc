@@ -1,7 +1,7 @@
 #lang racket
 (require "../pda-data.rkt"
          rackunit
-         "check-syntax-equal.rkt"
+         "test-util.rkt"
          "../parse-pda.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
