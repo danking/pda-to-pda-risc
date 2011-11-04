@@ -86,7 +86,14 @@
      (foldl (lambda (act dict)
               (match act
                 ((reduce lookahead rule)
-                 (dict-cons dict (syntax-e rule) stack-type))
+                 (dict-cons dict
+                            (syntax-e rule)
+                            ; The name is pushed before control transfers to the
+                            ; reduction. This is necessary to handle empty rule
+                            ; productions.
+                            (map (lambda (stack)
+                                   (cons (syntax-e name) stack))
+                                 stack-type)))
                 (_ dict)))
             dict
             (append non-gotos eos-actions)))))

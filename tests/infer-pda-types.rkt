@@ -90,9 +90,11 @@
                              (list)
                              (list (make-accept (list #'$eos)))
                              (list)))
-           (list (make-rule #'r1 '((B s4 start s2 A s2) (B s4 start s2 A s1))
+           (list (make-rule #'r1 '((s5 B s4 start s2 A s2)
+                                   (s5 B s4 start s2 A s1))
                             'start (list #f #'v2 #f) #'(+ 2 v2))
-                 (make-rule #'r2 '((B s2 A s2) (B s2 A s1))
+                 (make-rule #'r2 '((s3 B s2 A s2)
+                                   (s3 B s2 A s1))
                             'start '(#f #f) #'2))))
 
 (check-syntax-equal? (get-edges (make-state #'s2 '(s : ((A s1 ())
