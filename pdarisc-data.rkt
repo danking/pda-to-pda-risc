@@ -33,6 +33,7 @@
 ;;                [ListOf Insn*-Seq]
 ;;                Insn*-Seq)
 ;;  - (make-block Insn*-Seq)
+;;  - Branch
 ;;
 ;; an Insn*-Seq is a (append [ListOf Insn] (list Insn*))
 ;; an ArgList is a [ListOf RegName]
