@@ -13,10 +13,9 @@
       (cond [(and (hash? x) (hash? y)
                   (= (sequence-length x)
                      (sequence-length y)))
-             (for/and ([(x-key x-val) x]
-                       [(y-key y-val) y])
-                      (and (syntax-equal? x-key y-key)
-                           (syntax-equal? x-val y-val)))]
+             (for/and ([(x-key x-val) x])
+               (and (hash-has-key? y x-key)
+                    (syntax-equal? x-val (hash-ref y x-key))))]
             [(and (sequence? x) (sequence? y)
                   (= (sequence-length x)
                      (sequence-length y)))
