@@ -162,7 +162,7 @@
 (define (compile-rule r stream-state rto-table)
   (match r
     ((rule name stype nt args sem-act)
-     (let ((rto-states (dict-ref rto-table nt)))
+     (let ((rto-states (dict-ref rto-table nt (list))))
        (make-block*
         `(,@(compile-rule-args args)
           ,(make-sem-act name
