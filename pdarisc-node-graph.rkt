@@ -1,122 +1,111 @@
 #lang racket
-(require "pdarisc-data.rkt")
-(provide node reg-node join-node build-node-graph)
+(require "pdarisc-data.rkt"
+         "node-graph.rkt")
+(provide join-node build-node-graph)
 
-;; A Key is an ExactInteger
+;; an NG is a [NodeGraph [U Insn Insn*]]
+;; some auxiliary functions to NG may return values of type Key
 
-;; get-next-key : Unit -> Key
-;; rest-key-counter : Unit -> Unit
-(define-values (get-next-key reset-key-counter)
-  (let ((counter -1))
-    (values (lambda () (set! counter (add1 counter)) counter)
-            (lambda () (set! counter -1)))))
+;; build-node-graph : PDA-RISC -> NG
+(define (build-node-graph pdarisc)
+  (let-values
+      (((ng source-key)
+        (process (pdarisc-insns pdarisc) (make-node-graph) (hash))))
+    (node-graph-set-source/key ng source-key)))
 
-;; list-of-keys : [ListOf Any] -> [ListOf Key]
-;; produces a list of keys equal in length to the given list
-(define (list-of-keys ls)
-  (map (lambda (_) (get-next-key)) ls))
+;; process : Insn*-Seq NG LabelEnv -> (values NG Key)
+(define (process seq ng label-env)
+  (if (empty? (rest seq))
+      (process-insn* (first seq) ng label-env)
+      (process-insn (first seq) (rest seq) ng label-env)))
 
-;; A LabelEnv is a [Hash LabelName Key]
+;; process-insn* : Insn* NG LabelEnv -> (values NG Key)
+(define (process-insn* i* ng label-env)
+  (match i*
+    ((block* subseq)
+     (process subseq ng label-env))
+    ((label names stack-types token-types
+            arglists branches body)
+     (process-label i* ng label-env))
+    ((or (accept _)
+         (reject))
+     (node-graph-add-node ng i*))
+    ((if-eos cnsq altr)
+     ;; note that cnsq and atlr are Insn*s, so we turn them into Insn*-seqs
+     ;; (the inner calls to list), and put them into a list (the outer call
+     ;; to list)
+     (let-values (((ng succ-keys) (process-many (list (list cnsq) (list altr))
+                                                ng label-env)))
+       (node-graph-add-node/succs ng i* succ-keys)))
+    ((or (state-case _ _ cnsqs)
+         (token-case _ cnsqs))
+     (let-values (((ng succ-keys) (process-many cnsqs ng label-env)))
+       (node-graph-add-node/succs ng i* succ-keys)))
+    ((go label _)
+     (node-graph-add-node/succs ng i* (list (label-env-get label-env label))))))
+
+;; process-many : [ListOf Insn*-Seq] NG LabelEnv -> (values NG [SetOf Key])
+(define (process-many seqs ng labelenv)
+  (for/fold ((ng ng)
+             (keys (set)))
+            ((seq seqs))
+    (let-values
+        (((ng key) (process seq ng labelenv)))
+      (values ng (set-add keys key)))))
+
+;; process-label : Label
+;;                 NG
+;;                 LabelEnv
+;;                 ->
+;;                 (values NG Key)
+(define (process-label i* ng label-env)
+  (match-define (label branch-names _ _ arglists branches body) i*)
+
+  (let* ((label-env/boxes (for/fold ((env label-env))
+                                    ((name branch-names))
+                            (label-env-set env name (box #f)))))
+    (let-values
+        (((ng/branches branch-keys)
+          (for/fold ((ng ng)
+                     (keys (set)))
+              ((arglist arglists)
+               (branch branches))
+            (let*-values
+                (((ng* branch-key) (process branch ng label-env/boxes))
+                 ((ng** join-key) (node-graph-add-node/succs ng*
+                                                             (join-node arglist)
+                                                             (list branch-key))))
+              (values ng** (set-add keys join-key))))))
+      (for ((name branch-names)
+            (key branch-keys))
+        (set-box! (label-env-get label-env/boxes name) key))
+      (process body
+               ng/branches
+               label-env/boxes))))
+
+;; process-insn : Insn Insn*-Seq NG LabelEnv -> (values NG Key)
+(define (process-insn i seq ng label-env)
+  (match i
+    ((block subseq)
+     (process (append subseq seq) ng label-env))
+    ((insn)
+     (let-values
+         (((ng succ-key)
+           (process seq ng label-env)))
+       (node-graph-add-node/succs ng i (list succ-key))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Utilities
+
+;; A join-node is a dummy node used for join points
+(define-struct join-node (arglist) #:transparent)
+
+;; A LabelEnv is a [Hash LabelName [U Key [Box Key]]]
+
+;; label-env-set : LabelEnv -> LabelEnv
 (define (label-env-set env key val)
   (hash-set env (label-name->symbol key) val))
+;; label-env-set : LabelEnv -> Symbol
 (define (label-env-get env key)
   (hash-ref env (label-name->symbol key)))
 
-;; A Node is a (node [ListOf Key])
-(define-struct node (next-node) #:transparent)
-(define-struct (reg-node node) (insn) #:transparent)
-(define-struct (join-node node) (arglist) #:transparent)
-
-;; A Graph is a [Hash Key Node]
-
-;; build-node-graph : PDA-RISC -> Graph
-(define (build-node-graph pdarisc)
-  (process (pdarisc-insns pdarisc) (hash) (hash) (get-next-key)))
-
-;; process : Insn*-Seq Graph LabelEnv Key -> Graph
-(define (process seq graph label-env my-key)
-  (if (empty? (rest seq))
-      (process-insn* (first seq) graph label-env my-key)
-      (process-insn (first seq) (rest seq) graph label-env my-key)))
-
-;; process-insn* : Insn* Graph LabelEnv Key -> Graph
-(define (process-insn* i* graph label-env my-key)
-  (match i*
-    ((block* subseq)
-     (process subseq graph label-env my-key))
-    ((label names stack-types token-types
-            arglists branches body)
-     (process-label i* graph label-env my-key))
-    ((accept lor)
-     (hash-set graph my-key (reg-node '() i*)))
-    ((reject)
-     (hash-set graph my-key (reg-node '() i*)))
-    ((if-eos cnsq altr)
-     (let ((successor-keys (list (get-next-key)
-                                 (get-next-key))))
-       (process-insn* altr
-                      (process-insn* cnsq
-                                     (hash-set graph my-key (reg-node successor-keys i*))
-                                     label-env
-                                     (first successor-keys))
-                      label-env
-                      (second successor-keys))))
-    ((or (state-case _ _ cnsqs)
-         (token-case _ cnsqs))
-     (let ((successor-keys (list-of-keys cnsqs)))
-       (process/many cnsqs
-                     (hash-set graph my-key (reg-node successor-keys i*))
-                     label-env
-                     successor-keys)))
-    ((go label _)
-     (hash-set graph my-key (reg-node (list (label-env-get label-env label)) i*)))))
-
-;; process/many : [ListOf Insn*-Seq] Graph LabelEnv [ListOf Keys] -> Graph
-(define (process/many seqs graph labelenv keys)
-  (for/fold ((graph graph))
-            ((seq seqs)
-             (key keys))
-    (process seq graph labelenv key)))
-
-;; process-label : Label
-;;                 Graph
-;;                 LabelEnv
-;;                 Key
-;;                 ->
-;;                 Graph
-(define (process-label i* graph label-env my-key)
-  (match-define (label names _ _ arglists branches body) i*)
-
-  (let* ((next-keys (list-of-keys names))
-         (label-env* (for/fold ((env label-env))
-                         ((next-key next-keys)
-                          (name names))
-                       (label-env-set env name next-key)))
-         (body-key (get-next-key))
-         (graph* (hash-set graph my-key (reg-node (list body-key) i*))))
-    (process body
-             (for/fold ((new-graph graph*))
-                 ((next-key next-keys)
-                  (arglist arglists)
-                  (branch branches))
-               (let ((key-after-join (get-next-key)))
-                 (hash-set (process branch new-graph label-env* key-after-join)
-                           next-key
-                           (join-node (list key-after-join) arglist))))
-             label-env*
-             body-key)))
-
-;; process-insn : Insn Insn*-Seq Graph LabelEnv Key -> Graph
-(define (process-insn i seq graph label-env my-key)
-  (match i
-    ((block subseq)
-     (process (append subseq seq) graph label-env my-key))
-    ((insn)
-     (let ((next-key (get-next-key)))
-       (process seq
-                (hash-set graph
-                          my-key
-                          (reg-node (list next-key)
-                                    i))
-                label-env
-                next-key)))))
