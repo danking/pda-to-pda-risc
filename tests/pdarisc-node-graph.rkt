@@ -1,12 +1,12 @@
 #lang racket
-(require "../parse-pda.rkt"
-         "../pdarisc-data.rkt"
+(require "../pdarisc-data.rkt"
          "../parse-pdarisc.rkt"
          "../node-graph.rkt"
          "check-syntax-equal.rkt"
-         rackunit)
-(require/expose "../pdarisc-node-graph.rkt"
-                (build-node-graph join-node))
+         rackunit
+         "../pdarisc-node-graph.rkt")
+(require/expose "../node-graph.rkt"
+                (node-graph-uidmapping node-graph-graph))
 
 (define-syntax check-node-graph
   (syntax-rules ()
