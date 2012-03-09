@@ -1,86 +1,69 @@
 #lang racket
-(require srfi/1)
-(provide assign-types
-         union-stack-sets)
+(require "stack-types.rkt")
+(provide infer-stack-types)
 
-;; [Graph T] T -> [ListOf [Pair T Symbol]]
-(define (edges g s) (dict-ref g s))
+;; edges : States -> P(States × Symbol)
+;; type : States -> StackType
 
-;; [Graph T] T -> [ListOf (list T T Symbol)]
-(define (aug-edges g s)
-  (map (curry cons s) (edges g s)))
+;; StackType = P(Stacks) ∪ False
+;; A StackType is a set of stacks that are valid at a given state
+;; False means we know nothing about the stack type (bottom)
 
-;; add-trans : Any Symbol StackType -> StackType
-;; adds a note of the transition to the stack type
-(define (add-trans source token type)
-  (map (curry list* token source) type))
+;; Stacks-0 = ∅
+;; Stacks-n = Symbol × States × Stack-n-1
+;; Stacks = ⋃ Stack-i
 
-;; a [Graph T] is a [Dict T [ListOf [Pair T Symbol]]]
-;; where the pairs are edges of the form (destination shift-token) and the
-;; source node is the vector index
+(require "../misc/set-utilities.rkt")
 
-;; assign-types : [Graph T] T -> [Dict T StackType]
-(define (assign-types g s)
-  (let loop ((work (aug-edges g s))
-             (types (hasheq s '(()))))
-    (match work
-      (`() types)
-      (`((,source ,dest ,token) ,more-work ...)
-       (let ((new-stack-types (add-trans source
-                                         token
-                                         (dict-ref types
-                                                   source
-                                                   (unvisited-err source
-                                                                  dest
-                                                                  token))))
-             (dest-stack-types (dict-ref types
-                                         dest
-                                         #f)))
-         (if (false? dest-stack-types)
-             (loop (append more-work (aug-edges g dest))
-                   (dict-set types dest new-stack-types))
-             (let ((union-of-types (union-stack-sets dest-stack-types
-                                                     new-stack-types)))
-               (loop (if (equal? union-of-types dest-stack-types)
-                         more-work
-                         (append more-work (aug-edges g dest)))
-                     (dict-set types
-                               dest
-                               union-of-types)))))))))
+;; A [StackType T] is a (stack-type [SetOf [Stack T]] NaturalNumber)
 
-(define (unvisited-err source dest token)
+;; A [Stack T] is either
+;;  - empty, or
+;;  - (cons Symbol (cons T [StackType T]))
+
+;; infer-stack-types : [Hash T [Set T]] -> [Hash T [ListOf [Stack T]]]
+;; this infers all the possible paths through the given graph (recording both
+;; node and edge symbol) thus producing the "stack type" at every given node
+(define (infer-stack-types edges source-node)
+  (define (loop workset types)
+    (if (set-empty? workset)
+        (for/hash (((k e) types))
+          (values k
+                  (for/list ((stack (in-set (stack-type-stacks e))))
+                    stack)))
+        (let-values (((source workset) (set-get-one/rest workset)))
+          (let-values
+              (((workset* types)
+                (for/fold ([workset workset]
+                           [types types])
+                    ([edge (hash-ref edges source (err-no-edge source))])
+                  (let ((dest (first edge))
+                        (sym  (second edge)))
+                    (let* ((new-stack-type (transition (hash-ref types
+                                                                 source
+                                                                 (err-no-type source))
+                                                       source
+                                                       sym))
+                           (old-stack-type (hash-ref types dest bottom))
+                           (joined-stack-type (join-stack-types new-stack-type
+                                                                old-stack-type)))
+                      (if (equal? joined-stack-type old-stack-type)
+                          (values workset types)
+                          (values (set-add workset dest)
+                                  (hash-set types dest joined-stack-type))))))))
+            (loop workset* types)))))
+  (loop (set source-node) (hash source-node (stack-type (set '()) 0))))
+
+(define (err-no-edge node)
   (lambda ()
-    (error 't "must visit the source node first! (~a ~a ~a)"
-           source dest token)))
+    (error 'err-no-edge
+           "The given node ~a doesn't have any edges, is it in the graph?"
+           node)))
 
-
-;; A Stack is either
-;;  - empty
-;;  - (cons Symbol Stack)
-
-;; union-stack-sets : [ListOf Stack] [ListOf Stack] -> [ListOf Stack]
-;; computes the union of two sets of stacks
-(define (union-stack-sets s1 s2)
-  (let-values (((s1 s2)
-                (match-lengths-in-sets s1 s2)))
-    (lset-union equal? s1 s2)))
-
-(define (match-lengths-in-sets s1 s2)
-  (let ((l1 (length (first s1)))
-        (l2 (length (first s2))))
-    (cond [(< l1 l2) (values s1 (truncate-to s2 l1))]
-          [(> l1 l2) (values (truncate-to s1 l2) s2)]
-          [else (values s1 s2)])))
-
-;; truncate-to : [ListOf Stack] Number -> [ListOf Stack]
-(define (truncate-to los n)
-  (let loop ((los los)
-             (n n)
-             (acc (map (lambda (x) '()) los)))
-    (if (zero? n)
-        (map reverse acc)
-        (loop (map rest los)
-              (sub1 n)
-              (map cons
-                   (map first los)
-                   acc)))))
+(define (err-no-type node)
+  (lambda ()
+    (error 'err-no-edge
+           (string-append "The given node ~a doesn't have a type; therefore, it "
+                          "hasn't been visited, but we're still trying to "
+                          "transition from it?")
+           node)))

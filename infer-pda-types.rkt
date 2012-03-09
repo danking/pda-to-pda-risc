@@ -28,8 +28,8 @@
   (let* ((states (pda-states untyped-pda))
          (nodes (map (compose syntax-e state-name) states))
          (edges (map get-edges states))
-         (types (assign-types (make-hash (map list* nodes edges))
-                              (syntax-e (pda-start untyped-pda)))))
+         (types (infer-stack-types (make-hash (map list* nodes edges))
+                                   (syntax-e (pda-start untyped-pda)))))
     (pda-update-states (map (lambda (st)
                               (state-update-stack-type
                                (get-stack-type types (syntax-e (state-name st)))
@@ -70,11 +70,41 @@
 ;;                      ->
 ;;                      [Dict Symbol StackType]
 (define (cleanup-rule-types dict)
-  (for/hash ([rule (in-dict-keys dict)])
-            (let ((types (dict-ref dict rule)))
-              (values rule (foldl union-stack-sets
-                                  (first types)
-                                  (rest types))))))
+  (for/hash ([(rule types) dict])
+    (values rule (foldl union-stack-sets
+                        (first types)
+                        (rest types)))))
+
+;; union-stack-sets : [ListOf Stack] [ListOf Stack] -> [ListOf Stack]
+;; computes the union of two sets of stacks
+;; FIXME: PDAs should carry around sets instead of these stupid lists
+;;        until I take the time tor rework a huge portion of the
+;;        compiler we'll deal with this wart here that replicates
+;;        behavior from the node-graph.rkt module
+(require (only-in srfi/1 lset-union))
+(define (union-stack-sets s1 s2)
+  (define (match-lengths-in-sets s1 s2)
+    (let ((l1 (length (first s1)))
+          (l2 (length (first s2))))
+      (cond [(< l1 l2) (values s1 (truncate-to s2 l1))]
+            [(> l1 l2) (values (truncate-to s1 l2) s2)]
+            [else (values s1 s2)])))
+  (define (truncate-to los n)
+    (let loop ((los los)
+               (n n)
+               (acc (map (lambda (x) '()) los)))
+      (if (zero? n)
+          (map reverse acc)
+          (loop (map rest los)
+                (sub1 n)
+                (map cons
+                     (map first los)
+                     acc)))))
+
+  (let-values (((s1 s2)
+                (match-lengths-in-sets s1 s2)))
+    (lset-union equal? s1 s2)))
+
 
 ;; gather-rule-types-from-state : State
 ;;                                [Dict Symbol [ListOf StackType]]
