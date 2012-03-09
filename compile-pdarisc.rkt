@@ -1,6 +1,7 @@
 #lang racket
-(require "pdarisc-data.rkt")
-(require (for-template racket))
+(require "pdarisc-data.rkt"
+         "symbol-append.rkt"
+         (for-template racket))
 (provide compile-pdarisc)
 
 ;; compile-insn-seq* : PDA-RISC
@@ -189,10 +190,3 @@
                                                  arg-registers
                                                  lambda-args)
                                         stack))))))
-
-
-
-(define-syntax symbol-append
-  (syntax-rules ()
-    [(_ sym ...)
-     (string->symbol (string-append (symbol->string sym) ...))]))

@@ -1,6 +1,7 @@
 #lang racket
 (provide (all-defined-out))
-(require "define-ustruct.rkt")
+(require "define-ustruct.rkt"
+         "symbol-append.rkt")
 
 ;; a PDA-RISC is a (make-pdarisc Insn*-Seq)
 (define-ustruct pdarisc (insns))
@@ -33,6 +34,7 @@
 ;;                [ListOf Insn*-Seq]
 ;;                Insn*-Seq)
 ;;  - (make-block Insn*-Seq)
+;;  - Branch
 ;;
 ;; an Insn*-Seq is a (append [ListOf Insn] (list Insn*))
 ;; an ArgList is a [ListOf RegName]
@@ -87,5 +89,14 @@
 ;;  - a (make-label-polynym [Syntax Identifier] Symbol)
 (define-ustruct label-name (id))
 (define-ustruct (label-polynym label-name) (extra-id))
+
+;; label-name->symbol : LabelName -> Symbol
+;; strips the syntax information
+(define (label-name->symbol label)
+  (match label
+    ((label-polynym id id2) (symbol-append (syntax->datum id)
+                                           '-
+                                           id2))
+    ((label-name id) (syntax->datum id))))
 
 ;; A Token is [Syntax Identifier]
