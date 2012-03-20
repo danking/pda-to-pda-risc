@@ -289,7 +289,7 @@
 ;; big error message
 
 ;; Sadism:
-(define ab-matching
+(define ab-matching-sadism
            (pda (lambda (x) x) car cdr empty?
                 ((TOKENS A B $eos)
                  (EOS $eos)
