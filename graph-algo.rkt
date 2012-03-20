@@ -13,7 +13,7 @@
 ;; Stacks-n = Symbol × States × Stack-n-1
 ;; Stacks = ⋃ Stack-i
 
-(require "../misc/set-utilities.rkt")
+(require "../racket-utils/set-utilities.rkt")
 
 ;; A [StackType T] is a (stack-type [SetOf [Stack T]] NaturalNumber)
 
