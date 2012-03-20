@@ -14,7 +14,7 @@
 ;; A Key is a NonNegativeInteger
 ;; A Key* is a [U Key [Box Key]]
 
-(struct node-graph (graph uidmapping source next-key inc-key))
+(struct node-graph (graph uidmapping source next-key inc-key) #:transparent)
 
 ;; make-node-graph : Unit -> [NodeGraph Key Node]
 ;; this initializes the key counter and returns an empty node-graph
