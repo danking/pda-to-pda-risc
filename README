@@ -16,9 +16,16 @@ macro after minor modifications. First, the DRP algorithm produces unreachable
 states and never-used rules. We must remove these because the stack type
 inference algorithm will fail if it finds unreachable states. Then, we must
 remove the NO-SHIFT and ERROR forms because these are not found in the PDA
-grammar used by the pda macro. Furthermore, we must add a START form specifying
-the initial state. Finally, we must convert scheme48/scsh idioms, such as
-(if #f #f), to proper Racket code.
+grammar used by the pda macro. We must break the lambdas from the semantic
+actions into a series of bindings and a body as specified by the rule
+syntax. Furthermore, we must add a START form specifying the initial state and
+an EOS form specifying the EOS token. Finally, we must convert scheme48/scsh
+idioms, such as (if #f #f), to proper Racket code.
+
+The DRP algorithm often produces unreachable states that cause errors in the
+stack type inferring algorithm. You'll get hash-ref errors. Remove the
+corresponding states. Analogously, you may come across irreducible rules which
+will cause errors in the compile-pda step. Remove them as well.
 
 The procedure parameters used in DRP are slightly different than the ones
 expected by the pda macro. Instead of token-case, a piece of syntax which
