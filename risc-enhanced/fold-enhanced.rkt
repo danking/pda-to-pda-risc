@@ -90,4 +90,4 @@
            ((go target args)
             (go (labeluse target)
                 (map rhs args)))
-           (_ (error 'match-insn*/recure "did you add a new insn*? ~a" i))))]))
+           (_ (error 'match-insn*/recur "did you add a new insn*? ~a" i))))]))
