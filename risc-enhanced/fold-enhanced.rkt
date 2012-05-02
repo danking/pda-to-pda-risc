@@ -46,6 +46,7 @@
     [(m (~or (~optional (~seq #:insn insn:expr) #:defaults ([insn #'identity]))
              (~optional (~seq #:insn* insn*:expr) #:defaults ([insn* #'identity]))
              (~optional (~seq #:term term:expr) #:defaults ([term #'#f]))
+             (~optional (~seq #:term* term*:expr) #:defaults ([term* #'#f]))
              (~optional (~seq #:labeldef labeldef:expr) #:defaults ([labeldef #'identity]))
              (~optional (~seq #:labeluse labeluse:expr) #:defaults ([labeluse #'identity]))
              (~optional (~seq #:regdef regdef:expr) #:defaults ([regdef #'identity]))
@@ -56,7 +57,7 @@
         i:expr
         rules ...)
      #'(let* ((term-handler (if term term (raise-to-term insn)))
-              (term*-handler (if term term (raise-to-term insn*)))
+              (term*-handler (if term* term* (raise-to-term insn*)))
               (term-seq*-handler (if term-seq* term-seq*
                                      (iterate-term-seq* term-handler term*-handler))))
          (match i
