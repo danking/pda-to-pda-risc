@@ -4,95 +4,69 @@
 (provide fold/enhanced-pdarisc
          map-insn-combine)
 
-(define (map-insn-combine i . args)
-  (apply (struct-type-make-constructor (let-values (((a _) (struct-info i))) a))
-         args))
+(define-for-syntax (term-seq* recur recur*)
+  (lambda (seq)
+    (cond [(empty? seq) (error 'term-seq* "cannot have an empty term-seq*")]
+          [(empty? (rest seq)) (seq-combine (recur* (first seq)) seq-base)]
+          [else (seq-combine (recur (first seq)) (recur* (rest seq)))])))
 
-(define (fold/enhanced-pdarisc pr
-                               enhanced-combine
-                               seq-combine
-                               seq-base
-                               insn-combine
-                               register
-                               labelname
-                               purerhs
-                               varrhs)
-  (define (fold/term-seq* seq)
-    (cond [(empty? seq) (error 'fold/term-seq* "cannot have an empty term-seq*")]
-          [(empty? (rest seq)) (seq-combine (fold/term* (first seq)) seq-base)]
-          [else (seq-combine (fold/term (first seq)) (fold/term-seq* (rest seq)))]))
-  (define (fold/term-seq seq)
-    (foldr (lambda (i seq)
-             (seq-combine (fold/term i) seq))
-           seq-base
-           seq))
-  (define (fold/term t)
-    (match t
-      ((enh:pda-term preds succs avail-regs live-regs i)
-       (enhanced-combine preds succs avail-regs live-regs (fold/insn i)))))
-  (define (fold/term* t)
-    (match t
-      ((enh:pda-term preds succs avail-regs live-regs i)
-       (enhanced-combine preds succs avail-regs live-regs (fold/insn* i)))))
-  (define (fold/insn i)
-    (match i
-      ((assign id val)
-       (insn-combine i
-                     (register id)
-                     (varrhs val)))
-      ((push val)
-       (insn-combine i (purerhs val)))
-      ((sem-act name params retvars action)
-       (insn-combine i
-                name
-                (map register params)
-                (map (lambda (rn)
-                       (if rn
-                           (register rn)
-                           rn))
-                     retvars)
-                action))
-      ((drop-token) (insn-combine i))
-      ((get-token) (insn-combine i))
-      ((stack-ensure hdrm) (insn-combine i hdrm))
-      ((block insns) (insn-combine i (fold/term-seq insns)))))
-  (define (fold/insn* i)
-    (match i
-      ((label ids stack-types token-types
-              param-lists bodies body)
-       (insn-combine i
-                (map labelname ids)
-                stack-types
-                token-types
-                (map (lambda (param-list)
-                       (map register param-list))
-                     param-lists)
-                (map fold/term-seq* bodies)
-                (fold/term-seq* body)))
-      ((block* insns)
-       (insn-combine i
-                (fold/term-seq* insns)))
-      ((accept vals)
-       (insn-combine i (map register vals)))
-      ((reject)
-       (insn-combine i))
-      ((if-eos cnsq altr)
-       (insn-combine i
-                (fold/term* cnsq)
-                (fold/term* altr)))
-      ((state-case st lookaheads cnsqs)
-       (insn-combine i
-                (register st)
-                lookaheads
-                (map fold/term-seq* cnsqs)))
-      ((token-case lookaheads cnsqs)
-       (insn-combine i
-                lookaheads
-                (map fold/term-seq* cnsqs)))
-      ((go target args)
-       (insn-combine i
-                (labelname target)
-                (map purerhs args)))))
+(define-syntax match-insn/recur
+  (syntax-rules ()
+    ((_ recur regdef reguse rhs i rules ...)
+     (match i
+       rules ...
+       ((assign id val)
+        (assign (regdef id)
+                (rhs val)))
+       ((push val)
+        (assign (rhs val)))
+       ((sem-act name params retvars action)
+        (sem-act name
+                 (map reguse params)
+                 (map (lambda (rn)
+                        (if rn
+                            (regdef rn)
+                            rn))
+                      retvars)
+                 action))
+       ((drop-token) i)
+       ((get-token) i)
+       ((stack-ensure hdrm) i)
+       ((block insns) (block (map recur insns)))
+       (_ (error 'match-insn/recur "did you add a new insn?"))))))
 
-  (match pr
-    ((pdarisc insns) (pdarisc (fold/term-seq* insns)))))
+(define-syntax match-insn*/recur
+  (syntax-rules ()
+    ((_ recur recur* labeldef labeluse regdef reguse rhs i rules ...)
+     (let ((term-seq* (term-seq* recur recur*)))
+       (match i
+         rules ...
+         ((label ids stack-types token-types
+                 param-lists bodies body)
+          (label (map labeldef ids)
+                 stack-types
+                 token-types
+                 (map (lambda (param-list)
+                        (map regdef param-list))
+                      param-lists)
+                 (map term-seq* bodies)
+                 (term-seq* body)))
+         ((block* insns)
+          (block* (term-seq* insns)))
+         ((accept vals)
+          (accept (map reguse vals)))
+         ((reject)
+          i)
+         ((if-eos cnsq altr)
+          (if-eos (recur* cnsq)
+                  (recur* altr)))
+         ((state-case st lookaheads cnsqs)
+          (state-case (reguse st)
+                      lookaheads
+                      (map term-seq* cnsqs)))
+         ((token-case lookaheads cnsqs)
+          (token-case lookaheads
+                      (map term-seq* cnsqs)))
+         ((go target args)
+          (go (labeluse target)
+              (map rhs args))))))))
