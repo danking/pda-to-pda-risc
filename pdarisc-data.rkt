@@ -100,3 +100,5 @@
     ((label-name id) (syntax->datum id))))
 
 ;; A Token is [Syntax Identifier]
+
+;; A RegName is a Register
