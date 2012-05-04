@@ -4,10 +4,14 @@
 
 (define (uninitialized-pda-term insn)
   (pda-term (make-mutable-set) (make-mutable-set)
-            (make-mutable-set) (make-mutable-set)
+            #f #f
             insn))
 
-(struct pda-term (preds succs avail-regs live-regs insn)
+(struct pda-term (preds
+                  succs
+                  [avail-regs #:mutable]
+                  [live-regs #:mutable]
+                  insn)
   #:transparent)
 
 (define (uninitialized-register name)
@@ -27,6 +31,9 @@
                     [binding #:mutable]
                     uses)
   #:transparent)
+
+;; a join-point is an insn
+(struct join-point (params) #:transparent)
 
 (define (raise-to-term f)
   (lambda (t . rest)
