@@ -27,6 +27,8 @@
        ((get-token) i)
        ((stack-ensure hdrm) i)
        ((block insns) (block (map recur insns)))
+       ((enh:join-point params)
+        (enh:join-point (map regdef params)))
        (_ (error 'match-insn/recur "did you add a new insn? ~a" i))))))
 
 (define-for-syntax (identity x) x)
