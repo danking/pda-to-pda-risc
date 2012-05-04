@@ -31,13 +31,19 @@
   (enh:uninitialized-pda-term
    (match i
      ((label ids st tt param-lists bodies body)
-      (label (map convert/label-name ids)
-             st tt
+      (let ((converted-param-lists
              (map (lambda (param-list)
                     (map convert/register param-list))
-                  param-lists)
-             (map convert/insn-seq* bodies)
-             (convert/insn-seq* body)))
+                  param-lists)))
+       (label (map convert/label-name ids)
+              st tt
+              converted-param-lists
+              (for/list ((body bodies)
+                         (params converted-param-lists))
+                (cons (enh:uninitialized-pda-term
+                       (enh:join-point params))
+                      (convert/insn-seq* body)))
+              (convert/insn-seq* body))))
      ((accept regs)
       (accept (map convert/register regs)))
      ((if-eos cnsq altr)
