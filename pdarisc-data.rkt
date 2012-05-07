@@ -40,7 +40,8 @@
 ;; an ArgList is a [ListOf RegName]
 (define-ustruct insn* ())
 (define-ustruct (label insn*) (ids stack-types token-types
-                                   param-lists bodies body))
+                                   param-lists bodies body)
+  #:mutable) ;; needed for risc enhanced code
 (define-ustruct (block* insn*) (insns))
 
 

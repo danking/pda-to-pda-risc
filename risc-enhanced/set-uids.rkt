@@ -4,22 +4,89 @@
          "fold-enhanced.rkt"
          "../../racket-utils/environment.rkt")
 
-(provide configure-registers/pdarisc reset-id)
+(provide (all-defined-out))
 
-(define identity (lambda (x) x))
-
-(define (extend-env/regs e rs)
-  (extend-env/list e
-                   (map enh:register-lexical-name rs)
-                   (map enh:register-uid rs)))
-(define (extend-env/labels e ls)
-  (extend-env/list e
-                   (map enh:label-name-lexical-name ls)
-                   (map enh:label-name-uid ls)))
-
-(define (configure-registers/pdarisc pr)
+(define (set-uids/pdarisc pr)
   (match pr
     ((pdarisc seq) (pdarisc (cr/term-seq* seq empty-env empty-env)))))
+
+(define (cr/term t reg-e)
+  (match t
+    ((enh:pda-term a b c d i)
+     (enh:set-pda-term-insn! t (cr/insn i t reg-e))
+     t)))
+
+(define (cr/term* t reg-e lbl-e)
+  (match t
+    ((enh:pda-term a b c d i)
+     (enh:set-pda-term-insn! t (cr/insn* i t reg-e lbl-e))
+     t)))
+
+(define (cr/insn i t reg-e)
+  (define (wrap f) (lambda (x) (f x t reg-e)))
+
+  (let ((cr/reg-def (wrap cr/reg-def))
+        (cr/reg-use (wrap cr/reg-use))
+        (cr/rhs     (wrap cr/rhs)))
+    (match i
+      ((assign id val) (assign (cr/reg-def id) (cr/rhs val)))
+      ((push val)      (push (cr/rhs val)))
+      ((sem-act name params retvars action)
+       (sem-act name
+                (map (wrap-maybe cr/reg-use) params)
+                (map cr/reg-def retvars)
+                action))
+      ((drop-token) i)
+      ((get-token)  i)
+      ((stack-ensure hdrm) i)
+      ((block seq) (block (cr/term-seq seq reg-e)))
+      ((enh:join-point params)
+       (enh:join-point (map cr/reg-def params)))
+      (_ (error 'cr/insn "did you add a new insn? ~a" i)))))
+
+(define (cr/insn* i t reg-e lbl-e)
+  (define (wrap-no-lbl f) (lambda (x) (f x t reg-e)))
+
+  (let ((cr/reg-def (wrap-no-lbl cr/reg-def))
+        (cr/reg-use (wrap-no-lbl cr/reg-use))
+        (cr/rhs     (wrap-no-lbl cr/rhs)))
+    (match i
+      ((label ids stack-types token-types
+              param-lists bodies body)
+       (let* ((updated-ids (map (lambda (l) (cr/lbl-def l t lbl-e)) ids))
+              (new-lbl-e (extend-env/labels lbl-e updated-ids)))
+         (set-label-ids! i updated-ids)
+         (set-label-bodies! i (for/list ([body bodies])
+                                (cr/term-seq* body reg-e new-lbl-e)))
+         (set-label-body! i (cr/term-seq* body reg-e new-lbl-e))
+         i))
+      ((block* insns)
+       (block* (cr/term-seq* insns)))
+      ((accept vals)
+       (accept (map cr/reg-use vals)))
+      ((reject)
+       i)
+      ((if-eos cnsq altr)
+       (if-eos (cr/term* cnsq)
+               (cr/term* altr)))
+      ((state-case st lookaheads cnsqs)
+       (state-case (cr/reg-use st)
+                   lookaheads
+                   (map cr/term-seq* cnsqs)))
+      ((token-case lookaheads cnsqs)
+       (token-case lookaheads
+                   (map cr/term-seq* cnsqs)))
+      ((go target args)
+       (go (cr/lbl-use target t lbl-e) (map cr/rhs args)))
+      (_ (error 'cr/insn* "did you add a new insn*? ~a" i)))))
+
+(define (cr/term-seq seq reg-e)
+  (if (empty? seq)
+      empty
+      (let ((updated-term (cr/term (first seq) reg-e)))
+        (cons updated-term
+              (cr/term-seq (rest seq)
+                           (add-new-reg-bindings-from-term updated-term reg-e))))))
 
 (define (cr/term-seq* seq reg-e lbl-e)
   (cond [(empty? seq) (error 'configure-registers "term-seq* should always end in an insn*")]
@@ -31,50 +98,13 @@
                                (add-new-reg-bindings-from-term updated-term reg-e)
                                lbl-e)))]))
 
-(define (cr/insn i reg-e)
-  (let ((cr/reg-def (lambda (r) (cr/reg-def r reg-e)))
-        (cr/reg-use (lambda (r) (cr/reg-use r reg-e)))
-        (cr/rhs (lambda (r) (cr/rhs r reg-e)))
-        (cr/insn (lambda (i) (cr/insn i reg-e))))
-    (match-insn/recur cr/insn cr/reg-def cr/reg-use cr/rhs i)))
-(define cr/term (enh:raise-to-term cr/insn))
-
-(define (cr/insn* i reg-e lbl-e)
-  (let ((cr/reg-def (lambda (r) (cr/reg-def r reg-e)))
-        (cr/reg-use (lambda (r) (cr/reg-use r reg-e)))
-        (cr/rhs     (lambda (r) (cr/rhs r reg-e)))
-        (cr/lbl-def (lambda (l) (cr/lbl-def l lbl-e)))
-        (cr/lbl-use (lambda (l) (cr/lbl-use l lbl-e))))
-    (match-insn*/recur
-     #:insn (lambda (i) (cr/insn i reg-e)) #:insn* (lambda (i) (cr/insn* i reg-e))
-     #:regdef cr/reg-def #:reguse cr/reg-use #:rhs cr/rhs
-     #:labeluse cr/lbl-use #:labeldef cr/lbl-def
-     i
-     [(label ids st tt
-             param-lists bodies body)
-      (let* ((updated-param-lists (map (lambda (param-list)
-                                        (map cr/reg-def param-list))
-                                      param-lists))
-             (updated-labels (map cr/lbl-def ids))
-             (updated-label-env (extend-env/labels lbl-e updated-labels)))
-        (label updated-labels
-               st tt
-               updated-param-lists
-               (for/list [(params updated-param-lists)
-                          (body bodies)]
-                 (cr/term-seq* body
-                               (extend-env/regs reg-e params)
-                               updated-label-env))
-               (cr/term-seq* body reg-e updated-label-env)))])))
-(define cr/term* (enh:raise-to-term cr/insn*))
-
 (define (add-new-reg-bindings-from-insn i reg-e)
   (match i
     ((assign reg _)
-     (extend-env reg-e
-                 (enh:register-lexical-name reg)
-                 (enh:register-uid reg)))
+     (extend-env/regs reg-e (list reg)))
     ((sem-act _ _ regs _)
+     (extend-env/regs reg-e regs))
+    ((enh:join-point regs)
      (extend-env/regs reg-e regs))
     (_ reg-e)))
 (define add-new-reg-bindings-from-term (enh:raise-input-to-term add-new-reg-bindings-from-insn))
@@ -87,27 +117,45 @@
             (lambda ()
               (set! id -1)))))
 
-(define (cr/rhs rhs reg-e)
+(define (cr/rhs rhs t reg-e)
   (if (enh:register? rhs)
-      (cr/reg-use rhs reg-e)
+      (cr/reg-use rhs t reg-e)
       rhs))
 
-(define (cr/reg-def r reg-e)
+(define (cr/reg-def r t reg-e)
   (match r
     ((enh:register name _ b u)
-     (enh:register name (next-id) b u))))
+     (enh:register name (next-id) t u))))
 
-(define (cr/reg-use r reg-e)
+(define (cr/reg-use r t reg-e)
   (match r
     ((enh:register name _ b u)
-     (enh:register name (lookup-env reg-e name) b u))))
+     (let ((reg (lookup-env reg-e name)))
+       (enh:register-add-use! reg t)
+       reg))))
 
-(define (cr/lbl-def r lbl-e)
+(define (cr/lbl-def r t lbl-e)
   (match r
     ((enh:label-name name _ b u)
-     (enh:label-name name (next-id) b u))))
+     (enh:label-name name (next-id) t u))))
 
-(define (cr/lbl-use r lbl-e)
+(define (cr/lbl-use r t lbl-e)
   (match r
     ((enh:label-name name _ b u)
-     (enh:label-name name (lookup-env lbl-e name) b u))))
+     (let ((label (lookup-env lbl-e name)))
+       (enh:label-name-add-use! label t)
+       label))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; utilities
+(define (extend-env/regs e rs)
+  (extend-env/list e
+                   (map enh:register-lexical-name rs)
+                   rs))
+(define (extend-env/labels e ls)
+  (extend-env/list e
+                   (map enh:label-name-lexical-name ls)
+                   ls))
+
+(define (wrap-maybe f)
+  (lambda (x) (if x (f x) x)))

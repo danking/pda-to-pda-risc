@@ -7,15 +7,16 @@
             #f #f
             insn))
 
-(struct pda-term ([preds #:mutable]
-                  [succs #:mutable]
-                  [avail-regs #:mutable]
-                  [live-regs #:mutable]
+(struct pda-term (preds
+                  succs
+                  avail-regs
+                  live-regs
                   insn)
-  #:transparent)
+        #:mutable
+        #:transparent)
 
 (define (uninitialized-register name)
-  (register name #f #f #f))
+  (register name #f #f (set)))
 
 (struct register (lexical-name
                   uid
@@ -27,7 +28,7 @@
   (set-register-uses! r (set-add (register-uses r) u)))
 
 (define (uninitialized-label-name name)
-  (label-name name #f #f (make-mutable-set)))
+  (label-name name #f #f (set)))
 
 (struct label-name (lexical-name
                     uid
