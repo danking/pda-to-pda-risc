@@ -2,9 +2,13 @@
 (require "../pdarisc-data.rkt"
          (prefix-in enh: "data.rkt")
          "fold-enhanced.rkt"
-         (prefix-in basic: "../../racket-utils/environment.rkt")
-         "../../racket-utils/mutable-set.rkt")
+         (prefix-in basic: "../../racket-utils/environment.rkt"))
 (provide set-preds!)
+
+(define (preds-set-add! t element)
+  (enh:set-pda-term-preds! t (set-add (enh:pda-term-preds t) element)))
+(define (succs-set-add! t element)
+  (enh:set-pda-term-succs! t (set-add (enh:pda-term-succs t) element)))
 
 (define empty-env basic:empty-env)
 (define (extend-env e l v)
@@ -26,13 +30,13 @@
               (set-preds/term-seq*! (rest seq) (first seq) env)]))
 
 (define (set-preds/term! t pred succ)
-  (when pred (set-add! (enh:pda-term-preds t) pred))
-  (set-add! (enh:pda-term-succs t) succ))
+  (when pred (preds-set-add! t pred))
+  (succs-set-add! t succ))
 
 (define (set-preds/term*! t pred env)
-  (when pred (set-add! (enh:pda-term-preds t) pred))
+  (when pred (preds-set-add! t pred))
   (for ((succ (get-succs/term* t env)))
-    (set-add! (enh:pda-term-succs t) succ))
+    (succs-set-add! t succ))
   (match-insn*/recur #:term set-preds/term! #:term* set-preds/term*!
                      #:term-seq* set-preds/term-seq*!
     (enh:pda-term-insn t)
@@ -44,7 +48,7 @@
        (for-each (lambda (b) (set-preds/term-seq*! b t updated-label-env)) bodies)
        (set-preds/term-seq*! body t updated-label-env)))
     ((go target args)
-     (set-add! (enh:pda-term-preds (lookup-env env target)) t)))
+     (preds-set-add! (lookup-env env target) t)))
   (void))
 
 (define (get-succs/insn* i env)
