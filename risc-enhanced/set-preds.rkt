@@ -55,7 +55,7 @@
   (match i
     ((label ids stack-types token-types
             param-lists bodies body)
-     (cons (first body) (map first bodies)))
+     (list (first body)))
     ((block* insns)
      (list (first insns)))
     ((accept vals)
