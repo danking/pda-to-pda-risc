@@ -3,25 +3,28 @@
 (require "../../racket-utils/mutable-set.rkt")
 
 (define (uninitialized-pda-term insn)
-  (pda-term (make-mutable-set) (make-mutable-set)
+  (pda-term (set) (set)
             #f #f
             insn))
 
-(struct pda-term (preds
-                  succs
+(struct pda-term ([preds #:mutable]
+                  [succs #:mutable]
                   [avail-regs #:mutable]
                   [live-regs #:mutable]
                   insn)
   #:transparent)
 
 (define (uninitialized-register name)
-  (register name #f #f (make-mutable-set)))
+  (register name #f #f #f))
 
 (struct register (lexical-name
                   uid
                   [binding #:mutable]
-                  uses)
+                  [uses #:mutable])
   #:transparent)
+
+(define (register-add-use! r u)
+  (set-register-uses! r (set-add (register-uses r) u)))
 
 (define (uninitialized-label-name name)
   (label-name name #f #f (make-mutable-set)))
@@ -29,8 +32,11 @@
 (struct label-name (lexical-name
                     uid
                     [binding #:mutable]
-                    uses)
+                    [uses #:mutable])
   #:transparent)
+
+(define (label-name-add-use! r u)
+  (set-label-name-uses! r (set-add (label-name-uses r) u)))
 
 ;; a join-point is an insn
 (struct join-point (params) #:transparent)
