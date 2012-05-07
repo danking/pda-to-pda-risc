@@ -1,20 +1,12 @@
 #lang racket
 (require "../pdarisc-data.rkt"
          (prefix-in enh: "data.rkt")
-         "fold-enhanced.rkt"
-         (prefix-in basic: "../../racket-utils/environment.rkt")
          "../../racket-utils/graph-utils.rkt"
          "../../racket-utils/set-utilities.rkt")
 (provide set-avail/live-regs!)
 
-(define (maybe-set->set s)
-  (if s s (set)))
-
-(define empty-env basic:empty-env)
-(define (extend-env e l v)
-  (basic:extend-env e (enh:register-uid l) v))
-(define (lookup-env e l)
-  (basic:lookup-env e (enh:register-uid l)))
+(define (maybe-set->set-eq s)
+  (if s s (seteq)))
 
 (define (set-avail/live-regs! pr)
   (match pr
