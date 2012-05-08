@@ -3,7 +3,7 @@
 (require "../../racket-utils/mutable-set.rkt")
 
 (define (uninitialized-pda-term insn)
-  (pda-term (set) (set)
+  (pda-term (seteq) (seteq)
             #f #f
             insn))
 
@@ -16,7 +16,7 @@
         #:transparent)
 
 (define (uninitialized-register name)
-  (register name #f #f (set)))
+  (register name #f #f (seteq)))
 
 (struct register (lexical-name
                   uid
@@ -28,7 +28,7 @@
   (set-register-uses! r (set-add (register-uses r) u)))
 
 (define (uninitialized-label-name name)
-  (label-name name #f #f (set)))
+  (label-name name #f #f (seteq)))
 
 (struct label-name (lexical-name
                     uid
