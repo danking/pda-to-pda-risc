@@ -40,7 +40,7 @@
   (set-label-name-uses! r (set-add (label-name-uses r) u)))
 
 ;; a join-point is an insn
-(struct join-point (params) #:transparent)
+(struct join-point (label params) #:transparent)
 
 (define (raise-to-term f)
   (lambda (t . rest)

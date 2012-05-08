@@ -34,14 +34,16 @@
       (let ((converted-param-lists
              (map (lambda (param-list)
                     (map convert/register param-list))
-                  param-lists)))
-       (label (map convert/label-name ids)
+                  param-lists))
+            (converted-ids (map convert/label-name ids)))
+       (label converted-ids
               st tt
               converted-param-lists
               (for/list ((body bodies)
-                         (params converted-param-lists))
+                         (params converted-param-lists)
+                         (id converted-ids))
                 (cons (enh:uninitialized-pda-term
-                       (enh:join-point params))
+                       (enh:join-point id params))
                       (convert/insn-seq* body)))
               (convert/insn-seq* body))))
      ((accept regs)

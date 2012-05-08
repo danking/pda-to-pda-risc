@@ -6,7 +6,7 @@
 
 (define-syntax match-insn/recur
   (syntax-rules ()
-    ((_ recur regdef reguse rhs i rules ...)
+    ((_ recur regdef reguse lbldef lbluse rhs i rules ...)
      (match i
        rules ...
        ((assign id val)
@@ -27,8 +27,8 @@
        ((get-token) i)
        ((stack-ensure hdrm) i)
        ((block insns) (block (map recur insns)))
-       ((enh:join-point params)
-        (enh:join-point (map regdef params)))
+       ((enh:join-point lbl params)
+        (enh:join-point (lbldef lbl) (map regdef params)))
        (_ (error 'match-insn/recur "did you add a new insn? ~a" i))))))
 
 (define-for-syntax (identity x) x)
