@@ -1,8 +1,7 @@
 #lang racket
 (require "../pdarisc-data.rkt"
          (prefix-in enh: "data.rkt")
-         "../../racket-utils/graph-utils.rkt"
-         "../../racket-utils/set-utilities.rkt")
+         "../../racket-utils/graph-utils.rkt")
 (provide set-avail/live-regs!)
 
 (define (maybe-set->set-eq s)
