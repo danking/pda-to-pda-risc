@@ -49,7 +49,7 @@
 ;;  - (make-reject)
 ;;  - (make-if-eos Insn* Insn*)
 ;;  - (make-state-case RegName
-;;                     [ListOf [Syntax Identifier]]
+;;                     [ListOf (make-state [Syntax Identifier])]
 ;;                     [ListOf Insn*-Seq])
 ;;  - (make-token-case [ListOf [Maybe Token]] [ListOf Insn*-Seq])
 ;;  - (make-go LabelName [ListOf Pure-Rhs])
