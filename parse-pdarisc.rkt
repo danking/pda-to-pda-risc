@@ -1,11 +1,10 @@
 #lang racket
 (require "pdarisc-data.rkt")
-(provide parse-pdarisc parse-insn parse-insn*)
+(provide parse-pdarisc parse-insn parse-insn* parse-insn*-seq
+         parse-var-rhs parse-pure-rhs)
 
 (define (parse-pdarisc insn*-seq)
   (make-pdarisc (parse-insn*-seq insn*-seq)))
-
-
 
 (define (parse-insn i)
   (define r parse-insn)
@@ -13,16 +12,16 @@
 
   (match i
     (`(:= ,id ,val)
-     (make-assign (make-named-reg id) (parse-var-rhs val)))
+     (make-assign (parse-reg id) (parse-var-rhs val)))
     (`(push ,val)
      (make-push (parse-pure-rhs val)))
     (`(semantic-action ,name
                        (,params ...)
                        (,retvars ...)
                        ,action)
-     (make-sem-act name
-                   (map make-named-reg params)
-                   (map (lambda (x) (if x (make-named-reg x) x)) retvars)
+     (make-sem-act (syntaxify name)
+                   (map parse-reg params)
+                   (map (maybe-f parse-reg) retvars)
                    action))
     ('drop-token
      (make-drop-token))
@@ -49,28 +48,29 @@
     (`(label ((,ids : ,stack-type ,token-type
                     (,param-list ...) ,label-body ...) ...)
              ,body ...)
-     (make-label (map make-label-name ids)
+     (make-label (map parse-label-name ids)
                  stack-type
                  token-type
-                 (map (lambda (plist) (map make-named-reg plist)) param-list)
+                 (map (lambda (plist) (map parse-reg plist)) param-list)
                  (map rs* label-body)
                  (rs* body)))
     (`(block ,insns ...)
      (make-block* (rs* insns)))
     (`(accept ,vars ...)
-     (make-accept (map make-named-reg vars)))
+     (make-accept (map parse-reg vars)))
     (`(reject)
      (make-reject))
     (`(if-eos ,cnsq ,altr)
      (make-if-eos (r* cnsq) (r* altr)))
     (`(state-case ,var (,looks . ,cnsqs) ...)
-     (make-state-case (make-named-reg var)
-                      (map make-state looks)
+     (make-state-case (parse-reg var)
+                      (map (compose parse-pure-rhs (lambda (x) `(state ,x)))
+                           looks)
                       (map rs* cnsqs)))
     (`(token-case (,looks . ,cnsqs) ...)
-     (make-token-case looks (map rs* cnsqs)))
+     (make-token-case (map (maybe-f syntaxify) looks) (map rs* cnsqs)))
     (`(go ,target ,args ...)
-     (go (make-label-name target) (map parse-pure-rhs args)))))
+     (go (parse-label-name target) (map parse-pure-rhs args)))))
 
 (define (parse-var-rhs r)
   (match r
@@ -80,7 +80,7 @@
 (define (parse-pure-rhs r)
   (match r
     (`(state ,id)
-     (make-state id))
+     (make-state (syntaxify id)))
     (`(nterm ,id)
      (make-nterm id))
     ('(current-token)
@@ -88,4 +88,17 @@
     (`(current-token ,n)
      (make-curr-token n))
     ((? symbol? id)
-     (make-named-reg id))))
+     (parse-reg id))))
+
+(define (parse-reg r)
+  (make-named-reg (syntaxify r)))
+
+(define (parse-label-name l)
+  (make-label-name (syntaxify l)))
+
+;; [X -> X] -> [[Maybe X] -> X]
+(define (maybe-f f)
+  (lambda (x) (if x (f x) x)))
+
+(define (syntaxify val)
+  (quasisyntax (unsyntax val)))
