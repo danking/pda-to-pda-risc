@@ -6,100 +6,100 @@
 
 (provide (all-defined-out))
 
-(define (set-uids/pdarisc pr)
+(define (set-uids pr)
   (match pr
-    ((pdarisc seq) (pdarisc (cr/term-seq* seq empty-env empty-env)))))
+    ((pdarisc seq) (pdarisc (su/term-seq* seq empty-env empty-env)))))
 
-(define (cr/term t reg-e lbl-e)
+(define (su/term t reg-e lbl-e)
   (match t
     ((enh:pda-term a b c d i)
-     (enh:set-pda-term-insn! t (cr/insn i t reg-e lbl-e))
+     (enh:set-pda-term-insn! t (su/insn i t reg-e lbl-e))
      t)))
 
-(define (cr/term* t reg-e lbl-e)
+(define (su/term* t reg-e lbl-e)
   (match t
     ((enh:pda-term a b c d i)
-     (enh:set-pda-term-insn! t (cr/insn* i t reg-e lbl-e))
+     (enh:set-pda-term-insn! t (su/insn* i t reg-e lbl-e))
      t)))
 
-(define (cr/insn i t reg-e lbl-e)
+(define (su/insn i t reg-e lbl-e)
   (define (wrap f) (lambda (x) (f x t reg-e)))
 
-  (let ((cr/reg-def (wrap cr/reg-def))
-        (cr/reg-use (wrap cr/reg-use))
-        (cr/rhs     (wrap cr/rhs)))
+  (let ((su/reg-def (wrap su/reg-def))
+        (su/reg-use (wrap su/reg-use))
+        (su/rhs     (wrap su/rhs)))
     (match i
-      ((assign id val) (assign (cr/reg-def id) (cr/rhs val)))
-      ((push val)      (push (cr/rhs val)))
+      ((assign id val) (assign (su/reg-def id) (su/rhs val)))
+      ((push val)      (push (su/rhs val)))
       ((sem-act name params retvars action)
        (sem-act name
-                (map (wrap-maybe cr/reg-use) params)
-                (map cr/reg-def retvars)
+                (map (wrap-maybe su/reg-use) params)
+                (map su/reg-def retvars)
                 action))
       ((drop-token) i)
       ((get-token)  i)
       ((stack-ensure hdrm) i)
-      ((block seq) (block (cr/term-seq seq reg-e lbl-e)))
+      ((block seq) (block (su/term-seq seq reg-e lbl-e)))
       ((enh:join-point lbl params)
-       (enh:join-point (cr/lbl-join-point lbl t lbl-e)
-                       (map cr/reg-def params)))
-      (_ (error 'cr/insn "did you add a new insn? ~a" i)))))
+       (enh:join-point (su/lbl-join-point lbl t lbl-e)
+                       (map su/reg-def params)))
+      (_ (error 'su/insn "did you add a new insn? ~a" i)))))
 
-(define (cr/insn* i t reg-e lbl-e)
+(define (su/insn* i t reg-e lbl-e)
   (define (wrap-no-lbl f) (lambda (x) (f x t reg-e)))
   (define (wrap f) (lambda (x) (f x reg-e lbl-e)))
 
-  (let ((cr/reg-def (wrap-no-lbl cr/reg-def))
-        (cr/reg-use (wrap-no-lbl cr/reg-use))
-        (cr/rhs     (wrap-no-lbl cr/rhs))
-        (cr/term-seq*/rec (wrap cr/term-seq*))
-        (cr/term*/rec     (wrap cr/term*)))
+  (let ((su/reg-def (wrap-no-lbl su/reg-def))
+        (su/reg-use (wrap-no-lbl su/reg-use))
+        (su/rhs     (wrap-no-lbl su/rhs))
+        (su/term-seq*/rec (wrap su/term-seq*))
+        (su/term*/rec     (wrap su/term*)))
     (match i
       ((label ids stack-types token-types
               param-lists bodies body)
-       (let* ((updated-ids (map (lambda (l) (cr/lbl-alloc l t lbl-e)) ids))
+       (let* ((updated-ids (map (lambda (l) (su/lbl-alloc l t lbl-e)) ids))
               (new-lbl-e (extend-env/labels lbl-e updated-ids)))
          (set-label-ids! i updated-ids)
          (set-label-bodies! i (for/list ([body bodies])
-                                (cr/term-seq* body reg-e new-lbl-e)))
-         (set-label-body! i (cr/term-seq* body reg-e new-lbl-e))
+                                (su/term-seq* body reg-e new-lbl-e)))
+         (set-label-body! i (su/term-seq* body reg-e new-lbl-e))
          i))
       ((block* insns)
-       (block* (cr/term-seq*/rec insns)))
+       (block* (su/term-seq*/rec insns)))
       ((accept vals)
-       (accept (map cr/reg-use vals)))
+       (accept (map su/reg-use vals)))
       ((reject)
        i)
       ((if-eos cnsq altr)
-       (if-eos (cr/term*/rec cnsq)
-               (cr/term*/rec altr)))
+       (if-eos (su/term*/rec cnsq)
+               (su/term*/rec altr)))
       ((state-case st lookaheads cnsqs)
-       (state-case (cr/reg-use st)
+       (state-case (su/reg-use st)
                    lookaheads
-                   (map cr/term-seq*/rec cnsqs)))
+                   (map su/term-seq*/rec cnsqs)))
       ((token-case lookaheads cnsqs)
        (token-case lookaheads
-                   (map cr/term-seq*/rec cnsqs)))
+                   (map su/term-seq*/rec cnsqs)))
       ((go target args)
-       (go (cr/lbl-use target t lbl-e) (map cr/rhs args)))
-      (_ (error 'cr/insn* "did you add a new insn*? ~a" i)))))
+       (go (su/lbl-use target t lbl-e) (map su/rhs args)))
+      (_ (error 'su/insn* "did you add a new insn*? ~a" i)))))
 
-(define (cr/term-seq seq reg-e lbl-e)
+(define (su/term-seq seq reg-e lbl-e)
   (if (empty? seq)
       empty
-      (let ((updated-term (cr/term (first seq) reg-e lbl-e)))
+      (let ((updated-term (su/term (first seq) reg-e lbl-e)))
         (cons updated-term
-              (cr/term-seq (rest seq)
+              (su/term-seq (rest seq)
                            (add-new-reg-bindings-from-term updated-term reg-e)
                            lbl-e)))))
 
-(define (cr/term-seq* seq reg-e lbl-e)
+(define (su/term-seq* seq reg-e lbl-e)
   (cond [(empty? seq) (error 'configure-registers "term-seq* should always end in an insn*")]
-        [(empty? (rest seq)) (list (cr/term* (first seq) reg-e lbl-e))]
+        [(empty? (rest seq)) (list (su/term* (first seq) reg-e lbl-e))]
         [else
-         (let ((updated-term (cr/term (first seq) reg-e lbl-e)))
+         (let ((updated-term (su/term (first seq) reg-e lbl-e)))
            (cons updated-term
-                 (cr/term-seq* (rest seq)
+                 (su/term-seq* (rest seq)
                                (add-new-reg-bindings-from-term updated-term reg-e)
                                lbl-e)))]))
 
@@ -126,36 +126,36 @@
             (lambda ()
               (set! id -1)))))
 
-(define (cr/rhs rhs t reg-e)
+(define (su/rhs rhs t reg-e)
   (if (enh:register? rhs)
-      (cr/reg-use rhs t reg-e)
+      (su/reg-use rhs t reg-e)
       rhs))
 
-(define (cr/reg-def r t reg-e)
+(define (su/reg-def r t reg-e)
   (match r
     ((enh:register name _ b u)
      (enh:register name (next-id) t u))))
 
-(define (cr/reg-use r t reg-e)
+(define (su/reg-use r t reg-e)
   (match r
     ((enh:register name _ b u)
      (let ((reg (lookup-env reg-e name)))
        (enh:register-add-use! reg t)
        reg))))
 
-(define (cr/lbl-join-point lbl t lbl-e)
+(define (su/lbl-join-point lbl t lbl-e)
   (match lbl
     ((enh:label-name name _ _ _)
      (let ((label (lookup-env lbl-e name)))
        (enh:set-label-name-binding! label t)
        label))))
 
-(define (cr/lbl-alloc r t lbl-e)
+(define (su/lbl-alloc r t lbl-e)
   (match r
     ((enh:label-name name _ b u)
      (enh:label-name name (next-id) b u))))
 
-(define (cr/lbl-use r t lbl-e)
+(define (su/lbl-use r t lbl-e)
   (match r
     ((enh:label-name name _ b u)
      (let ((label (lookup-env lbl-e name)))
