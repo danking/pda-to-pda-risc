@@ -1,6 +1,92 @@
 #lang racket
-(provide (all-defined-out))
-(require "../../racket-utils/mutable-set.rkt")
+(require (except-in "../pdarisc-data.rkt"
+                    register
+                    struct:register
+                    make-register
+                    register?
+
+                    named-reg
+                    struct:named-reg
+                    make-named-reg
+                    named-reg?
+                    named-reg-id
+
+                    nameless-reg
+                    struct:nameless-reg
+                    make-nameless-reg
+                    nameless-reg?
+
+                    label-name
+                    struct:label-name
+                    make-label-name
+                    label-name?
+                    label-name-id
+
+                    label-polynym
+                    struct:label-polynym
+                    make-label-polynym
+                    label-polynym?
+                    label-polynym-extra-id)
+         (prefix-in old:
+                    (only-in "../pdarisc-data.rkt"
+                             register
+                             struct:register
+                             make-register
+                             register?
+
+                             named-reg
+                             struct:named-reg
+                             make-named-reg
+                             named-reg?
+                             named-reg-id
+
+                             nameless-reg
+                             struct:nameless-reg
+                             make-nameless-reg
+                             nameless-reg?
+
+                             label-name
+                             struct:label-name
+                             make-label-name
+                             label-name?
+                             label-name-id
+
+                             label-polynym
+                             struct:label-polynym
+                             make-label-polynym
+                             label-polynym?
+                             label-polynym-extra-id)))
+(provide (all-defined-out)
+         ;; Re-exports
+         (all-from-out "../pdarisc-data.rkt"))
+
+;; a PDA-RISC-ENH term is a:
+;;   (make-pdarisc Term*-Seq)
+
+;; a Term-Seq is a [ListOf Term]
+;; a Term*-Seq is a (append Term-Seq (list Term*))
+
+;; a Term is a (pda-term [SetEq Term]
+;;                       [SetEq Term]
+;;                       Register
+;;                       [SetEq Register]
+;;                       Insn)
+
+;; a Term* is the same as a Term except it contains an Insn instead of an Insn*
+;; concretely, (pda-term [SetEq Term]
+;;                       [SetEq Term]
+;;                       Register
+;;                       [SetEq Register]
+;;                       Insn*)
+
+;; Insn and Insn* are defined in ../pdarisc-data.rkt
+;; Except:
+;;   - instances of Register are replaced with the register struct defined
+;;     in this file, and all
+;;   - instances of LabelName are replaced with the label-name struct in this
+;;     file
+;;   - every labeled insn-seq* in a label form has a join-point appended to it
+;;     which records the label and argument list associated with that insn-seq*
 
 (define (uninitialized-pda-term insn)
   (pda-term (seteq) (seteq)
