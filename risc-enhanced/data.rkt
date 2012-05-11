@@ -15,6 +15,10 @@
         #:mutable
         #:transparent)
 
+(define (pda-risc-enh-initial-term pre)
+  (match pre
+    ((pdarisc seq) (first seq))))
+
 (define (uninitialized-register name)
   (register name #f #f (seteq)))
 
