@@ -86,7 +86,7 @@
 ;;
 ;;   < lexical-name, uid, binding, uses >
 ;;
-;; lexical-name ⊆ String
+;; lexical-name ⊆ Symbol
 ;; uid ⊆ Number
 ;; binding ⊆ pda-term
 ;; uses ⊆ P(pda-term)

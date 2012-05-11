@@ -12,16 +12,14 @@
   (enh:uninitialized-pda-term
    (match i
      ((assign id val) (assign (convert/register id) (convert/rhs val)))
-     ((sem-act name params retvars action)
+     ((sem-act name in-vars out-vars action)
       (sem-act name
-               (map (lambda (reg-list)
-                      (map convert/register reg-list))
-                    params)
+               (map convert/register in-vars)
                (map (lambda (maybe-r)
                       (if maybe-r
                           (convert/register maybe-r)
                           maybe-r))
-                    retvars)
+                    out-vars)
                action))
      ((block insns) (block (convert/insn-seq insns)))
      ((push rhs) (push (convert/rhs rhs)))
@@ -46,8 +44,11 @@
                        (enh:join-point id params))
                       (convert/insn-seq* body)))
               (convert/insn-seq* body))))
+     ((block* seq)
+      (block* (convert/insn-seq* seq)))
      ((accept regs)
       (accept (map convert/register regs)))
+     ((reject) i)
      ((if-eos cnsq altr)
       (if-eos (convert/insn* cnsq)
               (convert/insn* altr)))
@@ -81,5 +82,5 @@
 
 (define (convert/register reg)
   (match reg
-    ((named-reg id) (enh:uninitialized-register id))
+    ((named-reg id) (enh:uninitialized-register (syntax-e id)))
     ((nameless-reg) (enh:uninitialized-register '_))))
