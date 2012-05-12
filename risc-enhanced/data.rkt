@@ -99,7 +99,12 @@
                   live-regs
                   insn)
         #:mutable
-        #:transparent)
+        #:transparent
+        #:property prop:equal+hash (list (lambda (x y _) (eq? x y))
+                                         (lambda (x _)
+                                           (eq-hash-code x))
+                                         (lambda (x _)
+                                           (- (eq-hash-code x)))))
 
 (define (pda-risc-enh-initial-term pre)
   (match pre
@@ -107,25 +112,39 @@
 
 (define (uninitialized-register name)
   (register name #f #f (seteq)))
-
+(define (register-equal? x y)
+  (eq? (register-uid x) (register-uid y)))
+(define (register-hash-code x)
+  (register-uid x))
+(define (register-secondary-hash-code x)
+  (- (register-uid x)))
 (struct register (lexical-name
                   uid
                   [binding #:mutable]
                   [uses #:mutable])
-  #:transparent)
-
+        #:transparent
+        #:property prop:equal+hash (list (lambda (x y _) (register-equal? x y))
+                                         (lambda (x _) (register-hash-code x))
+                                         (lambda (x _) (register-secondary-hash-code x))))
 (define (register-add-use! r u)
   (set-register-uses! r (set-add (register-uses r) u)))
 
 (define (uninitialized-label-name name)
   (label-name name #f #f (seteq)))
-
+(define (label-name-equal? x y)
+  (eq? (label-name-uid x) (label-name-uid y)))
+(define (label-name-hash-code x)
+  (label-name-uid x))
+(define (label-name-secondary-hash-code x)
+  (- (label-name-uid x)))
 (struct label-name (lexical-name
                     uid
                     [binding #:mutable]
                     [uses #:mutable])
-  #:transparent)
-
+        #:transparent
+        #:property prop:equal+hash (list (lambda (x y _) (label-name-equal? x y))
+                                         (lambda (x _) (label-name-hash-code x))
+                                         (lambda (x _) (label-name-secondary-hash-code x))))
 (define (label-name-add-use! r u)
   (set-label-name-uses! r (set-add (label-name-uses r) u)))
 
