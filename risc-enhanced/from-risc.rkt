@@ -1,6 +1,5 @@
 #lang racket
-(require "../pdarisc-data.rkt"
-         (prefix-in enh: "data.rkt"))
+(require "data.rkt")
 (provide convert/pdarisc)
 
 (define (convert/pdarisc pr)
@@ -9,7 +8,7 @@
      (pdarisc (convert/insn-seq* insn-seq*)))))
 
 (define (convert/insn i)
-  (enh:uninitialized-pda-term
+  (uninitialized-pda-term
    (match i
      ((assign id val) (assign (convert/register id) (convert/rhs val)))
      ((sem-act name in-vars out-vars action)
@@ -26,7 +25,7 @@
      (_ i))))
 
 (define (convert/insn* i)
-  (enh:uninitialized-pda-term
+  (uninitialized-pda-term
    (match i
      ((label ids st tt param-lists bodies body)
       (let ((converted-param-lists
@@ -40,8 +39,8 @@
               (for/list ((body bodies)
                          (params converted-param-lists)
                          (id converted-ids))
-                (cons (enh:uninitialized-pda-term
-                       (enh:join-point id params))
+                (cons (uninitialized-pda-term
+                       (join-point id params))
                       (convert/insn-seq* body)))
               (convert/insn-seq* body))))
      ((block* seq)
@@ -72,15 +71,16 @@
              (list (convert/insn* i*))))))
 
 (define (convert/label-name lbl)
-  (let ((name (label-name->symbol lbl)))
-    (enh:uninitialized-label-name name)))
+  (let ((name (old:label-name->symbol lbl)))
+    (uninitialized-label-name name)))
 
 (define (convert/rhs rhs)
   (match rhs
-    ((register) (convert/register rhs))
+    ((old:register) (convert/register rhs))
+    ((state id) (state (syntax-e id)))
     (_ rhs)))
 
 (define (convert/register reg)
   (match reg
-    ((named-reg id) (enh:uninitialized-register (syntax-e id)))
-    ((nameless-reg) (enh:uninitialized-register '_))))
+    ((old:named-reg id) (uninitialized-register (syntax-e id)))
+    ((old:nameless-reg) (uninitialized-register '_))))
