@@ -26,9 +26,13 @@
                     struct:label-polynym
                     make-label-polynym
                     label-polynym?
+<<<<<<< HEAD
                     label-polynym-extra-id
 
                     label-name->symbol)
+=======
+                    label-polynym-extra-id)
+>>>>>>> unparse
          (prefix-in old:
                     (only-in "../pdarisc-data.rkt"
                              register
