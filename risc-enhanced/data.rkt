@@ -104,7 +104,11 @@
                   insn)
         #:mutable
         #:transparent
-        #:property prop:equal+hash (list (lambda (x y _) (eq? x y))
+        #:property prop:equal+hash (list (lambda (x y recur-equal?)
+                                           (match (list x y)
+                                             ((list (pda-term _ _ _ _ i1)
+                                                    (pda-term _ _ _ _ i2))
+                                              (recur-equal? i1 i2))))
                                          (lambda (x _)
                                            (eq-hash-code x))
                                          (lambda (x _)
