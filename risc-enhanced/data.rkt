@@ -59,7 +59,8 @@
                              label-polynym?
                              label-polynym-extra-id
 
-                             label-name->symbol)))
+                             label-name->symbol))
+         "unparse.rkt")
 (provide (all-defined-out)
          ;; Re-exports
          (all-from-out "../pdarisc-data.rkt"))
@@ -97,6 +98,11 @@
             #f #f
             insn))
 
+(define (write-pda-term t port mode)
+  (cond [(number? mode) (print   (unparse t) port mode)]
+        [(false? mode)  (display (unparse t) port)]
+        [else           (write   (unparse t) port)]))
+
 (struct pda-term (preds
                   succs
                   avail-regs
@@ -112,7 +118,8 @@
                                          (lambda (x _)
                                            (eq-hash-code x))
                                          (lambda (x _)
-                                           (- (eq-hash-code x)))))
+                                           (- (eq-hash-code x))))
+        #:property prop:custom-write write-pda-term)
 
 (define (pda-risc-enh-initial-term pre)
   (match pre
