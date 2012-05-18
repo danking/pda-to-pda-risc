@@ -98,9 +98,9 @@
             insn))
 
 (define (write-pda-term t port mode)
-  (cond [(number? mode) (print   (unparse t) port mode)]
-        [(false? mode)  (display (unparse t) port)]
-        [else           (write   (unparse t) port)]))
+  (if (insn*? (pda-term-insn t))
+      (write (unparse-term* t) port)
+      (write (unparse-term t) port)))
 
 (struct pda-term (preds
                   succs
