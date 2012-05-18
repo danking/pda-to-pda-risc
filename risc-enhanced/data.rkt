@@ -382,9 +382,6 @@
        param-lists
        rhses))
 
-(define (remove-struct:-prefix sym)
-  (string->symbol (substring (symbol->string sym) 7)))
-
 (define-values
   (unparse unparse-term unparse-term*)
   (traverse-pdarisc #:pdarisc (match-lambda ((pdarisc seq) seq))
