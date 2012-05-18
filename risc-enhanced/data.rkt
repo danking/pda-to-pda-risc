@@ -136,6 +136,8 @@
   (register-uid x))
 (define (register-secondary-hash-code x)
   (- (register-uid x)))
+(define (write-register r port mode)
+  (write (list 'register (register-uid r) (register-lexical-name r)) port))
 (struct register (lexical-name
                   uid
                   [binding #:mutable]
@@ -143,7 +145,8 @@
         #:transparent
         #:property prop:equal+hash (list (lambda (x y _) (register-equal? x y))
                                          (lambda (x _) (register-hash-code x))
-                                         (lambda (x _) (register-secondary-hash-code x))))
+                                         (lambda (x _) (register-secondary-hash-code x)))
+        #:property prop:custom-write write-register)
 (define (register-add-use! r u)
   (set-register-uses! r (set-add (register-uses r) u)))
 
@@ -155,6 +158,8 @@
   (label-name-uid x))
 (define (label-name-secondary-hash-code x)
   (- (label-name-uid x)))
+(define (write-label-name l port mode)
+  (write (list 'label-name (label-name-uid l) (label-name-lexical-name l)) port))
 (struct label-name (lexical-name
                     uid
                     [binding #:mutable]
@@ -162,7 +167,8 @@
         #:transparent
         #:property prop:equal+hash (list (lambda (x y _) (label-name-equal? x y))
                                          (lambda (x _) (label-name-hash-code x))
-                                         (lambda (x _) (label-name-secondary-hash-code x))))
+                                         (lambda (x _) (label-name-secondary-hash-code x)))
+        #:property prop:custom-write write-label-name)
 (define (label-name-add-use! r u)
   (set-label-name-uses! r (set-add (label-name-uses r) u)))
 
