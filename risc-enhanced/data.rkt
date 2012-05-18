@@ -359,6 +359,11 @@
    ((go target args)
     `(go ,target . ,args))))
 
+(define (strip-term t)
+  (match t
+    ((pda-term _ _ _ _ i)
+     `(pda-term ,i))))
+
 (define (unparse-label-clauses ids stack-types token-types param-lists rhses)
   (map (lambda (id stack-type token-type param rhs)
          `(,id : ,stack-type
@@ -377,8 +382,8 @@
 (define-values
   (unparse unparse-term unparse-term*)
   (traverse-pdarisc #:pdarisc (match-lambda ((pdarisc seq) seq))
-                    #:term pda-term-insn
-                    #:term* pda-term-insn
+                    #:term strip-term
+                    #:term* strip-term
                     #:insn unparse-insn
                     #:insn* unparse-insn*
                     #:rhs unparse-rhs
