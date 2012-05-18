@@ -77,7 +77,7 @@
 (define (convert/rhs rhs)
   (match rhs
     ((old:register) (convert/register rhs))
-    ((state id) (state (syntax-e id)))
+    ((state id) (state id))
     (_ rhs)))
 
 (define (convert/register reg)
