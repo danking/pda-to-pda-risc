@@ -114,10 +114,14 @@
                                              ((list (pda-term _ _ _ _ i1)
                                                     (pda-term _ _ _ _ i2))
                                               (recur-equal? i1 i2))))
-                                         (lambda (x _)
-                                           (eq-hash-code x))
-                                         (lambda (x _)
-                                           (- (eq-hash-code x))))
+                                         (lambda (x r)
+                                           (match x
+                                             ((pda-term _ _ _ _ i)
+                                              (r i))))
+                                         (lambda (x r)
+                                           (match x
+                                             ((pda-term _ _ _ _ i)
+                                              (- (r i))))))
         #:property prop:custom-write write-pda-term)
 
 (define (pda-risc-enh-initial-term pre)
