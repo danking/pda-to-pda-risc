@@ -1,0 +1,7 @@
+decorate.rkt packages up all the files in this folder. It wraps insns in
+`pda-term's and sets up all the associated fields:
+
+   + Live Registers
+   + Predecessor and Successor Sets for each insn
+   + Def/Use sets for every register
+   + Alpha Unique IDs for every label and register
