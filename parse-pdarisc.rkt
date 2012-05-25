@@ -40,12 +40,12 @@
      (make-block (next-uid) (rs insns)))))
 
 (define (parse-insn*-seq seq)
-  (foldr (lambda (x xs)
-           (if (empty? xs)
-               (list (parse-insn* x))
-               (cons (parse-insn x) xs)))
-         '()
-         seq))
+  (when (empty? seq)
+    (error 'parse-insn*-seq "insn*-seq cannot be empty"))
+  (if (empty? (rest seq))
+      (list (parse-insn* (first seq)))
+      (cons (parse-insn (first seq))
+            (parse-insn*-seq (rest seq)))))
 
 (define (parse-insn* i)
   (define r* parse-insn*)
