@@ -44,7 +44,7 @@
 (define (compile-register-name r)
   (match r
     ((named-reg id) id)
-    ((nameless-reg) #'<nameless-register>)))
+    ((nameless-reg) #'_)))
 
 ;; compile-reg-ref : Register [Syntax Identifier] -> Syntax
 (define (compile-register-ref r regs)
@@ -167,11 +167,6 @@
 
 (define (compile-label-name label)
   (match label
-    ((label-polynym id id2) (datum->syntax id
-                                           (symbol-append (syntax-e id)
-                                                          '-
-                                                          id2)
-                                           id))
     ((label-name id) id)))
 
 (define (compile-cond-clause name arg-registers body compile-cnsq)

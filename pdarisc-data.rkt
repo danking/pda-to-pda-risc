@@ -1,10 +1,9 @@
 #lang racket
 (provide (all-defined-out))
-(require "define-ustruct.rkt"
-         "symbol-append.rkt")
+(require "define-ustruct.rkt")
 
 ;; a PDA-RISC is a (make-pdarisc Insn*-Seq)
-(define-ustruct pdarisc (insns))
+(define-ustruct pdarisc (max-uid insns))
 
 ;; an Insn is one of
 ;;  - (make-assign RegName Var-Rhs)
@@ -17,7 +16,7 @@
 ;;  - (make-get-token)
 ;;  - (make-stack-ensure Natural)
 ;;  - (make-block [ListOf Insn])
-(define-ustruct insn ())
+(define-ustruct insn (uid))
 (define-ustruct (assign insn) (id val))
 (define-ustruct (push insn) (val))
 (define-ustruct (sem-act insn) (name params retvars action))
@@ -38,7 +37,7 @@
 ;;
 ;; an Insn*-Seq is a (append [ListOf Insn] (list Insn*))
 ;; an ArgList is a [ListOf RegName]
-(define-ustruct insn* ())
+(define-ustruct insn* (uid))
 (define-ustruct (label insn*) (ids stack-types token-types
                                    param-lists bodies body)
   #:mutable) ;; needed for risc enhanced code
@@ -79,26 +78,15 @@
 (define-ustruct (curr-token pure-rhs) (n))
 
 ;; A Register is either
-;;  - a (make-named-reg [Syntax Idnetifier]), or
+;;  - a (make-named-reg Symbol), or
 ;;  - a (make-nameless-reg)
 (define-ustruct (register pure-rhs) ())
 (define-ustruct (named-reg register) (id))
 (define-ustruct (nameless-reg register) ())
 
 ;; A LabelName is either
-;;  - a (make-label-name [Syntax Identifier]), or
-;;  - a (make-label-polynym [Syntax Identifier] Symbol)
+;;  - a (make-label-name Symbol), or
 (define-ustruct label-name (id))
-(define-ustruct (label-polynym label-name) (extra-id))
-
-;; label-name->symbol : LabelName -> Symbol
-;; strips the syntax information
-(define (label-name->symbol label)
-  (match label
-    ((label-polynym id id2) (symbol-append (syntax->datum id)
-                                           '-
-                                           id2))
-    ((label-name id) (syntax->datum id))))
 
 ;; A Token is [Syntax Identifier]
 

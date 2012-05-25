@@ -9,53 +9,53 @@
 
 (define (unparse-insn i)
   (match i
-    ((assign id val)
+    ((assign _ id val)
      `(:= ,(unparse-register id) ,(unparse-var-rhs val)))
-    ((push val)
+    ((push _ val)
      `(push ,(unparse-pure-rhs val)))
-    ((sem-act name params retvars action)
+    ((sem-act _ name params retvars action)
      `(semantic-action ,(syntax-e name)
                        ,(map unparse-register params)
                        ,(map unparse-maybe-register retvars)
-                       ,(syntax->datum action)))
-    ((drop-token)
+                       ',(syntax->datum action)))
+    ((drop-token _)
      'drop-token)
-    ((get-token)
+    ((get-token _)
      'get-token)
-    ((stack-ensure hdrm)
+    ((stack-ensure _ hdrm)
      `(stack-ensure ,hdrm))
-    ((block insns)
+    ((block _ insns)
      `(block . ,(map unparse-insn insns)))))
 
 (define (unparse-insn* i)
   (define up-seq* unparse-insn-seq*)
 
   (match i
-   ((label ids stack-types token-types param-lists rhses body)
+   ((label _ ids stack-types token-types param-lists rhses body)
     `(label ,(unparse-label-clauses ids stack-types token-types param-lists rhses)
             . ,(up-seq* body)))
-   ((block* insns)
+   ((block* _ insns)
     `(block . ,(up-seq* insns)))
-   ((accept vars)
+   ((accept _ vars)
     `(accept . ,(map unparse-register vars)))
-   ((reject)
+   ((reject _)
     `(reject))
-   ((if-eos cnsq altr)
+   ((if-eos _ cnsq altr)
     `(if-eos ,(unparse-insn* cnsq) ,(unparse-insn* altr)))
-   ((state-case var looks cnsqs)
+   ((state-case _ var looks cnsqs)
     `(state-case ,(unparse-register var)
                  . ,(map (lambda (look cnsq)
                            (cons (strip-state look)
                                  (up-seq* cnsq)))
                          looks
                          cnsqs)))
-   ((token-case looks cnsqs)
+   ((token-case _ looks cnsqs)
     `(token-case . ,(map (lambda (x y)
                            (cons (if x (syntax-e x) #f) ; looks : [Maybe Syntax]
                                  y))
                          looks
                          (map up-seq* cnsqs))))
-   ((go target args)
+   ((go _ target args)
     `(go ,(unparse-label-name target) . ,(map unparse-pure-rhs args)))))
 
 (define (unparse-insn-seq* iseq)
@@ -86,8 +86,8 @@
 
 (define (unparse-register r)
   (match r
-    ((named-reg id) (syntax-e id))
-    ((nameless-reg) '<nameless-register>)))
+    ((named-reg id) id)
+    ((nameless-reg) '_)))
 
 (define (unparse-maybe-register r)
   (match r
@@ -104,9 +104,7 @@
 
 (define (unparse-label-name l)
   (match l
-    ((label-polynym id extra-id)
-     (symbol-append (syntax-e id) '- extra-id))
-    ((label-name id) (syntax-e id))))
+    ((label-name id) id)))
 
 (define (unparse-label-clauses ids stack-types token-types param-lists rhses)
   (map (lambda (id stack-type token-type param rhs)

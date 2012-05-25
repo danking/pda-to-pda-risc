@@ -1,10 +1,16 @@
 #lang racket
-(require "pdarisc-data.rkt")
+(require "pdarisc-data.rkt"
+         "uid.rkt")
 (provide parse-pdarisc parse-insn parse-insn* parse-insn*-seq
          parse-var-rhs parse-pure-rhs)
 
+(define-values
+  (next-uid current-uid reset-uid set-uid)
+  (init))
+
 (define (parse-pdarisc insn*-seq)
-  (make-pdarisc (parse-insn*-seq insn*-seq)))
+  (let ((insns (parse-insn*-seq insn*-seq)))
+    (make-pdarisc (current-uid) insns)))
 
 (define (parse-insn i)
   (define r parse-insn)
@@ -12,25 +18,26 @@
 
   (match i
     (`(:= ,id ,val)
-     (make-assign (parse-reg id) (parse-var-rhs val)))
+     (make-assign (next-uid) (parse-reg id) (parse-var-rhs val)))
     (`(push ,val)
-     (make-push (parse-pure-rhs val)))
+     (make-push (next-uid) (parse-pure-rhs val)))
     (`(semantic-action ,name
                        (,params ...)
                        (,retvars ...)
                        ,action)
-     (make-sem-act (syntaxify name)
+     (make-sem-act (next-uid)
+                   (syntaxify name)
                    (map parse-reg params)
                    (map (maybe-f parse-reg) retvars)
                    action))
     ('drop-token
-     (make-drop-token))
+     (make-drop-token (next-uid)))
     ('get-token
-     (make-get-token))
+     (make-get-token (next-uid)))
     (`(stack-ensure ,hdrm)
-     (make-stack-ensure hdrm))
+     (make-stack-ensure (next-uid) hdrm))
     (`(block . ,insns)
-     (make-block (rs insns)))))
+     (make-block (next-uid) (rs insns)))))
 
 (define (parse-insn*-seq seq)
   (foldr (lambda (x xs)
@@ -48,29 +55,36 @@
     (`(label ((,ids : ,stack-type ,token-type
                     (,param-list ...) ,label-body ...) ...)
              ,body ...)
-     (make-label (map parse-label-name ids)
+     (make-label (next-uid)
+                 (map parse-label-name ids)
                  stack-type
                  token-type
                  (map (lambda (plist) (map parse-reg plist)) param-list)
                  (map rs* label-body)
                  (rs* body)))
     (`(block ,insns ...)
-     (make-block* (rs* insns)))
+     (make-block* (next-uid) (rs* insns)))
     (`(accept ,vars ...)
-     (make-accept (map parse-reg vars)))
+     (make-accept (next-uid) (map parse-reg vars)))
     (`(reject)
-     (make-reject))
+     (make-reject (next-uid)))
     (`(if-eos ,cnsq ,altr)
-     (make-if-eos (r* cnsq) (r* altr)))
+     (make-if-eos (next-uid) (r* cnsq) (r* altr)))
     (`(state-case ,var (,looks . ,cnsqs) ...)
-     (make-state-case (parse-reg var)
+     (make-state-case (next-uid)
+                      (parse-reg var)
                       (map (compose parse-pure-rhs (lambda (x) `(state ,x)))
                            looks)
                       (map rs* cnsqs)))
     (`(token-case (,looks . ,cnsqs) ...)
-     (make-token-case (map (maybe-f syntaxify) looks) (map rs* cnsqs)))
+     (make-token-case (next-uid)
+                      (map (maybe-f (compose make-state syntaxify))
+                           looks)
+                      (map rs* cnsqs)))
     (`(go ,target ,args ...)
-     (go (parse-label-name target) (map parse-pure-rhs args)))))
+     (go (next-uid)
+         (parse-label-name target)
+         (map parse-pure-rhs args)))))
 
 (define (parse-var-rhs r)
   (match r
@@ -91,10 +105,12 @@
      (parse-reg id))))
 
 (define (parse-reg r)
-  (make-named-reg (syntaxify r)))
+  (if (eq? r '_)
+      (make-nameless-reg)
+      (make-named-reg r)))
 
 (define (parse-label-name l)
-  (make-label-name (syntaxify l)))
+  (make-label-name l))
 
 ;; [X -> X] -> [[Maybe X] -> X]
 (define (maybe-f f)

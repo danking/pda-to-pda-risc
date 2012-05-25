@@ -11,8 +11,14 @@
                     [accept risc-accept]
                     [make-accept make-risc-accept]
                     [accept-vals risc-accept-vals])
-         "parse-pda.rkt")
+         "parse-pda.rkt"
+         "uid.rkt"
+         "symbol-append.rkt")
 (provide compile-pda)
+
+(define-values
+  (next-uid current-uid reset-uid set-uid)
+  (init))
 
 (define make-dict hasheq)
 ;; a Reduce-To-Table is a [Dict Non-Terminal
@@ -24,56 +30,66 @@
 (define (compile-pda a-pda)
   (match a-pda
     ((pda tokens eos start states rules)
-     (let ((rto-table (gather-rto-table states)))
-       (make-pdarisc
-        (list (make-label
-               (append (map (lambda (s)
-                              (make-label-polynym (state-name s)
-                                                  'unknown))
-                            states)
-                       (map (lambda (s)
-                              (make-label-polynym (state-name s)
-                                                  'have-token))
-                            states)
-                       (map (lambda (s)
-                              (make-label-polynym (state-name s)
-                                                  'eos))
-                            states)
-                       (map (lambda (r)
-                              (make-label-polynym (rule-name r)
-                                                  'have-token))
-                            rules)
-                       (map (lambda (r)
-                              (make-label-polynym (rule-name r)
-                                                  'eos))
-                            rules))
-               (append (map state-stack-type states)
-                       (map state-stack-type states)
-                       (map state-stack-type states)
-                       (map rule-stack-type  rules)
-                       (map rule-stack-type  rules))
-               (append (map (lambda (x) #f) states) ; current-token type
-                       (map (lambda (x) #f) states)
-                       (map (lambda (x) #f) states)
-                       (map (lambda (x) #f) rules)
-                       (map (lambda (x) #f) rules))
-               (append (map (lambda (x) '()) states) ; label arguments
-                       (map (lambda (x) '()) states)
-                       (map (lambda (x) '()) states)
-                       (map (lambda (x) '()) rules)
-                       (map (lambda (x) '()) rules))
-               (append (map (compose list compile-state) states)
-                       (map (compose list compile-have-token-state) states)
-                       (map (compose list compile-eos-state) states)
-                       (map (lambda (x) (list (compile-rule x
-                                                            'have-token
-                                                            rto-table)))
-                            rules)
-                       (map (lambda (x) (list (compile-rule x
-                                                            'eos
-                                                            rto-table)))
-                            rules))
-               (list (make-go (make-label-polynym start 'unknown) '())))))))))
+     (let* ((rto-table (gather-rto-table states))
+            (insns
+             (list (make-label
+                    (next-uid)
+                    (append (map (lambda (s)
+                                   (make-label-name (symbol-append (syntax-e
+                                                                    (state-name s))
+                                                                   '-unknown)))
+                                 states)
+                            (map (lambda (s)
+                                   (make-label-name (symbol-append (syntax-e
+                                                                    (state-name s))
+                                                                   '-have-token)))
+                                 states)
+                            (map (lambda (s)
+                                   (make-label-name (symbol-append (syntax-e
+                                                                    (state-name s))
+                                                                   '-eos)))
+                                 states)
+                            (map (lambda (r)
+                                   (make-label-name (symbol-append (syntax-e
+                                                                    (rule-name r))
+                                                                   '-have-token)))
+                                 rules)
+                            (map (lambda (r)
+                                   (make-label-name (symbol-append (syntax-e
+                                                                    (rule-name r))
+                                                                   '-eos)))
+                                 rules))
+                    (append (map state-stack-type states)
+                            (map state-stack-type states)
+                            (map state-stack-type states)
+                            (map rule-stack-type  rules)
+                            (map rule-stack-type  rules))
+                    (append (map (lambda (x) #f) states) ; current-token type
+                            (map (lambda (x) #f) states)
+                            (map (lambda (x) #f) states)
+                            (map (lambda (x) #f) rules)
+                            (map (lambda (x) #f) rules))
+                    (append (map (lambda (x) '()) states) ; label arguments
+                            (map (lambda (x) '()) states)
+                            (map (lambda (x) '()) states)
+                            (map (lambda (x) '()) rules)
+                            (map (lambda (x) '()) rules))
+                    (append (map (compose list compile-state) states)
+                            (map (compose list compile-have-token-state) states)
+                            (map (compose list compile-eos-state) states)
+                            (map (lambda (x) (list (compile-rule x
+                                                                 'have-token
+                                                                 rto-table)))
+                                 rules)
+                            (map (lambda (x) (list (compile-rule x
+                                                                 'eos
+                                                                 rto-table)))
+                                 rules))
+                    (list (make-go (next-uid)
+                                   (make-label-name (symbol-append (syntax-e start)
+                                                                   '-unknown))
+                                   '()))))))
+       (pdarisc (current-uid) insns)))))
 
 ;; gather-rto-table : [ListOf State] -> Reduce-To-Table
 (define (gather-rto-table states)
@@ -100,13 +116,21 @@
   (match st
     ((state name stype token-actions eos-actions gotos)
      (make-block*
+      (next-uid)
       (list
        (make-if-eos
-        (make-go (make-label-polynym name 'eos) '())
+        (next-uid)
+        (make-go (next-uid)
+                 (make-label-name (symbol-append (syntax-e name)
+                                                 '-eos))
+                 '())
         (make-block*
+         (next-uid)
          (list
-          (make-get-token)
-          (make-go (make-label-polynym name 'have-token) '())))))))))
+          (make-get-token (next-uid))
+          (make-go (next-uid) (make-label-name (symbol-append (syntax-e name)
+                                                              '-have-token))
+                   '())))))))))
 
 ;; compile-have-token-state : State -> Insn*
 ;; produces an insn* that encapsulates the behavior of the given PDA state when
@@ -117,9 +141,10 @@
      (let-values (((guards consequences)
                    (compile-case-clauses token-actions name)))
        (make-block*
+        (next-uid)
         (list
-         (make-push (make-risc-state name))
-         (make-token-case guards consequences)))))))
+         (make-push (next-uid) (make-risc-state name))
+         (make-token-case (next-uid) guards consequences)))))))
 
 ;; compile-case-clauses : [ListOf Action]
 ;;                        [Syntax Identifier]
@@ -138,7 +163,7 @@
                      (cons (compile-non-eos-action x name)
                            xs))
                    (if (empty? else)
-                       (list (list (make-reject)))
+                       (list (list (make-reject (next-uid))))
                        (list (compile-non-eos-action (first else) name)))
                    non-else))))
 
@@ -149,7 +174,8 @@
   (match st
     ((state name stype token-actions eos-actions gotos)
      (make-block*
-      (cons (make-push (make-risc-state name))
+      (next-uid)
+      (cons (make-push (next-uid) (make-risc-state name))
             (maybe-compile-eos-action (append (filter action-has-no-lookahead?
                                                       token-actions)
                                               eos-actions)
@@ -161,43 +187,52 @@
 (define (compile-rule r stream-state rto-table)
   (match r
     ((rule name stype nt args sem-act)
-     (let ((rto-states (dict-ref rto-table nt (list))))
+     (let ((rto-states (dict-ref rto-table nt (list)))
+           (args (map (maybe-f syntax-e) args)))
        (make-block*
+        (next-uid)
         `(,@(compile-rule-args args)
-          ,(make-sem-act name
+          ,(make-sem-act (next-uid)
+                         name
                          (map make-named-reg (filter (lambda (x) x) args))
-                         (list (make-named-reg #'ret-val))
+                         (list (make-named-reg 'ret-val))
                          sem-act)
-          ,(make-push (make-named-reg #'target))
-          ,(make-push (make-named-reg #'ret-val))
-          ,(make-state-case (make-named-reg #'target)
+          ,(make-push (next-uid) (make-named-reg 'target))
+          ,(make-push (next-uid) (make-named-reg 'ret-val))
+          ,(make-state-case (next-uid)
+                            (make-named-reg 'target)
                             (map make-risc-state (dict-keys rto-states))
                             (map (lambda (target)
                                    (list (make-go
-                                          (make-label-polynym target
-                                                              stream-state)
+                                          (next-uid)
+                                          (make-label-name
+                                           (symbol-append (syntax-e target)
+                                                          '-
+                                                          stream-state))
                                           '())))
                                  (dict-values rto-states)))))))))
 
 ;; compile-rule-args : [ListOf Symbol] -> [ListOf Insn]
 (define (compile-rule-args args)
   (if (empty? args)
-      (list (make-assign (make-named-reg #'target) (make-pop)))
+      (list (make-assign (next-uid) (make-named-reg 'target) (make-pop)))
       (cons ; pop the state which called for the reduce
-            (make-assign (make-nameless-reg) (make-pop))
+            (make-assign (next-uid) (make-nameless-reg) (make-pop))
             (foldl (lambda (x xs)
                      (if x
-                         (list* (make-assign (make-named-reg x) (make-pop))
-                                (make-assign (make-nameless-reg) (make-pop))
+                         (list* (make-assign (next-uid) (make-named-reg x) (make-pop))
+                                (make-assign (next-uid) (make-nameless-reg) (make-pop))
                                 xs)
-                         (list* (make-assign (make-nameless-reg) (make-pop))
-                                (make-assign (make-nameless-reg) (make-pop))
+                         (list* (make-assign (next-uid) (make-nameless-reg) (make-pop))
+                                (make-assign (next-uid) (make-nameless-reg) (make-pop))
                                 xs)))
-                   (list (make-assign (if (first args)
+                   (list (make-assign (next-uid)
+                                      (if (first args)
                                           (make-named-reg (first args))
                                           (make-nameless-reg))
                                       (make-pop))
-                         (make-assign (make-named-reg #'target) (make-pop)))
+                         (make-assign (next-uid)
+                                      (make-named-reg 'target) (make-pop)))
                    (rest args)))))
 
 
@@ -220,18 +255,23 @@
          (error 'compile-action
                 "cannot compile a shift as an eos action")
 
-         (list (make-push (make-curr-token #f))
-               (make-drop-token)
-               (make-go (make-label-polynym st 'unknown)
+         (list (make-push (next-uid) (make-curr-token #f))
+               (make-drop-token (next-uid))
+               (make-go (next-uid)
+                        (make-label-name (symbol-append (syntax-e st)
+                                                        '-unknown))
                         '()))))
     ((reduce l st)
-     (list (make-go (make-label-polynym st (if eos?
-                                               'eos
-                                               'have-token)) '())))
+     (list (make-go (next-uid)
+                    (make-label-name (symbol-append (syntax-e st)
+                                                    (if eos?
+                                                        '-eos
+                                                        '-have-token)))
+                    '())))
     ((accept l)
-     (list (make-assign (make-nameless-reg) (make-pop))
-           (make-assign (make-named-reg #'result) (make-pop))
-           (make-risc-accept (list (make-named-reg #'result)))))))
+     (list (make-assign (next-uid) (make-nameless-reg) (make-pop))
+           (make-assign (next-uid) (make-named-reg 'result) (make-pop))
+           (make-risc-accept (next-uid) (list (make-named-reg 'result)))))))
 
 ;; maybe-compile-action : [ListOf Action] -> [ListOf Insn*]
 ;; This first checks if the list of actions is empty, if not it compiles
@@ -239,7 +279,7 @@
 ;; is empty, it returns a error-halt state.
 (define (maybe-compile-eos-action actions curr-state)
   (if (empty? actions)
-      (list (make-reject))
+      (list (make-reject (next-uid)))
       (compile-eos-action (first actions) curr-state)))
 
 ;; action-has-no-lookahead? : Action -> Boolean
@@ -247,3 +287,8 @@
 ;; when the stream is at EOS
 (define (action-has-no-lookahead? act)
   (empty? (action-lookahead act)))
+
+;; maybe-f : [A -> B] -> [[Maybe A] -> [Maybe B]]
+(define (maybe-f f)
+  (lambda (x)
+    (if x (f x) x)))
