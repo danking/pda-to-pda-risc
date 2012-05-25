@@ -52,7 +52,7 @@
   (define rs* parse-insn*-seq)
 
   (match i
-    (`(label ((,ids : ,stack-type ,token-type
+    (`(label ((,ids ,stack-type ,token-type
                     (,param-list ...) ,label-body ...) ...)
              ,body ...)
      (make-label (next-uid)
