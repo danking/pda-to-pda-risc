@@ -11,8 +11,7 @@
                     [accept risc-accept]
                     [make-accept make-risc-accept]
                     [accept-vals risc-accept-vals])
-         "parse-pda.rkt"
-         rackunit)
+         "parse-pda.rkt")
 (provide compile-pda)
 
 (define make-dict hasheq)
