@@ -40,8 +40,8 @@
                           (SHIFT (A) s1)
                           (REDUCE () r1)
                           (GOTO nt2 s0))
-                   (RULE r1 ((A s)) nt (v) v)
-                   (RULE r2 (()) nt2 (v) v))))
+                   (RULE r1 ((A s)) nt (v) 'v)
+                   (RULE r2 (()) nt2 (v) 'v))))
    (check-syntax-equal?
     (unparse-pdarisc (compile-pda simple-pda))
     '((label ((s0-unknown (()) #f
