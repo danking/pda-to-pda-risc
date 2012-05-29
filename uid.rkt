@@ -3,14 +3,14 @@
 
 ;; (require "uid.rkt")
 ;; (define-values
-;;   (next-uid current-uid reset-uid set-uid)
+;;   (next-uid current-uid reset-uid! set-uid!)
 ;;   (init))
 
 
 ;; next-uid : -> Integer
 ;; current-uid : -> Integer
-;; reset-uid : -> Void
-;; set-uid : Integer -> Void
+;; reset-uid! : -> Void
+;; set-uid! : Integer -> Void
 (define (init)
   (let ((counter 0))
     (values (lambda ()
