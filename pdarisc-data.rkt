@@ -11,7 +11,7 @@
 ;;  - (make-sem-act [Syntax Identifier]
 ;;                  [ListOf RegName]
 ;;                  [ListOf [Maybe RegName]]
-;;                  SExp)
+;;                  [Syntax SExp])
 ;;  - (make-drop-token)
 ;;  - (make-get-token)
 ;;  - (make-stack-ensure Natural)

@@ -17,7 +17,7 @@
      `(semantic-action ,(syntax-e name)
                        ,(map unparse-register params)
                        ,(map unparse-maybe-register retvars)
-                       ',(syntax->datum action)))
+                       ,(syntax->datum action)))
     ((drop-token _)
      'drop-token)
     ((get-token _)

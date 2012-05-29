@@ -29,7 +29,7 @@
                    (syntaxify name)
                    (map parse-reg params)
                    (map (maybe-f parse-reg) retvars)
-                   action))
+                   (syntaxify action)))
     ('drop-token
      (make-drop-token (next-uid)))
     ('get-token
