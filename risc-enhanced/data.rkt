@@ -106,7 +106,8 @@
                                            (match x
                                              ((pda-term _ _ _ _ i)
                                               (- (r i))))))
-        #:property prop:custom-write write-pda-term)
+        ;; #:property prop:custom-write write-pda-term
+        )
 
 (define (pda-risc-enh-initial-term pre)
   (match pre
