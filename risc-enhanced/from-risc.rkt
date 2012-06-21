@@ -1,18 +1,26 @@
 #lang racket
 (require "data.rkt")
+(require "../uid.rkt")
 (provide convert/pdarisc)
+
+(define-values
+  (next-uid current-uid reset-uid! set-uid!)
+  (init))
 
 (define (convert/pdarisc pr)
   (match pr
-    ((pdarisc insn-seq*)
-     (pdarisc (convert/insn-seq* insn-seq*)))))
+    ((pdarisc uid insn-seq*)
+     (set-uid! uid)
+     (let ((insns (convert/insn-seq* insn-seq*)))
+       (pdarisc (current-uid) insns)))))
 
 (define (convert/insn i)
   (uninitialized-pda-term
    (match i
-     ((assign id val) (assign (convert/register id) (convert/rhs val)))
-     ((sem-act name in-vars out-vars action)
-      (sem-act name
+     ((assign uid id val) (assign uid (convert/register id) (convert/rhs val)))
+     ((sem-act uid name in-vars out-vars action)
+      (sem-act uid
+               name
                (map convert/register in-vars)
                (map (lambda (maybe-r)
                       (if maybe-r
@@ -20,45 +28,49 @@
                           maybe-r))
                     out-vars)
                action))
-     ((block insns) (block (convert/insn-seq insns)))
-     ((push rhs) (push (convert/rhs rhs)))
+     ((block uid insns) (block uid (convert/insn-seq insns)))
+     ((push uid rhs) (push uid (convert/rhs rhs)))
      (_ i))))
 
 (define (convert/insn* i)
   (uninitialized-pda-term
    (match i
-     ((label ids st tt param-lists bodies body)
+     ((label uid ids st tt param-lists bodies body)
       (let ((converted-param-lists
              (map (lambda (param-list)
                     (map convert/register param-list))
                   param-lists))
             (converted-ids (map convert/label-name ids)))
-       (label converted-ids
+       (label uid
+              converted-ids
               st tt
               converted-param-lists
               (for/list ((body bodies)
                          (params converted-param-lists)
                          (id converted-ids))
                 (cons (uninitialized-pda-term
-                       (join-point id params))
+                       (join-point (next-uid) id params))
                       (convert/insn-seq* body)))
               (convert/insn-seq* body))))
-     ((block* seq)
-      (block* (convert/insn-seq* seq)))
-     ((accept regs)
-      (accept (map convert/register regs)))
-     ((reject) i)
-     ((if-eos cnsq altr)
-      (if-eos (convert/insn* cnsq)
+     ((block* uid seq)
+      (block* uid (convert/insn-seq* seq)))
+     ((accept uid regs)
+      (accept uid (map convert/register regs)))
+     ((reject uid) i)
+     ((if-eos uid cnsq altr)
+      (if-eos uid
+              (convert/insn* cnsq)
               (convert/insn* altr)))
-     ((state-case r l cnsqs)
-      (state-case (convert/register r)
+     ((state-case uid r l cnsqs)
+      (state-case uid
+                  (convert/register r)
                   l
                   (map convert/insn-seq* cnsqs)))
-     ((token-case l cnsqs)
-      (token-case l (map convert/insn-seq* cnsqs)))
-     ((go target args)
-      (go (convert/label-name target)
+     ((token-case uid l cnsqs)
+      (token-case uid l (map convert/insn-seq* cnsqs)))
+     ((go uid target args)
+      (go uid
+          (convert/label-name target)
           (map convert/rhs args))))))
 
 (define (convert/insn-seq seq)

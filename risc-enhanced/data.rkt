@@ -126,7 +126,7 @@
 
 (define (pda-risc-enh-initial-term pre)
   (match pre
-    ((pdarisc seq) (first seq))))
+    ((pdarisc _ seq) (first seq))))
 
 (define (uninitialized-register name)
   (register name #f #f (seteq)))
@@ -171,9 +171,11 @@
         #:property prop:custom-write write-label-name)
 (define (label-name-add-use! r u)
   (set-label-name-uses! r (set-add (label-name-uses r) u)))
+(define (get-label-params lblname)
+  (join-point-params (label-name-binding lblname)))
 
 ;; a join-point is an insn
-(struct join-point (label params) #:transparent)
+(struct join-point (uid label params) #:transparent)
 
 (define (raise-to-term f)
   (lambda (t . rest)
@@ -235,13 +237,15 @@
   (define (map/insn i)
     (touch-insn
      (match i
-       ((assign id val)
-        (assign (regdef id)
+       ((assign uid id val)
+        (assign uid
+                (regdef id)
                 (rhs val)))
-       ((push val)
-        (push (rhs val)))
-       ((sem-act name params retvars action)
-        (sem-act (syntax name)
+       ((push uid val)
+        (push uid (rhs val)))
+       ((sem-act uid name params retvars action)
+        (sem-act uid
+                 name
                  (map reguse params)
                  (map (lambda (rn)
                         (if rn
@@ -249,12 +253,12 @@
                             rn))
                       retvars)
                  action))
-       ((drop-token) i)
-       ((get-token) i)
-       ((stack-ensure hdrm) (stack-ensure hdrm))
-       ((join-point label args)
-        (join-point (lbluse label) (map regdef args)))
-       ((block seq) (block (map/term-seq seq))))))
+       ((drop-token _) i)
+       ((get-token _) i)
+       ((stack-ensure uid hdrm) (stack-ensure uid hdrm))
+       ((join-point uid label args)
+        (join-point uid (lbluse label) (map regdef args)))
+       ((block uid seq) (block uid (map/term-seq seq))))))
   (define (map/term t)
     (match t
       ((pda-term a b c d i)
@@ -262,9 +266,10 @@
   (define (map/insn* i)
     (touch-insn*
      (match i
-       ((label ids stack-types token-types
+       ((label uid ids stack-types token-types
                param-lists bodies body)
-        (label (map lbldef ids)
+        (label uid
+               (map lbldef ids)
                stack-types
                token-types
                (map (lambda (param-list)
@@ -272,23 +277,27 @@
                     param-lists)
                (map map/term-seq* bodies)
                (map/term-seq* body)))
-       ((block* seq)
-        (block* (map/term-seq* seq)))
-       ((accept vals)
-        (accept (map reguse vals)))
-       ((reject) i)
-       ((if-eos cnsq altr)
-        (if-eos (map/term* cnsq)
+       ((block* uid seq)
+        (block* uid (map/term-seq* seq)))
+       ((accept uid vals)
+        (accept uid (map reguse vals)))
+       ((reject _) i)
+       ((if-eos uid cnsq altr)
+        (if-eos uid
+                (map/term* cnsq)
                 (map/term* altr)))
-       ((state-case st lookaheads cnsqs)
-        (state-case (reguse st)
+       ((state-case uid st lookaheads cnsqs)
+        (state-case uid
+                    (reguse st)
                     (map rhs lookaheads)
                     (map map/term-seq* cnsqs)))
-       ((token-case lookaheads cnsqs)
-        (token-case (map (maybe-f token) lookaheads)
+       ((token-case uid lookaheads cnsqs)
+        (token-case uid
+                    (map (maybe-f token) lookaheads)
                     (map map/term-seq* cnsqs)))
-       ((go target args)
-        (go (lbluse target)
+       ((go uid target args)
+        (go uid
+            (lbluse target)
             (map rhs args))))))
   (define (map/term* t)
     (match t
@@ -297,7 +306,7 @@
   (values
    (lambda (pr)
      (match pr
-       ((pdarisc seq) (touch-pdarisc (pdarisc (map/term-seq* seq))))))
+       ((pdarisc uid seq) (touch-pdarisc (pdarisc uid (map/term-seq* seq))))))
    map/term
    map/term*))
 
@@ -318,52 +327,52 @@
 
 (define (unparse-insn i)
   (match i
-    ((assign id val)
+    ((assign _ id val)
      `(:= ,id ,val))
-    ((push val)
+    ((push _ val)
      `(push ,val))
-    ((sem-act name params retvars action)
+    ((sem-act _ name params retvars action)
      `(semantic-action ,name
                        ,params
                        ,retvars
                        ,action))
-    ((drop-token)
+    ((drop-token _)
      'drop-token)
-    ((get-token)
+    ((get-token _)
      'get-token)
-    ((stack-ensure hdrm)
+    ((stack-ensure _ hdrm)
      `(stack-ensure ,hdrm))
-    ((join-point label args)
+    ((join-point _ label args)
      `(join-point ,label . ,args))
-    ((block insns)
+    ((block _ insns)
      `(block . ,insns))))
 
 (define (unparse-insn* i)
   (match i
-   ((label ids stack-types token-types param-lists rhses body)
-    `(label ,(unparse-label-clauses ids stack-types token-types param-lists rhses)
-            . ,body))
-   ((block* insns)
-    `(block . ,insns))
-   ((accept vars)
-    `(accept . ,vars))
-   ((reject)
-    `(reject))
-   ((if-eos cnsq altr)
-    `(if-eos ,cnsq ,altr))
-   ((state-case var looks cnsqs)
-    `(state-case ,var
-                 . ,(map (lambda (look cnsq)
-                           (cons look cnsq))
-                         looks
-                         cnsqs)))
-   ((token-case looks cnsqs)
-    `(token-case . ,(map (lambda (l c)
-                           (cons (if l l #f) c))
-                         looks
-                         cnsqs)))
-   ((go target args)
-    `(go ,target . ,args))))
+    ((label _ ids stack-types token-types param-lists rhses body)
+     `(label ,(unparse-label-clauses ids stack-types token-types param-lists rhses)
+             . ,body))
+    ((block* _ insns)
+     `(block . ,insns))
+    ((accept _ vars)
+     `(accept . ,vars))
+    ((reject _)
+     `(reject))
+    ((if-eos _ cnsq altr)
+     `(if-eos ,cnsq ,altr))
+    ((state-case _ var looks cnsqs)
+     `(state-case ,var
+                  . ,(map (lambda (look cnsq)
+                            (cons look cnsq))
+                          looks
+                          cnsqs)))
+    ((token-case _ looks cnsqs)
+     `(token-case . ,(map (lambda (l c)
+                            (cons (if l l #f) c))
+                          looks
+                          cnsqs)))
+    ((go _ target args)
+     `(go ,target . ,args))))
 
 (define (strip-term t)
   (match t
@@ -384,7 +393,7 @@
 
 (define-values
   (unparse unparse-term unparse-term*)
-  (traverse-pdarisc #:pdarisc (match-lambda ((pdarisc seq) seq))
+  (traverse-pdarisc #:pdarisc (match-lambda ((pdarisc uid seq) seq))
                     #:term strip-term
                     #:term* strip-term
                     #:insn unparse-insn

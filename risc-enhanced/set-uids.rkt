@@ -8,7 +8,7 @@
 
 (define (set-uids pr)
   (match pr
-    ((pdarisc seq) (pdarisc (su/term-seq* seq empty-env empty-env)))))
+    ((pdarisc uid seq) (pdarisc uid (su/term-seq* seq empty-env empty-env)))))
 
 (define (su/term t reg-e lbl-e)
   (match t
@@ -29,19 +29,21 @@
         (su/reg-use (wrap su/reg-use))
         (su/rhs     (wrap su/rhs)))
     (match i
-      ((assign id val) (assign (su/reg-def id) (su/rhs val)))
-      ((push val)      (push (su/rhs val)))
-      ((sem-act name params retvars action)
-       (sem-act name
+      ((assign uid id val) (assign uid (su/reg-def id) (su/rhs val)))
+      ((push uid val) (push uid (su/rhs val)))
+      ((sem-act uid name params retvars action)
+       (sem-act uid
+                name
                 (map (wrap-maybe su/reg-use) params)
                 (map su/reg-def retvars)
                 action))
-      ((drop-token) i)
-      ((get-token)  i)
-      ((stack-ensure hdrm) i)
-      ((block seq) (block (su/term-seq seq reg-e lbl-e)))
-      ((enh:join-point lbl params)
-       (enh:join-point (su/lbl-join-point lbl t lbl-e)
+      ((drop-token _) i)
+      ((get-token _) i)
+      ((stack-ensure _ hdrm) i)
+      ((block uid seq) (block uid (su/term-seq seq reg-e lbl-e)))
+      ((enh:join-point uid lbl params)
+       (enh:join-point uid
+                       (su/lbl-join-point lbl t lbl-e)
                        (map su/reg-def params)))
       (_ (error 'su/insn "did you add a new insn? ~a" i)))))
 
@@ -55,7 +57,7 @@
         (su/term-seq*/rec (wrap su/term-seq*))
         (su/term*/rec     (wrap su/term*)))
     (match i
-      ((label ids stack-types token-types
+      ((label _ ids stack-types token-types
               param-lists bodies body)
        (let* ((updated-ids (map (lambda (l) (su/lbl-alloc l t lbl-e)) ids))
               (new-lbl-e (extend-env/labels lbl-e updated-ids)))
@@ -64,24 +66,27 @@
                                 (su/term-seq* body reg-e new-lbl-e)))
          (set-label-body! i (su/term-seq* body reg-e new-lbl-e))
          i))
-      ((block* insns)
-       (block* (su/term-seq*/rec insns)))
-      ((accept vals)
-       (accept (map su/reg-use vals)))
-      ((reject)
+      ((block* uid insns)
+       (block* uid (su/term-seq*/rec insns)))
+      ((accept uid vals)
+       (accept uid (map su/reg-use vals)))
+      ((reject _)
        i)
-      ((if-eos cnsq altr)
-       (if-eos (su/term*/rec cnsq)
+      ((if-eos uid cnsq altr)
+       (if-eos uid
+               (su/term*/rec cnsq)
                (su/term*/rec altr)))
-      ((state-case st lookaheads cnsqs)
-       (state-case (su/reg-use st)
+      ((state-case uid st lookaheads cnsqs)
+       (state-case uid
+                   (su/reg-use st)
                    lookaheads
                    (map su/term-seq*/rec cnsqs)))
-      ((token-case lookaheads cnsqs)
-       (token-case lookaheads
+      ((token-case uid lookaheads cnsqs)
+       (token-case uid
+                   lookaheads
                    (map su/term-seq*/rec cnsqs)))
-      ((go target args)
-       (go (su/lbl-use target t lbl-e) (map su/rhs args)))
+      ((go uid target args)
+       (go uid (su/lbl-use target t lbl-e) (map su/rhs args)))
       (_ (error 'su/insn* "did you add a new insn*? ~a" i)))))
 
 (define (su/term-seq seq reg-e lbl-e)
@@ -105,13 +110,13 @@
 
 (define (add-new-reg-bindings-from-insn i reg-e)
   (match i
-    ((assign reg _)
+    ((assign _ reg _)
      (extend-env/regs reg-e (list reg)))
-    ((sem-act _ _ regs _)
+    ((sem-act _ _ _ regs _)
      (extend-env/regs reg-e regs))
-    ((enh:join-point _ regs)
+    ((enh:join-point _ _ regs)
      (extend-env/regs reg-e regs))
-    ((block seq)
+    ((block _ seq)
      (for/fold ((reg-e reg-e))
                ((t seq))
        (add-new-reg-bindings-from-term t reg-e)))
