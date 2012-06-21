@@ -20,15 +20,7 @@
                     struct:label-name
                     make-label-name
                     label-name?
-                    label-name-id
-
-                    label-polynym
-                    struct:label-polynym
-                    make-label-polynym
-                    label-polynym?
-                    label-polynym-extra-id
-
-                    label-name->symbol)
+                    label-name-id)
          (prefix-in old:
                     (only-in "../pdarisc-data.rkt"
                              register
@@ -51,15 +43,7 @@
                              struct:label-name
                              make-label-name
                              label-name?
-                             label-name-id
-
-                             label-polynym
-                             struct:label-polynym
-                             make-label-polynym
-                             label-polynym?
-                             label-polynym-extra-id
-
-                             label-name->symbol)))
+                             label-name-id)))
 (provide (all-defined-out)
          ;; Re-exports
          (all-from-out "../pdarisc-data.rkt"))

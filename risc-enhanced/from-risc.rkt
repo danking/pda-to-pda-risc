@@ -83,7 +83,7 @@
              (list (convert/insn* i*))))))
 
 (define (convert/label-name lbl)
-  (let ((name (old:label-name->symbol lbl)))
+  (let ((name (old:label-name-id lbl)))
     (uninitialized-label-name name)))
 
 (define (convert/rhs rhs)
