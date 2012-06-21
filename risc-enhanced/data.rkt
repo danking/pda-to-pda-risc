@@ -145,6 +145,7 @@
   (- (label-name-uid x)))
 (define (write-label-name l port mode)
   (write (list 'label-name (label-name-uid l) (label-name-lexical-name l)) port))
+;; (label-name String Number Join-Point [SetOf GoInsn])
 (struct label-name (lexical-name
                     uid
                     [binding #:mutable]
