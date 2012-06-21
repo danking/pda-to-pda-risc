@@ -34,13 +34,13 @@
       (check-equal? (hash-ref new-env 'foo) foo-reg))))
 
 (pretty-print
- (parse/convert/set-uids '((label ((hiphoppop : (id tok foo) #f
+ (parse/convert/set-uids '((label ((hiphoppop (id tok foo) #f
                                               (foo bar)
                                               (:= hiphop (pop))
                                               (push foo)
                                               (push bar)
                                               (accept))
-                                   (indirection : () plus-sign
+                                   (indirection () plus-sign
                                                 ()
                                                 (go hiphoppop
                                                     (nterm kanye)

@@ -22,13 +22,13 @@
 
 (define pda2
   (parse/convert/set-uids
-   '((label ((hiphoppop : (id tok foo) #f
+   '((label ((hiphoppop (id tok foo) #f
                         (foo bar)
                         (:= hiphop (pop))
                         (push foo)
                         (push bar)
                         (accept))
-             (indirection : () plus-sign
+             (indirection () plus-sign
                           ()
                           (go hiphoppop
                               (nterm kanye)
