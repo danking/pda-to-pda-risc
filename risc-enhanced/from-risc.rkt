@@ -94,5 +94,5 @@
 
 (define (convert/register reg)
   (match reg
-    ((old:named-reg id) (uninitialized-register (syntax-e id)))
+    ((old:named-reg id) (uninitialized-register id))
     ((old:nameless-reg) (uninitialized-register '_))))
