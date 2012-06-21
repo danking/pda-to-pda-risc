@@ -6,6 +6,8 @@
 
 ;; infer-pda-types : PDA -> PDA
 (define (infer-pda-types untyped-pda)
+  untyped-pda
+  #;
   (infer-rule-types (infer-state-types untyped-pda)))
 
 ;; infer-rule-types : PDA -> PDA
