@@ -48,7 +48,7 @@
          ;; Re-exports
          (all-from-out "../pdarisc-data.rkt"))
 
-;; a PDA-RISC-ENH term is a:
+;; a PDA-RISC-ENH is a:
 ;;   (make-pdarisc Term*-Seq)
 
 ;; a Term-Seq is a [ListOf Term]
@@ -56,14 +56,14 @@
 
 ;; a Term is a (pda-term [SetEq Term]
 ;;                       [SetEq Term]
-;;                       Register
+;;                       [SetEq Register]
 ;;                       [SetEq Register]
 ;;                       Insn)
 
 ;; a Term* is the same as a Term except it contains an Insn instead of an Insn*
 ;; concretely, (pda-term [SetEq Term]
 ;;                       [SetEq Term]
-;;                       Register
+;;                       [SetEq Register]
 ;;                       [SetEq Register]
 ;;                       Insn*)
 
