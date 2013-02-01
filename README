@@ -34,3 +34,5 @@ stream into a token declared in the TOKENS form. The pda get-token argument
 expects only one argument, the stream; the DRP's get-token argument expected
 both a stream and a lookahead. Finally, the pda macro neglects an error handler
 and adds an empty-stream? procedure, which checks if the stream is empty.
+
+(NO-SHIFT *EOF*) => (EOF *EOF*)

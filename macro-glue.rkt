@@ -3,7 +3,6 @@
          (for-syntax "parse-pda.rkt"
                      "compile-pda.rkt"
                      "compile-pdarisc.rkt")
-         "parse-pda.rkt"
          "compile-pda.rkt"
          "compile-pdarisc.rkt")
 (provide pda pda->pda-risc pda->pda-risc/no-syntax
