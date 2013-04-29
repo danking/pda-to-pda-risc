@@ -392,3 +392,8 @@
                     #:reg (lambda (r)
                             `(register ,(register-uid r)
                                        ,(register-lexical-name r)))))
+
+(define (get-uid i)
+    (cond [(insn? i) (insn-uid i)]
+          [(insn*? i) (insn*-uid i)]
+          [(join-point? i) (join-point-uid i)]))
