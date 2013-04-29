@@ -18,14 +18,27 @@
 (define (set-preds/term-seq*! seq preds)
   (cond [(empty? seq) (error 'term-seq* "cannot have an empty term-seq*")]
         [(empty? (rest seq)) (set-preds/term*! (first seq) preds)]
-        [else (set-preds/term! (first seq)
-                               preds
-                               (first (rest seq)))
-              (set-preds/term-seq*! (rest seq) (seteq (first seq)))]))
+        [else (let ((next-pred (set-preds/term! (first seq)
+                                                preds
+                                                (first (rest seq)))))
+                (set-preds/term-seq*! (rest seq) (seteq next-pred)))]))
+
+(define (set-preds/term-seq! seq preds succ)
+  (cond [(empty? (rest seq))
+         (set-preds/term! (first seq) preds succ)
+         (first seq)]
+        [else
+         (set-preds/term! (first seq) preds (first (rest seq)))
+         (set-preds/term-seq! (rest seq) (seteq (first seq)) succ)]))
 
 (define (set-preds/term! t preds succ)
   (preds-set-union! t preds)
-  (succs-set-add! t succ))
+  (match (enh:pda-term-insn t)
+    ((block _ (cons insn insns))
+     (succs-set-add! t insn)
+     (set-preds/term-seq! (cons insn insns) preds succ))
+    (_ (succs-set-add! t succ)
+       t)))
 
 (define (set-preds/term*! t preds)
   (preds-set-union! t preds)
