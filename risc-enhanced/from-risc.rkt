@@ -29,7 +29,10 @@
                     out-vars)
                action))
      ((block uid insns) (block uid (convert/insn-seq insns)))
-     ((push uid rhs) (push uid (convert/rhs rhs)))
+     ((push uid rhs)
+      (block (next-uid)
+             (list (uninitialized-pda-term (stack-ensure (next-uid) 1))
+                   (uninitialized-pda-term (push uid (convert/rhs rhs))))))
      (_ i))))
 
 (define (convert/insn* i)
