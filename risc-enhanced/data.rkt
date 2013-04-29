@@ -82,9 +82,7 @@
             insn))
 
 (define (write-pda-term t port mode)
-  (if (insn*? (pda-term-insn t))
-      (write (unparse-term* t) port)
-      (write (unparse-term t) port)))
+  (write (unparse t) port))
 
 (struct pda-term (preds
                   succs
@@ -293,6 +291,11 @@
    (lambda (pr)
      (match pr
        ((pdarisc uid seq) (touch-pdarisc (pdarisc uid (map/term-seq* seq))))))
+   (lambda (t)
+     (cond [(not (pda-term? t))
+            (error 'traverse-pdaric "must give a pda-term to unparse")]
+           [(insn? (pda-term-insn t)) (unparse-term t)]
+           [(insn*? (pda-term-insn t)) (unparse-term* t)]))
    map/term
    map/term*))
 
@@ -378,7 +381,7 @@
        rhses))
 
 (define-values
-  (unparse unparse-term unparse-term*)
+  (unparse-pda unparse unparse-term unparse-term*)
   (traverse-pdarisc #:pdarisc (match-lambda ((pdarisc uid seq) seq))
                     #:term strip-term
                     #:term* strip-term
