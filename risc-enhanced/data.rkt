@@ -242,11 +242,13 @@
        ((stack-ensure uid hdrm) (stack-ensure uid hdrm))
        ((join-point uid label args)
         (join-point uid (lbluse label) (map regdef args)))
-       ((block uid seq) (block uid (map/term-seq seq))))))
+       ((block uid seq) (block uid (map/term-seq seq)))
+       (_ (error 'traverse-pdarisc "unknown insn ~a" i)))))
   (define (map/term t)
     (match t
       ((pda-term a b c d i)
-       (touch-term (pda-term a b c d (map/insn i))))))
+       (touch-term (pda-term a b c d (map/insn i))))
+      (_ (error 'traverse-pdarisc "unknown term ~a" t))))
   (define (map/insn* i)
     (touch-insn*
      (match i
@@ -282,11 +284,13 @@
        ((go uid target args)
         (go uid
             (lbluse target)
-            (map rhs args))))))
+            (map rhs args)))
+       (_ (error 'traverse-pdarisc "unknown insn* ~a" i)))))
   (define (map/term* t)
     (match t
       ((pda-term a b c d i)
-       (touch-term (pda-term a b c d (map/insn* i))))))
+       (touch-term (pda-term a b c d (map/insn* i))))
+      (_ (error 'traverse-pdarisc "unknown term ~a" t))))
   (values
    (lambda (pr)
      (match pr
@@ -294,8 +298,11 @@
    (lambda (t)
      (cond [(not (pda-term? t))
             (error 'traverse-pdaric "must give a pda-term to unparse")]
-           [(insn? (pda-term-insn t)) (unparse-term t)]
-           [(insn*? (pda-term-insn t)) (unparse-term* t)]))
+           [(or (insn? (pda-term-insn t))
+                (join-point? (pda-term-insn t)))
+            (map/term t)]
+           [(insn*? (pda-term-insn t)) (map/term* t)]
+           [else (error 'traverse-pdarisc "unknown term ~a" t)]))
    map/term
    map/term*))
 
