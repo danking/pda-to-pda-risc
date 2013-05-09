@@ -329,10 +329,10 @@
      `(push ,uid ,val))
     ((sem-act uid name params retvars action)
      `(semantic-action ,uid
-                       (syntax->datum ,name)
+                       ,(syntax->datum name)
                        ,params
                        ,retvars
-                       (syntax->datum ,action)))
+                       ,(syntax->datum action)))
     ((drop-token uid)
      `(drop-token ,uid))
     ((get-token uid)
