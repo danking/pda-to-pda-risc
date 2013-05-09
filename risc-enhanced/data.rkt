@@ -403,6 +403,35 @@
                             `(register ,(register-uid r)
                                        ,(register-lexical-name r)))))
 
+(define (remove-term t)
+  (match t
+    ((pda-term _ _ _ _ i)
+     i)))
+
+(define-values
+  (pre->risc-sexp pre-term->risc-sexp _3 _4)
+  (traverse-pdarisc #:pdarisc (match-lambda ((pdarisc uid seq) seq))
+                    #:term remove-term
+                    #:term* remove-term
+                    #:insn unparse-insn
+                    #:insn* unparse-insn*
+                    #:rhs unparse-rhs
+                    #:syntax syntax-e
+                    #:lbl (lambda (l)
+                            `(label-name ,(label-name-uid l)
+                                         ,(label-name-lexical-name l)))
+                    #:reg (lambda (r)
+                            `(register ,(register-uid r)
+                                       ,(register-lexical-name r)))))
+
+(define-values
+  (pda-risc-enh->pda-risc pda-term->insn _1 _2)
+  (traverse-pdarisc #:term pda-term-insn
+                    #:term* pda-term-insn))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; common utilities
+
 (define (get-uid i)
     (cond [(insn? i) (insn-uid i)]
           [(insn*? i) (insn*-uid i)]
