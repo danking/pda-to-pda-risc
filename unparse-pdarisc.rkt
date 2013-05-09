@@ -1,6 +1,6 @@
 #lang racket
 (require "pdarisc-data.rkt")
-(provide unparse-pdarisc unparse-insn)
+(provide unparse-pdarisc unparse-insn unparse-insn*)
 
 (define (unparse-pdarisc p)
   (unparse-insn-seq* (pdarisc-insns p)))
