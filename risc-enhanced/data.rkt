@@ -323,52 +323,56 @@
 
 (define (unparse-insn i)
   (match i
-    ((assign _ id val)
-     `(:= ,id ,val))
-    ((push _ val)
-     `(push ,val))
-    ((sem-act _ name params retvars action)
-     `(semantic-action ,name
+    ((assign uid id val)
+     `(:= ,uid ,id ,val))
+    ((push uid val)
+     `(push ,uid ,val))
+    ((sem-act uid name params retvars action)
+     `(semantic-action ,uid
+                       (syntax->datum ,name)
                        ,params
                        ,retvars
-                       ,action))
-    ((drop-token _)
-     'drop-token)
-    ((get-token _)
-     'get-token)
-    ((stack-ensure _ hdrm)
-     `(stack-ensure ,hdrm))
-    ((join-point _ label args)
-     `(join-point ,label . ,args))
-    ((block _ insns)
-     `(block . ,insns))))
+                       (syntax->datum ,action)))
+    ((drop-token uid)
+     `(drop-token ,uid))
+    ((get-token uid)
+     `(get-token ,uid))
+    ((stack-ensure uid hdrm)
+     `(stack-ensure ,uid ,hdrm))
+    ((join-point uid label args)
+     `(join-point ,uid ,label . ,args))
+    ((block uid insns)
+     `(block ,uid . ,insns))))
 
 (define (unparse-insn* i)
   (match i
-    ((label _ ids stack-types token-types param-lists rhses body)
-     `(label ,(unparse-label-clauses ids stack-types token-types param-lists rhses)
+    ((label uid ids stack-types token-types param-lists rhses body)
+     `(label ,uid
+             ,(unparse-label-clauses ids stack-types token-types param-lists rhses)
              . ,body))
-    ((block* _ insns)
-     `(block . ,insns))
-    ((accept _ vars)
-     `(accept . ,vars))
-    ((reject _)
-     `(reject))
-    ((if-eos _ cnsq altr)
-     `(if-eos ,cnsq ,altr))
-    ((state-case _ var looks cnsqs)
-     `(state-case ,var
+    ((block* uid insns)
+     `(block ,uid . ,insns))
+    ((accept uid vars)
+     `(accept ,uid . ,vars))
+    ((reject uid)
+     `(reject ,uid))
+    ((if-eos uid cnsq altr)
+     `(if-eos ,uid ,cnsq ,altr))
+    ((state-case uid var looks cnsqs)
+     `(state-case ,uid
+                  ,var
                   . ,(map (lambda (look cnsq)
                             (cons look cnsq))
                           looks
                           cnsqs)))
-    ((token-case _ looks cnsqs)
-     `(token-case . ,(map (lambda (l c)
+    ((token-case uid looks cnsqs)
+     `(token-case ,uid
+                  . ,(map (lambda (l c)
                             (cons (if l l #f) c))
                           looks
                           cnsqs)))
-    ((go _ target args)
-     `(go ,target . ,args))))
+    ((go uid target args)
+     `(go ,uid ,target . ,args))))
 
 (define (strip-term t)
   (match t
