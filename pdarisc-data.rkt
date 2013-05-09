@@ -26,6 +26,10 @@
 (define-ustruct (stack-ensure insn) (hdrm))
 (define-ustruct (block insn) (insns))
 
+;; a Pop is an assign struct whose value is a pop
+(define (pop-assign? i)
+  (and (assign? i) (pop? (assign-val i))))
+
 ;; an Insn* is one of
 ;;  - (make-label [ListOf LabelName]
 ;;                [ListOf ST] ;; ST is defined in pda-data.rkt
