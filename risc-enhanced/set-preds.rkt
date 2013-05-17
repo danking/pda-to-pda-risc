@@ -36,7 +36,7 @@
   (match (enh:pda-term-insn t)
     ((block _ (cons insn insns))
      (succs-set-add! t insn)
-     (set-preds/term-seq! (cons insn insns) preds succ))
+     (set-preds/term-seq! (cons insn insns) (seteq t) succ))
     (_ (succs-set-add! t succ)
        t)))
 
