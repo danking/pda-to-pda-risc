@@ -85,7 +85,10 @@
                                    (lambda (x r)
                                      (r (syntax-e (state-id x))))
                                    (lambda (x r)
-                                     (r (syntax-e (state-id x))))))
+                                     (r (syntax-e (state-id x)))))
+  #:property prop:custom-write (lambda (s port mode)
+                                 (write `(state ,(syntax-e (state-id s)))
+                                        port)))
 (define-ustruct (nterm pure-rhs) (id))
 (define-ustruct (curr-token pure-rhs) (n))
 
