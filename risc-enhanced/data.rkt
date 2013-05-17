@@ -440,3 +440,6 @@
     (cond [(insn? i) (insn-uid i)]
           [(insn*? i) (insn*-uid i)]
           [(join-point? i) (join-point-uid i)]))
+
+(define (pda-term->uid t)
+  (get-uid (pda-term-insn t)))
