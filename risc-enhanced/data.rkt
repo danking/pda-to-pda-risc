@@ -56,14 +56,14 @@
 
 ;; a Term is a (pda-term [SetEq Term]
 ;;                       [SetEq Term]
-;;                       Register
+;;                       [SetEq Register]
 ;;                       [SetEq Register]
 ;;                       Insn)
 
 ;; a Term* is the same as a Term except it contains an Insn instead of an Insn*
 ;; concretely, (pda-term [SetEq Term]
 ;;                       [SetEq Term]
-;;                       Register
+;;                       [SetEq Register]
 ;;                       [SetEq Register]
 ;;                       Insn*)
 
