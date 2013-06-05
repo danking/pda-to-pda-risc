@@ -343,11 +343,14 @@
     ((block uid insns)
      `(block ,uid . ,insns))))
 
-(define (unparse-insn* i)
+(define (unparse-insn* i #:shorten-labels? [shorten-labels? #t])
   (match i
     ((label uid ids stack-types token-types param-lists rhses body)
      `(label ,uid
-             ,(unparse-label-clauses ids stack-types token-types param-lists rhses)
+             ,(if shorten-labels?
+                  ids
+                  (unparse-label-clauses ids stack-types token-types
+                                         param-lists rhses))
              . ,body))
     ((block* uid insns)
      `(block ,uid . ,insns))
@@ -405,6 +408,24 @@
                     #:reg (lambda (r)
                             `(register ,(register-uid r)
                                        ,(register-lexical-name r)))))
+
+(define unparse-pda/showing-label
+  (let-values
+      (((unparse-pda/showing-label _1 _2 _3)
+        (traverse-pdarisc #:pdarisc (match-lambda ((pdarisc uid seq) seq))
+                          #:term strip-term
+                          #:term* strip-term
+                          #:insn unparse-insn
+                          #:insn* (lambda (x) (unparse-insn* x #:shorten-labels? #f))
+                          #:rhs unparse-rhs
+                          #:syntax syntax-e
+                          #:lbl (lambda (l)
+                                  `(label-name ,(label-name-uid l)
+                                               ,(label-name-lexical-name l)))
+                          #:reg (lambda (r)
+                                  `(register ,(register-uid r)
+                                             ,(register-lexical-name r))))))
+    unparse-pda/showing-label))
 
 (define (remove-term t)
   (match t
