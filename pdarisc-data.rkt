@@ -43,9 +43,24 @@
 ;; an Insn*-Seq is a (append [ListOf Insn] (list Insn*))
 ;; an ArgList is a [ListOf RegName]
 (define-ustruct insn* (uid))
+(define (write-label l port mode)
+  (if mode
+      (let* ((uid (insn*-uid l))
+             (ids (label-ids l))
+             (stack-types (label-stack-types l))
+             (token-types (label-token-types l))
+             (param-lists (label-param-lists l))
+             (bodies (label-bodies l))
+             (body (label-body l)))
+        (write `(label ,uid ,ids ,stack-types ,token-types
+                       ,param-lists ,bodies ,body)
+               port))
+      (write `(label ,(label-ids l) body) port)))
 (define-ustruct (label insn*) (ids stack-types token-types
                                    param-lists bodies body)
-  #:mutable) ;; needed for risc enhanced code
+  #:mutable
+  #:methods gen:custom-write
+  [(define write-proc write-label)]) ;; needed for risc enhanced code
 (define-ustruct (block* insn*) (insns))
 
 
