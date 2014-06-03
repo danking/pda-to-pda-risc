@@ -1,5 +1,6 @@
 #lang racket
-(require (except-in "../pdarisc-data.rkt"
+(require graph ;; for gen:graph
+         (except-in "../pdarisc-data.rkt"
                     register
                     struct:register
                     make-register
@@ -104,7 +105,14 @@
                                            (match x
                                              ((pda-term _ _ _ _ i)
                                               (- (r i))))))
-        #:property prop:custom-write write-pda-term)
+        #:property prop:custom-write write-pda-term
+        #:methods gen:graph
+        [(define (in-neighbors g v)
+           (pda-term-succs v))
+         (define (in-vertices g)
+           ;; XXX: hack, I know these graphs have a single source and g
+           ;; is always a reference to that source.
+           (set g))])
 
 (define (pda-risc-enh-initial-term pre)
   (match pre
