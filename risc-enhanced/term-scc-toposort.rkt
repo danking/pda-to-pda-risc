@@ -23,13 +23,15 @@
 
 (define (create-scc-graph sccs)
   (define scc-graph (unweighted-graph/directed '()))
+  (define sccs-as-sets
+    (for/list ([scc sccs]) (for/mutable-set ([term scc]) term)))
 
-  (for ([scc sccs])
+  (for ([scc sccs-as-sets])
     (for ([term scc])
       (for ([neighbor (in-neighbors term term)]
             #:when (not (set-member? scc neighbor)))
         (let ((neighbors-scc (findf (lambda (x) (set-member? x neighbor))
-                                    sccs)))
+                                    sccs-as-sets)))
           (unless neighbors-scc
             (error 'create-scc-graph
                    (format "The node ~a doesn't have an scc?!" neighbor)))
