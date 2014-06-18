@@ -463,3 +463,6 @@
 
 (define (pda-term->uid t)
   (get-uid (pda-term-insn t)))
+
+(define (pop-assign-term? t)
+  (pop-assign? (pda-term-insn t)))
