@@ -64,9 +64,9 @@
                                      (iterate-term-seq* term-handler term*-handler))))
          (match i
            rules ...
-           ((label ids stack-types token-types
+           ((label uid ids stack-types token-types
                    param-lists bodies body)
-            (label (map labeldef ids)
+            (label uid (map labeldef ids)
                    stack-types
                    token-types
                    (map (lambda (param-list)
@@ -74,23 +74,27 @@
                         param-lists)
                    (map term-seq*-handler bodies)
                    (term-seq*-handler body)))
-           ((block* insns)
-            (block* (term-seq*-handler insns)))
-           ((accept vals)
-            (accept (map reguse vals)))
-           ((reject)
+           ((block* uid insns)
+            (block* uid (term-seq*-handler insns)))
+           ((accept uid vals)
+            (accept uid (map reguse vals)))
+           ((reject uid)
             i)
-           ((if-eos cnsq altr)
-            (if-eos (term*-handler cnsq)
+           ((if-eos uid cnsq altr)
+            (if-eos uid
+                    (term*-handler cnsq)
                     (term*-handler altr)))
-           ((state-case st lookaheads cnsqs)
-            (state-case (reguse st)
+           ((state-case uid st lookaheads cnsqs)
+            (state-case uid
+                        (reguse st)
                         lookaheads
                         (map term-seq*-handler cnsqs)))
-           ((token-case lookaheads cnsqs)
-            (token-case lookaheads
+           ((token-case uid lookaheads cnsqs)
+            (token-case uid
+                        lookaheads
                         (map term-seq*-handler cnsqs)))
-           ((go target args)
-            (go (labeluse target)
+           ((go uid target args)
+            (go uid
+                (labeluse target)
                 (map rhs args)))
            (_ (error 'match-insn*/recur "did you add a new insn*? ~a" i))))]))
