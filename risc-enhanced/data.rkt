@@ -108,7 +108,7 @@
 
 (define (pda-risc-enh-initial-term pre)
   (match pre
-    ((pdarisc _ seq) (first seq))))
+    ((pdarisc _ _ _ seq) (first seq))))
 
 (define (uninitialized-register name)
   (register name #f #f (seteq)))
@@ -293,7 +293,8 @@
   (values
    (lambda (pr)
      (match pr
-       ((pdarisc uid seq) (touch-pdarisc (pdarisc uid (map/term-seq* seq))))))
+       ((pdarisc uid reguid lbluid seq)
+        (touch-pdarisc (pdarisc uid reguid lbluid (map/term-seq* seq))))))
    (lambda (t)
      (cond [(not (pda-term? t))
             (error 'traverse-pdaric "must give a pda-term to unparse")]
@@ -395,7 +396,7 @@
 
 (define-values
   (unparse-pda unparse unparse-term unparse-term*)
-  (traverse-pdarisc #:pdarisc (match-lambda ((pdarisc uid seq) seq))
+  (traverse-pdarisc #:pdarisc (match-lambda ((pdarisc uid _ _ seq) seq))
                     #:term strip-term
                     #:term* strip-term
                     #:insn unparse-insn
@@ -412,7 +413,7 @@
 (define unparse-pda/showing-label
   (let-values
       (((unparse-pda/showing-label _1 _2 _3)
-        (traverse-pdarisc #:pdarisc (match-lambda ((pdarisc uid seq) seq))
+        (traverse-pdarisc #:pdarisc (match-lambda ((pdarisc uid _ _ seq) seq))
                           #:term strip-term
                           #:term* strip-term
                           #:insn unparse-insn
@@ -434,7 +435,7 @@
 
 (define-values
   (pre->risc-sexp pre-term->risc-sexp _3 _4)
-  (traverse-pdarisc #:pdarisc (match-lambda ((pdarisc uid seq) seq))
+  (traverse-pdarisc #:pdarisc (match-lambda ((pdarisc uid _ _ seq) seq))
                     #:term remove-term
                     #:term* remove-term
                     #:insn unparse-insn

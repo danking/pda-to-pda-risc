@@ -9,7 +9,7 @@
 
 (define (set-avail/live-regs! pr)
   (match pr
-    ((pdarisc _ seq)
+    ((pdarisc _ _ _ seq)
      (set-avail-regs/term! (seteq (first seq)))
      (set-live-regs/term! (find-sinks (seteq (first seq)) enh:pda-term-succs)))))
 

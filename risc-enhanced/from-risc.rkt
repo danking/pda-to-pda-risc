@@ -9,10 +9,10 @@
 
 (define (convert/pdarisc pr)
   (match pr
-    ((pdarisc uid insn-seq*)
+    ((pdarisc uid reguid lbluid insn-seq*)
      (set-uid! uid)
      (let ((insns (convert/insn-seq* insn-seq*)))
-       (pdarisc (current-uid) insns)))))
+       (pdarisc (current-uid) reguid lbluid insns)))))
 
 (define (convert/insn i)
   (uninitialized-pda-term

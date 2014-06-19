@@ -89,7 +89,7 @@
                                    (make-label-name (symbol-append (syntax-e start)
                                                                    '-unknown))
                                    '()))))))
-       (pdarisc (current-uid) insns)))))
+       (pdarisc (current-uid) #f #f insns)))))
 
 ;; gather-rto-table : [ListOf State] -> Reduce-To-Table
 (define (gather-rto-table states)

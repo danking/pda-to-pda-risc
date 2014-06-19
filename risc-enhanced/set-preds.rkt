@@ -12,7 +12,7 @@
 
 (define (set-preds! pr)
   (match pr
-    ((pdarisc _ seq)
+    ((pdarisc _ _ _ seq)
      (set-preds/term-seq*! seq (seteq)))))
 
 (define (set-preds/term-seq*! seq preds)

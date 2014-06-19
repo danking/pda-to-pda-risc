@@ -2,13 +2,17 @@
 (require "../pdarisc-data.rkt"
          (prefix-in enh: "data.rkt")
          "fold-enhanced.rkt"
-         "../../racket-utils/environment.rkt")
+         "../../racket-utils/environment.rkt"
+         "../uid.rkt")
 
 (provide (all-defined-out))
 
 (define (set-uids pr)
   (match pr
-    ((pdarisc uid seq) (pdarisc uid (su/term-seq* seq empty-env empty-env)))))
+    ((pdarisc uid _ _ seq)
+     ;; evaluate the term-seq first so that {reg,lbl}-current-uid is correct
+     (let ((seq (su/term-seq* seq empty-env empty-env)))
+       (pdarisc uid (reg-current-uid) (lbl-current-uid) seq)))))
 
 (define (su/term t reg-e lbl-e)
   (match t
@@ -123,13 +127,12 @@
     (_ reg-e)))
 (define add-new-reg-bindings-from-term (enh:raise-input-to-term add-new-reg-bindings-from-insn))
 
-(define-values (next-id reset-id)
-  (let ((id -1))
-    (values (lambda ()
-              (set! id (add1 id))
-              id)
-            (lambda ()
-              (set! id -1)))))
+(define-values
+  (reg-next-uid reg-current-uid reg-reset-uid reg-set-uid)
+  (init))
+(define-values
+  (lbl-next-uid lbl-current-uid lbl-reset-uid lbl-set-uid)
+  (init))
 
 (define (su/rhs rhs t reg-e)
   (if (enh:register? rhs)
@@ -139,7 +142,7 @@
 (define (su/reg-def r t reg-e)
   (match r
     ((enh:register name _ b u)
-     (enh:register name (next-id) t u))))
+     (enh:register name (reg-next-uid) t u))))
 
 (define (su/reg-use r t reg-e)
   (match r
@@ -158,7 +161,7 @@
 (define (su/lbl-alloc r t lbl-e)
   (match r
     ((enh:label-name name _ b u)
-     (enh:label-name name (next-id) b u))))
+     (enh:label-name name (lbl-next-uid) b u))))
 
 (define (su/lbl-use r t lbl-e)
   (match r

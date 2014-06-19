@@ -2,9 +2,9 @@
 (provide (all-defined-out))
 (require "define-ustruct.rkt")
 
-;; a PDA-RISC is a (make-pdarisc Natural Insn*-Seq)
+;; a PDA-RISC is a (make-pdarisc Natural Natural Natural Insn*-Seq)
 ;; the natural number is the last used uid
-(define-ustruct pdarisc (max-uid insns))
+(define-ustruct pdarisc (max-uid reg-uid lbl-uid insns))
 
 ;; an Insn is one of
 ;;  - (make-assign RegName Var-Rhs)

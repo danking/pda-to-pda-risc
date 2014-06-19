@@ -98,6 +98,6 @@
   (values
    (lambda (pr)
      (match pr
-       ((pdarisc seq) (pdarisc (map/insn-seq* seq)))))
+       ((pdarisc a b c seq) (pdarisc a b c (map/insn-seq* seq)))))
    map/insn
    map/insn*))

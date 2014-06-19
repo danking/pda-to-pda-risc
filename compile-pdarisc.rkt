@@ -19,7 +19,7 @@
       (struct state (id))
       (struct nterm (id))
       #,(match p
-          ((pdarisc _ insns)
+          ((pdarisc _ _ _ insns)
            (compile-insn-seq* insns
                               token-convert
                               get-token
