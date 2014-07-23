@@ -28,6 +28,7 @@
 
 ;; compile-pda : PDA -> PDA-RISC
 (define (compile-pda a-pda)
+  (reset-uid)
   (match a-pda
     ((pda tokens eos start states rules)
      (let* ((rto-table (gather-rto-table states))
