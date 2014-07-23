@@ -1,5 +1,6 @@
 #lang racket
-(require (except-in "../pdarisc-data.rkt"
+(require "../../lattice/lattice.rkt"
+         (except-in "../pdarisc-data.rkt"
                     register
                     struct:register
                     make-register
@@ -104,7 +105,14 @@
                                            (match x
                                              ((pda-term _ _ _ _ i)
                                               (- (r i))))))
-        #:property prop:custom-write write-pda-term)
+        #:property prop:custom-write write-pda-term
+        #:methods gen:gen:join-semi-lattice
+        [(define gte? (lattice-gte? flat-equal?-lattice))
+         (define join (lattice-join flat-equal?-lattice))]
+        #:methods gen:gen:meet-semi-lattice
+        [(define lte? (lattice-lte? flat-equal?-lattice))
+         (define meet (lattice-meet flat-equal?-lattice))]
+        )
 
 (define (pda-risc-enh-initial-term pre)
   (match pre
