@@ -7,7 +7,16 @@
 
 (provide (all-defined-out))
 
+(define-values
+  (reg-next-uid reg-current-uid reg-reset-uid reg-set-uid)
+  (init))
+(define-values
+  (lbl-next-uid lbl-current-uid lbl-reset-uid lbl-set-uid)
+  (init))
+
 (define (set-uids pr)
+  (reg-reset-uid)
+  (lbl-reset-uid)
   (match pr
     ((pdarisc uid _ _ seq)
      ;; evaluate the term-seq first so that {reg,lbl}-current-uid is correct
@@ -126,13 +135,6 @@
        (add-new-reg-bindings-from-term t reg-e)))
     (_ reg-e)))
 (define add-new-reg-bindings-from-term (enh:raise-input-to-term add-new-reg-bindings-from-insn))
-
-(define-values
-  (reg-next-uid reg-current-uid reg-reset-uid reg-set-uid)
-  (init))
-(define-values
-  (lbl-next-uid lbl-current-uid lbl-reset-uid lbl-set-uid)
-  (init))
 
 (define (su/rhs rhs t reg-e)
   (if (enh:register? rhs)
