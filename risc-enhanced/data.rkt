@@ -93,12 +93,12 @@
         #:mutable
         #:transparent
         #:property prop:equal+hash (list (lambda (x y recur-equal?)
-                                           (recur-equal? (pda-term-insn x)
-                                                         (pda-term-insn y)))
+                                           (recur-equal? (get-uid (pda-term-insn x))
+                                                         (get-uid (pda-term-insn y))))
                                          (lambda (x r)
-                                           (r (pda-term-insn x)))
+                                           (get-uid (pda-term-insn x)))
                                          (lambda (x r)
-                                           (- (r (pda-term-insn x)))))
+                                           (- (get-uid (pda-term-insn x)))))
         #:property prop:custom-write write-pda-term
         #:methods gen:gen:join-semi-lattice
         [(define gte? (lattice-gte? flat-equal?-lattice))
