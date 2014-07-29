@@ -98,7 +98,7 @@
                                          (lambda (x r)
                                            (r (pda-term-insn x)))
                                          (lambda (x r)
-                                           (r (pda-term-insn x))))
+                                           (- (r (pda-term-insn x)))))
         #:property prop:custom-write write-pda-term
         #:methods gen:gen:join-semi-lattice
         [(define gte? (lattice-gte? flat-equal?-lattice))
